@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BinanceAPI</RootNamespace>
+    <AssemblyName>BinanceAPI</AssemblyName>
+    <IsPublishable>False</IsPublishable>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Hypsy</Authors>
+    <PackageVersion>3.1.7</PackageVersion>
+    <AssemblyVersion>3.1.7</AssemblyVersion>
+    <FileVersion>3.1.7</FileVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DocumentationFile>BinanceAPI.xml</DocumentationFile>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <OutputType>Library</OutputType>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>X:\BinanceAPI.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SimpleLog4.NET" Version="1.0.5" />
+  </ItemGroup>
+</Project>

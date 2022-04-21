@@ -1,0 +1,25 @@
+﻿using BinanceAPI.Enums;
+using System.Collections.Generic;
+
+namespace BinanceAPI.Converters
+{
+    internal class TimeInForceConverter : BaseConverter<TimeInForce>
+    {
+        public TimeInForceConverter() : this(true)
+        {
+        }
+
+        public TimeInForceConverter(bool quotes) : base(quotes)
+        {
+        }
+
+        protected override List<KeyValuePair<TimeInForce, string>> Mapping => new()
+        {
+            new KeyValuePair<TimeInForce, string>(TimeInForce.GoodTillCancel, "GTC"),
+            new KeyValuePair<TimeInForce, string>(TimeInForce.ImmediateOrCancel, "IOC"),
+            new KeyValuePair<TimeInForce, string>(TimeInForce.FillOrKill, "FOK"),
+            new KeyValuePair<TimeInForce, string>(TimeInForce.GoodTillCrossing, "GTX"),
+            new KeyValuePair<TimeInForce, string>(TimeInForce.GoodTillExpiredOrCanceled, "GTE_GTC")
+        };
+    }
+}
