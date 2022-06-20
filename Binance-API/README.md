@@ -1,3 +1,6 @@
+### Version 6.0.3.2
+- [x] If you call `ServerTimeClient.Start` it will automatically wait until the first timestamp is produced
+
 ### Version 6.0.3.1
 - [x] Fixed a bug that was stopping the `ServerTimeClient` from starting
 - [x] Simplified Creation of `ServerTimeClient`
