@@ -1,8 +1,32 @@
-﻿using BinanceAPI.Interfaces.SubClients;
-using BinanceAPI.Interfaces.SubClients.Spot;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.WalletData;
 using BinanceAPI.Requests;
+using BinanceAPI.SubClients.Margin;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
@@ -14,24 +38,24 @@ namespace BinanceAPI.SubClients.Spot
     /// <summary>
     /// Spot endpoints
     /// </summary>
-    public class BinanceClientSpot : IBinanceClientSpot
+    public class BinanceClientSpot
     {
         private const string tradingStatusEndpoint = "account/apiTradingStatus";
 
         /// <summary>
         /// Spot system endpoints
         /// </summary>
-        public IBinanceClientSpotSystem System { get; }
+        public BinanceClientSpotSystem System { get; }
 
         /// <summary>
         /// Spot market endpoints
         /// </summary>
-        public IBinanceClientSpotMarket Market { get; }
+        public BinanceClientSpotMarket Market { get; }
 
         /// <summary>
         /// Spot order endpoints
         /// </summary>
-        public IBinanceClientSpotOrder Order { get; }
+        public BinanceClientSpotOrder Order { get; }
 
         /// <summary>
         /// Spot user stream endpoints
@@ -60,10 +84,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <returns>The trading status of the account</returns>
         public async Task<WebCallResult<BinanceTradingStatus>> GetTradingStatusAsync(int? receiveWindow = null, CancellationToken ct = default)
         {
-            var parameters = new Dictionary<string, object>
-            {
-                { "timestamp", ServerTimeClient.GetTimestamp() },
-            };
+            var parameters = new Dictionary<string, object>();
 
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 

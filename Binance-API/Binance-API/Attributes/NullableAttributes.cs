@@ -1,4 +1,28 @@
-﻿#if !NETSTANDARD2_1
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+#if !NETSTANDARD2_1
+
 namespace System.Diagnostics.CodeAnalysis
 {
     using System;
@@ -17,7 +41,8 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>
         ///     Initializes a new instance of the <see cref="AllowNullAttribute"/> class.
         /// </summary>
-        public AllowNullAttribute() { }
+        public AllowNullAttribute()
+        { }
     }
 
     /// <summary>
@@ -28,14 +53,14 @@ namespace System.Diagnostics.CodeAnalysis
         AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property,
         Inherited = false
     )]
-
     [ExcludeFromCodeCoverage]
     internal sealed class DisallowNullAttribute : Attribute
     {
         /// <summary>
         ///     Initializes a new instance of the <see cref="DisallowNullAttribute"/> class.
         /// </summary>
-        public DisallowNullAttribute() { }
+        public DisallowNullAttribute()
+        { }
     }
 
     /// <summary>
@@ -48,7 +73,8 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>
         ///     Initializes a new instance of the <see cref="DoesNotReturnAttribute"/> class.
         /// </summary>
-        public DoesNotReturnAttribute() { }
+        public DoesNotReturnAttribute()
+        { }
     }
 
     /// <summary>
@@ -96,11 +122,12 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>
         ///     Initializes a new instance of the <see cref="MaybeNullAttribute"/> class.
         /// </summary>
-        public MaybeNullAttribute() { }
+        public MaybeNullAttribute()
+        { }
     }
 
     /// <summary>
-    ///     Specifies that when a method returns <see cref="ReturnValue"/>, 
+    ///     Specifies that when a method returns <see cref="ReturnValue"/>,
     ///     the parameter may be <see langword="null"/> even if the corresponding type disallows it.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
@@ -141,7 +168,8 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>
         ///     Initializes a new instance of the <see cref="NotNullAttribute"/> class.
         /// </summary>
-        public NotNullAttribute() { }
+        public NotNullAttribute()
+        { }
     }
 
     /// <summary>
@@ -207,4 +235,5 @@ namespace System.Diagnostics.CodeAnalysis
         }
     }
 }
+
 #endif

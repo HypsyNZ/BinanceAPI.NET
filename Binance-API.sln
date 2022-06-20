@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Binance-API", "Binance-API\Binance-API.csproj", "{D8D48E06-C356-438D-BA54-48271C59875C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API-Test", "API-Test\API-Test.csproj", "{828A9C7C-7EDE-4F79-933C-D0E8470EA138}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BinanceAPI", "Binance-API\BinanceAPI.csproj", "{5FABA133-E67E-440C-B898-99ED0713E8D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D8D48E06-C356-438D-BA54-48271C59875C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D8D48E06-C356-438D-BA54-48271C59875C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D8D48E06-C356-438D-BA54-48271C59875C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D8D48E06-C356-438D-BA54-48271C59875C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{828A9C7C-7EDE-4F79-933C-D0E8470EA138}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{828A9C7C-7EDE-4F79-933C-D0E8470EA138}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{828A9C7C-7EDE-4F79-933C-D0E8470EA138}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{828A9C7C-7EDE-4F79-933C-D0E8470EA138}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FABA133-E67E-440C-B898-99ED0713E8D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FABA133-E67E-440C-B898-99ED0713E8D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FABA133-E67E-440C-B898-99ED0713E8D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FABA133-E67E-440C-B898-99ED0713E8D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

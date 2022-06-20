@@ -1,6 +1,29 @@
-﻿using BinanceAPI.Converters;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.LendingData;
 using BinanceAPI.Requests;
@@ -17,7 +40,7 @@ namespace BinanceAPI.SubClients
     /// <summary>
     /// Lending endpoints
     /// </summary>
-    public class BinanceClientLending : IBinanceClientLending
+    public class BinanceClientLending
     {
         // Lending
         private const string flexibleProductListEndpoint = "lending/daily/product/list";
@@ -59,7 +82,6 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("status", status == null ? null : JsonConvert.SerializeObject(status, new ProductStatusConverter(false)));
             parameters.AddOptionalParameter("featured", featured == true ? "TRUE" : "ALL");
@@ -88,7 +110,6 @@ namespace BinanceAPI.SubClients
             var parameters = new Dictionary<string, object>
             {
                 { "productId", productId },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -115,7 +136,6 @@ namespace BinanceAPI.SubClients
             {
                 { "productId", productId },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -142,7 +162,6 @@ namespace BinanceAPI.SubClients
             {
                 { "productId", productId },
                 { "type",  JsonConvert.SerializeObject(type, new RedeemTypeConverter(false)) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -171,7 +190,6 @@ namespace BinanceAPI.SubClients
                 { "productId", productId },
                 { "type", JsonConvert.SerializeObject(type, new RedeemTypeConverter(false)) },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -184,20 +202,19 @@ namespace BinanceAPI.SubClients
 
         /// <summary>
         /// Get flexible product position
+        /// <para>will return all positions if asset isn't specified</para>
         /// </summary>
         /// <param name="asset">Asset</param>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Flexible product position</returns>
-        public async Task<WebCallResult<IEnumerable<BinanceFlexibleProductPosition>>> GetFlexibleProductPositionAsync(string asset, long? receiveWindow = null, CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceFlexibleProductPosition>>> GetFlexibleProductPositionAsync(string? asset = null, long? receiveWindow = null, CancellationToken ct = default)
         {
-            asset.ValidateNotNull(nameof(asset));
-
             var parameters = new Dictionary<string, object>
             {
-                { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
+
+            parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceFlexibleProductPosition>>(GetUri.New(_baseClient.BaseAddress, flexiblePositionEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -226,7 +243,6 @@ namespace BinanceAPI.SubClients
             var parameters = new Dictionary<string, object>
             {
                 { "type", JsonConvert.SerializeObject(type, new ProjectTypeConverter(false)) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("status", status == null ? null : JsonConvert.SerializeObject(status, new ProductStatusConverter(false)));
@@ -259,7 +275,6 @@ namespace BinanceAPI.SubClients
             {
                 { "projectId", projectId },
                 { "lot", lot.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -286,7 +301,6 @@ namespace BinanceAPI.SubClients
             var parameters = new Dictionary<string, object>
             {
                 { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("projectId", projectId);
             parameters.AddOptionalParameter("status", status == null ? null : JsonConvert.SerializeObject(status, new ProjectStatusConverter(false)));
@@ -309,7 +323,6 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -336,14 +349,13 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() },
                 { "lendingType", JsonConvert.SerializeObject(lendingType, new LendingTypeConverter(false)) }
             };
             parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("current", page?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinancePurchaseRecord>>(GetUri.New(_baseClient.BaseAddress, purchaseRecordEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -369,14 +381,13 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() },
                 { "lendingType", JsonConvert.SerializeObject(lendingType, new LendingTypeConverter(false)) }
             };
             parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("current", page?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceRedemptionRecord>>(GetUri.New(_baseClient.BaseAddress, redemptionRecordEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -402,14 +413,13 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() },
                 { "lendingType", JsonConvert.SerializeObject(lendingType, new LendingTypeConverter(false)) }
             };
             parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("current", page?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceLendingInterestHistory>>(GetUri.New(_baseClient.BaseAddress, lendingInterestHistoryEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -436,7 +446,6 @@ namespace BinanceAPI.SubClients
             {
                 { "projectId", projectId },
                 { "lot", lot.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("positionId", positionId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));

@@ -1,6 +1,31 @@
-﻿using BinanceAPI.Authentication;
-using BinanceAPI.Enums;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Authentication;
+using BinanceAPI.Clients;
 using BinanceAPI.Options;
+using BinanceAPI.Time;
 using System;
 using System.Net.Http;
 
@@ -12,24 +37,20 @@ namespace BinanceAPI.Objects
     public class BinanceClientOptions : RestClientOptions
     {
         /// <summary>
-        /// The delay before the internal timer starts and begins synchronizing the server time
+        /// Path to the Time Log
         /// </summary>
-        public int ServerTimeStartTime { get; set; } = 2000;
-
-        /// <summary>
-        /// The interval at which to sync the time automatically
-        /// </summary>
-        public int ServerTimeUpdateTime { get; set; } = 125;
-
-        /// <summary>
-        /// Automatic Server Time Sync Update Mode
-        /// </summary>
-        public ServerTimeSyncType ServerTimeSyncType { get; set; } = ServerTimeSyncType.Manual;
+        public string TimeLogPath { get; set; } = "";
 
         /// <summary>
         /// The default receive window for requests
         /// </summary>
         public TimeSpan ReceiveWindow { get; set; } = TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// The rate at which the Server Time Should be Synced in Minutes
+        /// <para><see cref="ServerTimeClient.LoopToken"/> can be cancelled to stop syncing</para>
+        /// </summary>
+        public int SyncUpdateTime { get; set; } = 15;
 
         /// <summary>
         /// Constructor with default endpoints
@@ -79,22 +100,6 @@ namespace BinanceAPI.Objects
         public BinanceClientOptions(string spotBaseAddress, HttpClient? client) : base(spotBaseAddress)
         {
             HttpClient = client;
-        }
-
-        /// <summary>
-        /// Return a copy of these options
-        /// </summary>
-        /// <returns></returns>
-        public BinanceClientOptions Copy()
-        {
-            var copy = Copy<BinanceClientOptions>();
-            copy.ServerTimeStartTime = ServerTimeStartTime;
-            copy.ServerTimeUpdateTime = ServerTimeUpdateTime;
-            copy.ServerTimeSyncType = ServerTimeSyncType;
-            copy.ReceiveWindow = ReceiveWindow;
-            copy.LogLevel = LogLevel;
-            copy.LogPath = LogPath;
-            return copy;
         }
     }
 }

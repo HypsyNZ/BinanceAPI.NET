@@ -1,4 +1,29 @@
-﻿using BinanceAPI.Enums;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Clients;
+using BinanceAPI.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +45,7 @@ namespace BinanceAPI.Authentication
         /// <summary>
         /// The provided credentials
         /// </summary>
-        public ApiCredentials Credentials { get; }
+        public static ApiCredentials? Credentials { get; private set; }
 
         /// <summary>
         /// ctor
@@ -50,6 +75,8 @@ namespace BinanceAPI.Authentication
         {
             if (!signed)
                 return parameters;
+
+            parameters.AddParameter("timestamp", ServerTimeClient.GetRequestTimestamp());
 
             string signData;
             if (parameterPosition == HttpMethodParameterPosition.InUri)
@@ -90,7 +117,7 @@ namespace BinanceAPI.Authentication
         /// <returns>Should return a dictionary containing any header key/value pairs needed for authenticating the request</returns>
         public virtual Dictionary<string, string> AddAuthenticationToHeaders(string uri, HttpMethod method, Dictionary<string, object> parameters, bool signed, HttpMethodParameterPosition parameterPosition, ArrayParametersSerialization arraySerialization)
         {
-            if (Credentials.Key == null)
+            if (Credentials == null || Credentials.Key == null)
                 throw new ArgumentException("No valid API credentials provided. Key/Secret needed.");
 
             return new Dictionary<string, string> { { "X-MBX-APIKEY", Credentials.Key.GetString() } };

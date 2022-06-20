@@ -1,11 +1,36 @@
-﻿using BinanceAPI.Converters;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Converters;
 using BinanceAPI.Enums;
 using BinanceAPI.Interfaces;
-using BinanceAPI.Interfaces.SubClients.Spot;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.MarketData;
+using BinanceAPI.Objects.Spot.MarketStream;
 using BinanceAPI.Objects.Spot.WalletData;
 using BinanceAPI.Requests;
+using BinanceAPI.Time;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -19,7 +44,7 @@ namespace BinanceAPI.SubClients.Spot
     /// <summary>
     /// Spot market endpoints
     /// </summary>
-    public class BinanceClientSpotMarket : IBinanceClientSpotMarket
+    public class BinanceClientSpotMarket
     {
         private const string orderBookEndpoint = "depth";
         private const string aggregatedTradesEndpoint = "aggTrades";
@@ -73,14 +98,14 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="limit">Result limit</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of recent trades</returns>
-        public async Task<WebCallResult<IEnumerable<IBinanceRecentTrade>>> GetRecentTradeHistoryAsync(string symbol, int? limit = null, CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceRecentTrade>>> GetRecentTradeHistoryAsync(string symbol, int? limit = null, CancellationToken ct = default)
         {
             limit?.ValidateIntBetween(nameof(limit), 1, 1000);
 
             var parameters = new Dictionary<string, object> { { "symbol", symbol } };
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             var result = await _baseClient.SendRequestInternal<IEnumerable<BinanceRecentTradeQuote>>(GetUri.New(_baseClient.BaseAddress, recentTradesEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
-            return result.As<IEnumerable<IBinanceRecentTrade>>(result.Data);
+            return result.As<IEnumerable<BinanceRecentTrade>>(result.Data);
         }
 
         #endregion Recent Trades List
@@ -95,7 +120,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="fromId">From which trade id on results should be retrieved</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of recent trades</returns>
-        public async Task<WebCallResult<IEnumerable<IBinanceRecentTrade>>> GetTradeHistoryAsync(string symbol, int? limit = null, long? fromId = null, CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceRecentTrade>>> GetTradeHistoryAsync(string symbol, int? limit = null, long? fromId = null, CancellationToken ct = default)
         {
             limit?.ValidateIntBetween(nameof(limit), 1, 1000);
             var parameters = new Dictionary<string, object> { { "symbol", symbol } };
@@ -103,7 +128,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
 
             var result = await _baseClient.SendRequestInternal<IEnumerable<BinanceRecentTradeQuote>>(GetUri.New(_baseClient.BaseAddress, historicalTradesEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
-            return result.As<IEnumerable<IBinanceRecentTrade>>(result.Data);
+            return result.As<IEnumerable<BinanceRecentTrade>>(result.Data);
         }
 
         #endregion Old Trade Lookup
@@ -126,8 +151,8 @@ namespace BinanceAPI.SubClients.Spot
 
             var parameters = new Dictionary<string, object> { { "symbol", symbol } };
             parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceAggregatedTrade>>(GetUri.New(_baseClient.BaseAddress, aggregatedTradesEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
@@ -147,19 +172,19 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="limit">Max number of results</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>The candlestick data for the provided symbol</returns>
-        public async Task<WebCallResult<IEnumerable<IBinanceKline>>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime? startTime = null, DateTime? endTime = null, int? limit = null, CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceSpotKline>>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime? startTime = null, DateTime? endTime = null, int? limit = null, CancellationToken ct = default)
         {
-            limit?.ValidateIntBetween(nameof(limit), 1, 1000);
+            limit?.ValidateIntBetween(nameof(limit), 1, 1500);
             var parameters = new Dictionary<string, object> {
                 { "symbol", symbol },
                 { "interval", JsonConvert.SerializeObject(interval, new KlineIntervalConverter(false)) }
             };
-            parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
 
             var result = await _baseClient.SendRequestInternal<IEnumerable<BinanceSpotKline>>(GetUri.New(_baseClient.BaseAddress, klinesEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
-            return result.As<IEnumerable<IBinanceKline>>(result.Data);
+            return result.As<IEnumerable<BinanceSpotKline>>(result.Data);
         }
 
         #endregion Kline/Candlestick Data
@@ -189,12 +214,12 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="symbol">The symbol to get the data for</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Data over the last 24 hours</returns>
-        public async Task<WebCallResult<IBinanceTick>> GetTickerAsync(string symbol, CancellationToken ct = default)
+        public async Task<WebCallResult<BinanceStreamTick>> GetTickerAsync(string symbol, CancellationToken ct = default)
         {
             var parameters = new Dictionary<string, object> { { "symbol", symbol } };
 
-            var result = await _baseClient.SendRequestInternal<Binance24HPrice>(GetUri.New(_baseClient.BaseAddress, price24HEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
-            return result.As<IBinanceTick>(result.Data);
+            var result = await _baseClient.SendRequestInternal<BinanceStreamTick>(GetUri.New(_baseClient.BaseAddress, price24HEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
+            return result.As<BinanceStreamTick>(result.Data);
         }
 
         /// <summary>
@@ -202,10 +227,10 @@ namespace BinanceAPI.SubClients.Spot
         /// </summary>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of data over the last 24 hours</returns>
-        public async Task<WebCallResult<IEnumerable<IBinanceTick>>> GetTickersAsync(CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceStreamTick>>> GetTickersAsync(CancellationToken ct = default)
         {
-            var result = await _baseClient.SendRequestInternal<IEnumerable<Binance24HPrice>>(GetUri.New(_baseClient.BaseAddress, price24HEndpoint, api, publicVersion), HttpMethod.Get, ct).ConfigureAwait(false);
-            return result.As<IEnumerable<IBinanceTick>>(result.Data);
+            var result = await _baseClient.SendRequestInternal<IEnumerable<BinanceStreamTick>>(GetUri.New(_baseClient.BaseAddress, price24HEndpoint, api, publicVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
+            return result.As<IEnumerable<BinanceStreamTick>>(result.Data);
         }
 
         #endregion 24hr Ticker Price Change Statistics
@@ -235,7 +260,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <returns>List of prices</returns>
         public async Task<WebCallResult<IEnumerable<BinancePrice>>> GetPricesAsync(CancellationToken ct = default)
         {
-            return await _baseClient.SendRequestInternal<IEnumerable<BinancePrice>>(GetUri.New(_baseClient.BaseAddress, allPricesEndpoint, api, publicVersion), HttpMethod.Get, ct).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinancePrice>>(GetUri.New(_baseClient.BaseAddress, allPricesEndpoint, api, publicVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
         }
 
         #endregion Symbol Price Ticker
@@ -262,7 +287,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <returns>List of book prices</returns>
         public async Task<WebCallResult<IEnumerable<BinanceBookPrice>>> GetAllBookPricesAsync(CancellationToken ct = default)
         {
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceBookPrice>>(GetUri.New(_baseClient.BaseAddress, bookPricesEndpoint, api, publicVersion), HttpMethod.Get, ct).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceBookPrice>>(GetUri.New(_baseClient.BaseAddress, bookPricesEndpoint, api, publicVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
         }
 
         #endregion Symbol Order Book Ticker
@@ -280,8 +305,8 @@ namespace BinanceAPI.SubClients.Spot
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
+
             parameters.AddOptionalParameter("symbol", symbol);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 

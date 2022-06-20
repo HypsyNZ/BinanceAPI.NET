@@ -1,5 +1,28 @@
-﻿using BinanceAPI.Objects;
-using BinanceAPI.Options;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Objects;
 using System;
 using System.Threading.Tasks;
 
@@ -10,7 +33,11 @@ namespace BinanceAPI.Sockets
     /// </summary>
     public class UpdateSubscription
     {
-        private readonly SocketConnection connection;
+        /// <summary>
+        /// The Connection
+        /// </summary>
+        public readonly SocketConnection Connection;
+
         private readonly SocketSubscription subscription;
 
         /// <summary>
@@ -18,18 +45,17 @@ namespace BinanceAPI.Sockets
         /// </summary>
         public event Action ConnectionLost
         {
-            add => connection.ConnectionLost += value;
-            remove => connection.ConnectionLost -= value;
+            add => Connection.ConnectionLost += value;
+            remove => Connection.ConnectionLost -= value;
         }
 
         /// <summary>
-        /// Event when the connection is closed. This event happens when reconnecting/resubscribing has failed too often based on the <see cref="SocketClientOptions.MaxReconnectTries"/> and <see cref="SocketClientOptions.MaxResubscribeTries"/> options,
-        /// or <see cref="SocketClientOptions.AutoReconnect"/> is false
+        /// Event when the connection is closed and won't be reconnecting
         /// </summary>
         public event Action ConnectionClosed
         {
-            add => connection.ConnectionClosed += value;
-            remove => connection.ConnectionClosed -= value;
+            add => Connection.ConnectionClosed += value;
+            remove => Connection.ConnectionClosed -= value;
         }
 
         /// <summary>
@@ -39,41 +65,14 @@ namespace BinanceAPI.Sockets
         /// </summary>
         public event Action<TimeSpan> ConnectionRestored
         {
-            add => connection.ConnectionRestored += value;
-            remove => connection.ConnectionRestored -= value;
-        }
-
-        /// <summary>
-        /// Event when the connection to the server is paused based on a server indication. No operations can be performed while paused
-        /// </summary>
-        public event Action ActivityPaused
-        {
-            add => connection.ActivityPaused += value;
-            remove => connection.ActivityPaused -= value;
-        }
-
-        /// <summary>
-        /// Event when the connection to the server is unpaused after being paused
-        /// </summary>
-        public event Action ActivityUnpaused
-        {
-            add => connection.ActivityUnpaused += value;
-            remove => connection.ActivityUnpaused -= value;
-        }
-
-        /// <summary>
-        /// Event when an exception happens during the handling of the data
-        /// </summary>
-        public event Action<Exception> Exception
-        {
-            add => subscription.Exception += value;
-            remove => subscription.Exception -= value;
+            add => Connection.ConnectionRestored += value;
+            remove => Connection.ConnectionRestored -= value;
         }
 
         /// <summary>
         /// The id of the socket
         /// </summary>
-        public int SocketId => connection.Socket.Id;
+        public int SocketId => Connection.Socket.Id;
 
         /// <summary>
         /// The id of the subscription
@@ -87,7 +86,7 @@ namespace BinanceAPI.Sockets
         /// <param name="subscription">The subscription</param>
         public UpdateSubscription(SocketConnection connection, SocketSubscription subscription)
         {
-            this.connection = connection;
+            this.Connection = connection;
             this.subscription = subscription;
         }
 
@@ -97,16 +96,16 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         public Task CloseAsync()
         {
-            return connection.CloseAsync(subscription);
+            return Connection.CloseAsync(subscription);
         }
 
         /// <summary>
         /// Close the socket to cause a reconnect
         /// </summary>
         /// <returns></returns>
-        internal Task ReconnectAsync()
+        public Task ReconnectAsync()
         {
-            return connection.Socket.CloseAsync();
+            return Connection.Socket.CloseAsync();
         }
 
         /// <summary>
@@ -115,7 +114,7 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         internal async Task UnsubscribeAsync()
         {
-            await connection.UnsubscribeAsync(subscription).ConfigureAwait(false);
+            await Connection.UnsubscribeAsync(subscription).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -124,7 +123,7 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         internal async Task<CallResult<bool>> ResubscribeAsync()
         {
-            return await connection.ResubscribeAsync(subscription).ConfigureAwait(false);
+            return await Connection.ResubscribeAsync(subscription).ConfigureAwait(false);
         }
     }
 }

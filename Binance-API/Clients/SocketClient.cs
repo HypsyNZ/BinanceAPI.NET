@@ -1,9 +1,32 @@
-﻿using BinanceAPI.Authentication;
-using BinanceAPI.Interfaces;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Other;
 using BinanceAPI.Options;
 using BinanceAPI.Sockets;
+using BinanceAPI.SocketSubClients;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -11,23 +34,64 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
-using System.Threading;
 using System.Threading.Tasks;
 using static BinanceAPI.Logging;
 
-namespace BinanceAPI
+namespace BinanceAPI.Clients
 {
     /// <summary>
     /// Base for socket client implementations
     /// </summary>
-    public abstract class SocketClient : BaseClient, ISocketClient
+    public class SocketClient : BaseClient
     {
-        #region fields
+        /// <summary>
+        /// The Default Options or the Options that you Set
+        /// <para>new BinanceSocketClientOptions() creates the standard defaults regardless of what you set this to</para>
+        /// </summary>
+        public static BinanceSocketClientOptions DefaultOptions = new();
 
         /// <summary>
-        /// The factory for creating sockets. Used for unit testing
+        /// Spot streams
         /// </summary>
-        public IWebsocketFactory SocketFactory { get; set; } = new WebsocketFactory();
+        public BinanceSocketClientSpot Spot { get; set; }
+
+        #region constructor/destructor
+
+        /// <summary>
+        /// Create a new instance of BinanceSocketClient with default options
+        /// </summary>
+        public SocketClient() : this(DefaultOptions)
+        {
+        }
+
+        #endregion constructor/destructor
+
+        #region methods
+
+        /// <summary>
+        /// Set the default options to be used when creating new socket clients
+        /// </summary>
+        /// <param name="options"></param>
+        public static void SetDefaultOptions(BinanceSocketClientOptions options)
+        {
+            DefaultOptions = options;
+        }
+
+        internal Task<CallResult<UpdateSubscription>> SubscribeInternal<T>(string url, IEnumerable<string> topics, Action<DataEvent<T>> onData)
+        {
+            var request = new BinanceSocketRequest
+            {
+                Method = "SUBSCRIBE",
+                Params = topics.ToArray(),
+                Id = NextId()
+            };
+
+            return SubscribeAsync(url, request, null, false, onData);
+        }
+
+        #endregion methods
+
+        #region fields
 
         /// <summary>
         /// List of socket connections currently connecting/connected
@@ -35,35 +99,12 @@ namespace BinanceAPI
         protected internal ConcurrentDictionary<int, SocketConnection> sockets = new();
 
         /// <summary>
-        /// Semaphore used while creating sockets
-        /// </summary>
-        protected internal readonly SemaphoreSlim semaphoreSlim = new(1);
-
-        /// <inheritdoc cref="SocketClientOptions.ReconnectInterval"/>
-        public TimeSpan ReconnectInterval { get; }
-
-        /// <inheritdoc cref="SocketClientOptions.AutoReconnect"/>
-        public bool AutoReconnect { get; }
-
-        /// <inheritdoc cref="SocketClientOptions.SocketResponseTimeout"/>
-        public TimeSpan ResponseTimeout { get; }
-
-        /// <inheritdoc cref="SocketClientOptions.SocketNoDataTimeout"/>
-        public TimeSpan SocketNoDataTimeout { get; }
-
-        /// <summary>
         /// The max amount of concurrent socket connections
         /// </summary>
         public int MaxSocketConnections { get; protected set; } = 9999;
 
-        /// <inheritdoc cref="SocketClientOptions.SocketSubscriptionsCombineTarget"/>
-        public int SocketCombineTarget { get; protected set; }
-
         /// <inheritdoc cref="SocketClientOptions.MaxReconnectTries"/>
         public int? MaxReconnectTries { get; protected set; }
-
-        /// <inheritdoc cref="SocketClientOptions.MaxResubscribeTries"/>
-        public int? MaxResubscribeTries { get; protected set; }
 
         /// <inheritdoc cref="SocketClientOptions.MaxConcurrentResubscriptionsPerSocket"/>
         public int MaxConcurrentResubscriptionsPerSocket { get; protected set; }
@@ -105,11 +146,6 @@ namespace BinanceAPI
         protected internal bool ContinueOnQueryResponse { get; protected set; }
 
         /// <summary>
-        /// If a message is received on the socket which is not handled by a handler this boolean determines whether this logs an error message
-        /// </summary>
-        protected internal bool UnhandledMessageExpected { get; set; }
-
-        /// <summary>
         /// The current kilobytes per second of data being received by all connection from this client, averaged over the last 3 seconds
         /// </summary>
         public double IncomingKbps
@@ -126,26 +162,22 @@ namespace BinanceAPI
         #endregion fields
 
         /// <summary>
-        /// ctor
+        /// Create a new instance of BinanceSocketClient using provided options
         /// </summary>
-        /// <param name="exchangeName">The name of the exchange this client is for</param>
-        /// <param name="exchangeOptions">The options for this client</param>
-        /// <param name="authenticationProvider">The authentication provider for this client (can be null if no credentials are provided)</param>
-        protected SocketClient(string exchangeName, SocketClientOptions exchangeOptions, AuthenticationProvider? authenticationProvider) : base(exchangeName, exchangeOptions, authenticationProvider)
+        /// <param name="options">The options to use for this client</param>
+        public SocketClient(BinanceSocketClientOptions options) : base(options)
         {
-            if (exchangeOptions == null)
-                throw new ArgumentNullException(nameof(exchangeOptions));
+            Spot = new BinanceSocketClientSpot(this, options);
 
-            AutoReconnect = exchangeOptions.AutoReconnect;
-            ReconnectInterval = exchangeOptions.ReconnectInterval;
-            ResponseTimeout = exchangeOptions.SocketResponseTimeout;
-            SocketNoDataTimeout = exchangeOptions.SocketNoDataTimeout;
-            SocketCombineTarget = exchangeOptions.SocketSubscriptionsCombineTarget ?? 1;
-            MaxReconnectTries = exchangeOptions.MaxReconnectTries;
-            MaxResubscribeTries = exchangeOptions.MaxResubscribeTries;
-            MaxConcurrentResubscriptionsPerSocket = exchangeOptions.MaxConcurrentResubscriptionsPerSocket;
+            SetDataInterpreter((data) => { return string.Empty; }, null);
 
-            Logging.StartSocketLog(exchangeOptions.LogPath, exchangeOptions.LogLevel);
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            MaxReconnectTries = options.MaxReconnectTries;
+            MaxConcurrentResubscriptionsPerSocket = options.MaxConcurrentResubscriptionsPerSocket;
+
+            StartSocketLog(options.LogPath, options.LogLevel, options.LogToConsole);
         }
 
         /// <summary>
@@ -173,48 +205,20 @@ namespace BinanceAPI
         {
             SocketConnection socketConnection;
             SocketSubscription subscription;
-            var released = false;
-            // Wait for a semaphore here, so we only connect 1 socket at a time.
-            // This is necessary for being able to see if connections can be combined
-            await semaphoreSlim.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                // Get a new or existing socket connection
-                socketConnection = GetSocketConnection(url, authenticated);
 
-                // Add a subscription on the socket connection
-                subscription = AddSubscription(request, identifier, true, socketConnection, dataHandler);
-                if (SocketCombineTarget == 1)
-                {
-                    // Only 1 subscription per connection, so no need to wait for connection since a new subscription will create a new connection anyway
-                    semaphoreSlim.Release();
-                    released = true;
-                }
+            // Get a new or existing socket connection
+            socketConnection = GetSocketConnection(url, authenticated);
 
-                var needsConnecting = !socketConnection.Connected;
+            // Add a subscription on the socket connection
+            subscription = AddSubscription(request, identifier, true, socketConnection, dataHandler);
 
-                var connectResult = await ConnectIfNeededAsync(socketConnection, authenticated).ConfigureAwait(false);
-                if (!connectResult)
-                    return new CallResult<UpdateSubscription>(null, connectResult.Error);
-#if DEBUG
-                if (needsConnecting)
-                    SocketLog?.Debug($"Socket {socketConnection.Socket.Id} connected to {url} {(request == null ? "" : "with request " + JsonConvert.SerializeObject(request))}");
-#endif
-            }
-            finally
-            {
-                if (!released)
-                    semaphoreSlim.Release();
-            }
+            var needsConnecting = !socketConnection.Connected;
 
-            if (socketConnection.PausedActivity)
-            {
-#if DEBUG
-                SocketLog?.Info($"Socket {socketConnection.Socket.Id} has been paused, can't subscribe at this moment");
-#endif
-                return new CallResult<UpdateSubscription>(default, new ServerError("Socket is paused"));
-            }
-
+            var connectResult = await ConnectIfNeededAsync(socketConnection, authenticated).ConfigureAwait(false);
+            if (!connectResult)
+                return new CallResult<UpdateSubscription>(null, connectResult.Error);
+            if (needsConnecting)
+                SocketLog?.Debug($"Socket {socketConnection.Socket.Id} connected to {url} {(request == null ? "" : "with request " + JsonConvert.SerializeObject(request))}");
             if (request != null)
             {
                 // Send the request and wait for answer
@@ -245,7 +249,7 @@ namespace BinanceAPI
         protected internal virtual async Task<CallResult<bool>> SubscribeAndWaitAsync(SocketConnection socketConnection, object request, SocketSubscription subscription)
         {
             CallResult<object>? callResult = null;
-            await socketConnection.SendAndWaitAsync(request, ResponseTimeout, data => HandleSubscriptionResponse(request, data, out callResult)).ConfigureAwait(false);
+            await socketConnection.SendAndWaitAsync(request, TimeSpan.FromSeconds(5), data => HandleSubscriptionResponse(request, data, out callResult)).ConfigureAwait(false);
 
             if (callResult?.Success == true)
                 subscription.Confirmed = true;
@@ -321,8 +325,11 @@ namespace BinanceAPI
         /// <param name="message">The received data</param>
         /// <param name="request">The subscription request</param>
         /// <returns>True if the message is for the subscription which sent the request</returns>
-        public bool MessageMatchesHandler(JToken message, object request)
+        public bool MessageMatchesHandler(JToken message, object? request)
         {
+            if (request == null)
+                return false;
+
             if (message.Type != JTokenType.Object)
                 return false;
 
@@ -335,7 +342,7 @@ namespace BinanceAPI
         }
 
         /// <summary>
-        /// Needs to unsubscribe a subscription, typically by sending an unsubscribe request. If multiple subscriptions per socket is not allowed this can just return since the socket will be closed anyway
+        /// Needs to unsubscribe a subscription, typically by sending an unsubscribe request.
         /// </summary>
         /// <param name="connection">The connection on which to unsubscribe</param>
         /// <param name="subscription">The subscription to unsubscribe</param>
@@ -349,7 +356,7 @@ namespace BinanceAPI
             if (!connection.Socket.IsOpen)
                 return true;
 
-            await connection.SendAndWaitAsync(unsub, ResponseTimeout, data =>
+            await connection.SendAndWaitAsync(unsub, TimeSpan.FromSeconds(5), data =>
             {
                 if (data.Type != JTokenType.Object)
                     return false;
@@ -411,9 +418,7 @@ namespace BinanceAPI
                 var desResult = Json.Deserialize<T>(messageEvent.JsonData, false);
                 if (!desResult)
                 {
-#if DEBUG
                     SocketLog?.Warning($"Socket {connection.Socket.Id} Failed to deserialize data into type {typeof(T)}: {desResult.Error}");
-#endif
                     return;
                 }
 #if DEBUG
@@ -438,22 +443,10 @@ namespace BinanceAPI
         /// <returns></returns>
         protected virtual SocketConnection GetSocketConnection(string address, bool authenticated)
         {
-            var socketResult = sockets.Where(s => s.Value.Socket.Url.TrimEnd('/') == address.TrimEnd('/')
-            && s.Value.Connected).OrderBy(s => s.Value.SubscriptionCount).FirstOrDefault();
-            var result = socketResult.Equals(default(KeyValuePair<int, SocketConnection>)) ? null : socketResult.Value;
-            if (result != null)
-            {
-                if (result.SubscriptionCount < SocketCombineTarget || (sockets.Count >= MaxSocketConnections && sockets.All(s => s.Value.SubscriptionCount >= SocketCombineTarget)))
-                {
-                    // Use existing socket if it has less than target connections OR it has the least connections and we can't make new
-                    return result;
-                }
-            }
+            var socketConnection = new SocketConnection(this, CreateSocket(address));
 
-            // Create new socket
-            var socket = CreateSocket(address);
-            var socketConnection = new SocketConnection(this, socket);
             socketConnection.UnhandledMessage += HandleUnhandledMessage;
+
             foreach (var kvp in genericHandlers)
             {
                 var handler = SocketSubscription.CreateForIdentifier(NextId(), kvp.Key, false, kvp.Value);
@@ -493,16 +486,15 @@ namespace BinanceAPI
         /// </summary>
         /// <param name="address">The address the socket should connect to</param>
         /// <returns></returns>
-        protected virtual IWebsocket CreateSocket(string address)
+        protected virtual WebSocketClient CreateSocket(string address)
         {
-            var socket = SocketFactory.CreateWebsocket(address);
+            WebSocketClient socket = new WebSocketClient(address);
 #if DEBUG
             SocketLog?.Debug($"Socket {socket.Id} new socket created for " + address);
 #endif
             if (apiProxy != null)
                 socket.SetProxy(apiProxy);
 
-            socket.Timeout = SocketNoDataTimeout;
             socket.DataInterpreterBytes = dataInterpreterBytes;
             socket.DataInterpreterString = dataInterpreterString;
             socket.OnError += e =>
@@ -540,7 +532,7 @@ namespace BinanceAPI
         public virtual async Task UnsubscribeAllAsync()
         {
 #if DEBUG
-            SocketLog?.Debug($"Closing all {sockets.Sum(s => s.Value.SubscriptionCount)} subscriptions");
+            SocketLog?.Debug($"Closing all {sockets.Count} subscriptions");
 #endif
             await Task.Run(async () =>
             {
@@ -548,7 +540,9 @@ namespace BinanceAPI
                 {
                     var socketList = sockets.Values;
                     foreach (var sub in socketList)
+                    {
                         tasks.Add(sub.CloseAsync());
+                    }
                 }
 
                 await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
@@ -567,7 +561,6 @@ namespace BinanceAPI
             periodicEvent?.Set();
             periodicEvent?.Dispose();
             Task.Run(UnsubscribeAllAsync).ConfigureAwait(false).GetAwaiter().GetResult();
-            semaphoreSlim?.Dispose();
             base.Dispose();
         }
     }

@@ -1,9 +1,33 @@
-﻿using BinanceAPI.Converters;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.WalletData;
 using BinanceAPI.Requests;
+using BinanceAPI.Time;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,7 +41,7 @@ namespace BinanceAPI.SubClients
     /// <summary>
     /// Withdraw/Deposit endpoints
     /// </summary>
-    public class BinanceClientWithdrawDeposit : IBinanceClientWithdrawDeposit
+    public class BinanceClientWithdrawDeposit
     {
         private const string assetDetailsEndpoint = "asset/assetDetail";
         private const string withdrawEndpoint = "capital/withdraw/apply";
@@ -44,7 +68,6 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -80,7 +103,6 @@ namespace BinanceAPI.SubClients
                 { "coin", asset },
                 { "address", address },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("name", name);
             parameters.AddOptionalParameter("withdrawOrderId", withdrawOrderId);
@@ -114,14 +136,13 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
 
             parameters.AddOptionalParameter("coin", asset);
             parameters.AddOptionalParameter("withdrawOrderId", withdrawOrderId);
             parameters.AddOptionalParameter("status", status != null ? JsonConvert.SerializeObject(status, new WithdrawalStatusConverter(false)) : null);
-            parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit);
             parameters.AddOptionalParameter("offset", offset);
@@ -150,14 +171,13 @@ namespace BinanceAPI.SubClients
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("coin", coin);
             parameters.AddOptionalParameter("offset", offset?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("status", status != null ? JsonConvert.SerializeObject(status, new DepositStatusConverter(false)) : null);
-            parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceDeposit>>(
@@ -184,7 +204,6 @@ namespace BinanceAPI.SubClients
             var parameters = new Dictionary<string, object>
             {
                 { "coin", coin },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("network", network);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));

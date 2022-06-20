@@ -1,4 +1,28 @@
-﻿using BinanceAPI.Enums;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Enums;
 using BinanceAPI.Objects.Spot.MarketData;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -95,6 +119,16 @@ namespace BinanceAPI.Converters
                     };
                     break;
 
+                case SymbolFilterType.TrailingDelta:
+                    result = new BinanceSymbolTrailingDeltaFilter
+                    {
+                        MaxTrailingAboveDelta = (int)obj["maxTrailingAboveDelta"],
+                        MaxTrailingBelowDelta = (int)obj["maxTrailingBelowDelta"],
+                        MinTrailingAboveDelta = (int)obj["minTrailingAboveDelta"],
+                        MinTrailingBelowDelta = (int)obj["minTrailingBelowDelta"],
+                    };
+                    break;
+
                 default:
                     Debug.WriteLine("Can't parse symbol filter of type: " + obj["filterType"]);
                     result = new BinanceSymbolFilter();
@@ -181,6 +215,20 @@ namespace BinanceAPI.Converters
                     writer.WriteValue(pricePercentFilter.MultiplierDown);
                     writer.WritePropertyName("avgPriceMins");
                     writer.WriteValue(pricePercentFilter.AveragePriceMinutes);
+                    break;
+
+                case SymbolFilterType.TrailingDelta:
+                    var TrailingDelta = (BinanceSymbolTrailingDeltaFilter)filter;
+                    {
+                        writer.WritePropertyName("maxTrailingAboveDelta");
+                        writer.WriteValue(TrailingDelta.MaxTrailingAboveDelta);
+                        writer.WritePropertyName("maxTrailingBelowDelta");
+                        writer.WriteValue(TrailingDelta.MaxTrailingBelowDelta);
+                        writer.WritePropertyName("minTrailingAboveDelta");
+                        writer.WriteValue(TrailingDelta.MinTrailingAboveDelta);
+                        writer.WritePropertyName("minTrailingBelowDelta");
+                        writer.WriteValue(TrailingDelta.MinTrailingBelowDelta);
+                    };
                     break;
 
                 default:

@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>10.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<RootNamespace>BinanceAPI</RootNamespace>
+		<AssemblyName>BinanceAPI.NET</AssemblyName>
+		<IsPublishable>False</IsPublishable>
+		<DebugType>embedded</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Authors>S Christison</Authors>
+		<PackageVersion>6.0.3.2</PackageVersion>
+		<AssemblyVersion>6.0.3.2</AssemblyVersion>
+		<FileVersion>6.0.3.2</FileVersion>
+		<Version>6.0.3.2</Version>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<DocumentationFile>BinanceAPI.xml</DocumentationFile>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<OutputType>Library</OutputType>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>X:\BinanceAPI.snk</AssemblyOriginatorKeyFile>
+		<Company>HypsyNZ</Company>
+		<Description>High Performance RestAPI/Websocket Wrapper for Binance.com</Description>
+		<Copyright>S Christison ©2022</Copyright>
+		<PackageProjectUrl>https://github.com/HypsyNZ/Binance-API</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/HypsyNZ/Binance-API</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>binance, api, wrapper, rest, websocket, high, performance, secure, string, socket, client</PackageTags>
+		<PackageReleaseNotes>https://github.com/HypsyNZ/Binance-API/tree/main/Binance-API</PackageReleaseNotes>
+		<NeutralLanguage>en</NeutralLanguage>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Deterministic>True</Deterministic>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="SemaphoreLite.NET" Version="1.0.6.2" />
+		<PackageReference Include="SimpleLog4.NET" Version="1.0.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+	</ItemGroup>
+
+</Project>

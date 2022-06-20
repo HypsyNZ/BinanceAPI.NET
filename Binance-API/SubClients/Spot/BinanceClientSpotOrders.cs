@@ -1,6 +1,29 @@
-﻿using BinanceAPI.Converters;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces.SubClients.Spot;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.SpotData;
@@ -18,7 +41,7 @@ namespace BinanceAPI.SubClients.Spot
     /// <summary>
     /// Spot order endpoints
     /// </summary>
-    public class BinanceClientSpotOrder : IBinanceClientSpotOrder
+    public class BinanceClientSpotOrder
     {
         private const string api = "api";
         private const string signedVersion = "3";
@@ -65,6 +88,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="stopPrice">Used for stop orders</param>
         /// <param name="icebergQty">User for iceberg orders</param>
         /// <param name="orderResponseType">Used for the response JSON</param>
+        /// <param name="trailingDelta">Trailing delta value for order in BIPS. A value of 1 means 0.01% trailing delta.</param>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Id's for the placed test order</returns>
@@ -79,6 +103,7 @@ namespace BinanceAPI.SubClients.Spot
             decimal? stopPrice = null,
             decimal? icebergQty = null,
             OrderResponseType? orderResponseType = null,
+            int? trailingDelta = null,
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
@@ -96,6 +121,7 @@ namespace BinanceAPI.SubClients.Spot
                 null,
                 null,
                 orderResponseType,
+                trailingDelta,
                 receiveWindow,
                 ct).ConfigureAwait(false);
         }
@@ -118,6 +144,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="stopPrice">Used for stop orders</param>
         /// <param name="icebergQty">Used for iceberg orders</param>
         /// <param name="orderResponseType">Used for the response JSON</param>
+        /// <param name="trailingDelta">Trailing delta value for order in BIPS. A value of 1 means 0.01% trailing delta.</param>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Id's for the placed order</returns>
@@ -132,6 +159,7 @@ namespace BinanceAPI.SubClients.Spot
             decimal? stopPrice = null,
             decimal? icebergQty = null,
             OrderResponseType? orderResponseType = null,
+            int? trailingDelta = null,
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
@@ -149,10 +177,11 @@ namespace BinanceAPI.SubClients.Spot
                 null,
                 null,
                 orderResponseType,
+                trailingDelta,
                 receiveWindow,
                 ct).ConfigureAwait(false);
             if (result)
-                _baseClient.InvokeOrderPlaced(result.Data);
+                BinanceClient.OnOrderPlaced?.Invoke(null, result.Data);
             return result;
         }
 
@@ -178,7 +207,6 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderId", orderId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
@@ -187,7 +215,7 @@ namespace BinanceAPI.SubClients.Spot
 
             var result = await _baseClient.SendRequestInternal<BinanceCanceledOrder>(GetUri.New(_baseClient.BaseAddress, cancelOrderEndpoint, api, signedVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
             if (result)
-                _baseClient.InvokeOrderCanceled(result.Data);
+                BinanceClient.OnOrderCanceled?.Invoke(null, result.Data);
             return result;
         }
 
@@ -207,7 +235,6 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -235,13 +262,12 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderId", orderId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderBase>(GetUri.New(_baseClient.BaseAddress, queryOrderEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderBase>(UriManager.API_ONE.Order.API_V3_GET_ORDERS_GetOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Order
@@ -259,7 +285,6 @@ namespace BinanceAPI.SubClients.Spot
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("symbol", symbol);
@@ -289,11 +314,10 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderId", orderId?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
 
@@ -310,6 +334,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
         /// <param name="stopLimitTimeInForce">Lifetime of the stop order (GoodTillCancel/ImmediateOrCancel/FillOrKill)</param>
+        /// <param name="trailingDelta">Trailing delta value for order in BIPS. A value of 1 means 0.01% trailing delta.</param>
         /// <param name="quantity">The amount of the symbol</param>
         /// <param name="price">The price to use</param>
         /// <param name="stopPrice">The stop price</param>
@@ -334,6 +359,7 @@ namespace BinanceAPI.SubClients.Spot
             decimal? limitIcebergQuantity = null,
             decimal? stopIcebergQuantity = null,
             TimeInForce? stopLimitTimeInForce = null,
+            int? trailingDelta = null,
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
@@ -344,7 +370,6 @@ namespace BinanceAPI.SubClients.Spot
                 { "quantity", quantity.ToString(CultureInfo.InvariantCulture) },
                 { "price", price.ToString(CultureInfo.InvariantCulture) },
                 { "stopPrice", stopPrice.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("stopLimitPrice", stopLimitPrice?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("listClientOrderId", listClientOrderId);
@@ -353,6 +378,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("limitIcebergQty", limitIcebergQuantity?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("stopIcebergQty", stopIcebergQuantity?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("stopLimitTimeInForce", stopLimitTimeInForce == null ? null : JsonConvert.SerializeObject(stopLimitTimeInForce, new TimeInForceConverter(false)));
+            parameters.AddOptionalParameter("trailingDelta", trailingDelta);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(GetUri.New(_baseClient.BaseAddress, newOcoOrderEndpoint, api, signedVersion), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
@@ -380,7 +406,6 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderListId", orderListId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("listClientOrderId", listClientOrderId);
@@ -409,7 +434,6 @@ namespace BinanceAPI.SubClients.Spot
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderListId", orderListId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
@@ -441,7 +465,6 @@ namespace BinanceAPI.SubClients.Spot
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("startTime", startTime != null ? JsonConvert.SerializeObject(startTime, new TimestampConverter()) : null);
@@ -466,7 +489,6 @@ namespace BinanceAPI.SubClients.Spot
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -496,13 +518,12 @@ namespace BinanceAPI.SubClients.Spot
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("orderId", orderId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceTrade>>(GetUri.New(_baseClient.BaseAddress, myTradesEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);

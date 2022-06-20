@@ -1,12 +1,35 @@
-﻿using BinanceAPI.Converters;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
+
+using BinanceAPI.Converters;
 using BinanceAPI.Enums;
 using BinanceAPI.Interfaces.SubClients;
-using BinanceAPI.Interfaces.SubClients.IsolatedMargin;
-using BinanceAPI.Interfaces.SubClients.Margin;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.IsolatedMarginData;
 using BinanceAPI.Objects.Spot.MarginData;
 using BinanceAPI.Requests;
+using BinanceAPI.Time;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,7 +43,7 @@ namespace BinanceAPI.SubClients.Margin
     /// <summary>
     /// Margin endpoints
     /// </summary>
-    public class BinanceClientMargin : IBinanceClientMargin
+    public class BinanceClientMargin
     {
         private const string marginApi = "sapi";
         private const string marginVersion = "1";
@@ -40,6 +63,8 @@ namespace BinanceAPI.SubClients.Margin
         private const string interestRateHistoryEndpoint = "margin/interestRateHistory";
 
         private const string interestMarginDataEndpoint = "margin/crossMarginData";
+        private const string interestIsolatedMarginDataEndpoint = "margin/isolatedMarginData";
+
         private const string forceLiquidationHistoryEndpoint = "margin/forceLiquidationRec";
 
         private const string isolatedMarginTransferHistoryEndpoint = "margin/isolated/transfer";
@@ -52,12 +77,12 @@ namespace BinanceAPI.SubClients.Margin
         /// <summary>
         /// Margin market endpoints
         /// </summary>
-        public IBinanceClientMarginMarket Market { get; }
+        public BinanceClientMarginMarket Market { get; }
 
         /// <summary>
         /// Margin order endpoints
         /// </summary>
-        public IBinanceClientMarginOrders Order { get; }
+        public BinanceClientMarginOrders Order { get; }
 
         /// <summary>
         /// Margin user stream endpoints
@@ -67,7 +92,7 @@ namespace BinanceAPI.SubClients.Margin
         /// <summary>
         /// Isolated margin user stream endpoints
         /// </summary>
-        public IBinanceClientIsolatedMarginUserStream IsolatedUserStream { get; }
+        public BinanceClientIsolatedMarginUserStream IsolatedUserStream { get; }
 
         internal BinanceClientMargin(BinanceClient baseClient)
         {
@@ -81,7 +106,7 @@ namespace BinanceAPI.SubClients.Margin
         #region Margin Account Transfer
 
         /// <summary>
-        /// Execute transfer between spot account and margin account.
+        /// Execute transfer between spot account and cross margin account.
         /// </summary>
         /// <param name="asset">The asset being transferred, e.g., BTC</param>
         /// <param name="amount">The amount to be transferred</param>
@@ -98,7 +123,6 @@ namespace BinanceAPI.SubClients.Margin
                 { "asset", asset },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
                 { "type", JsonConvert.SerializeObject(type, new TransferDirectionTypeConverter(false)) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -129,7 +153,6 @@ namespace BinanceAPI.SubClients.Margin
             {
                 { "asset", asset },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("isIsolated", isIsolated?.ToString().ToLower());
             parameters.AddOptionalParameter("symbol", symbol);
@@ -160,7 +183,6 @@ namespace BinanceAPI.SubClients.Margin
             {
                 { "asset", asset },
                 { "amount", amount.ToString(CultureInfo.InvariantCulture) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("isIsolated", isIsolated?.ToString().ToLower());
             parameters.AddOptionalParameter("symbol", symbol);
@@ -191,12 +213,11 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 { "direction", JsonConvert.SerializeObject(direction, new TransferDirectionConverter(false)) },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("current", page?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceTransferHistory>>(GetUri.New(_baseClient.BaseAddress, transferHistoryEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -228,21 +249,16 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("txId", transactionId?.ToString(CultureInfo.InvariantCulture));
 
             // TxId or startTime must be sent. txId takes precedence.
             if (!transactionId.HasValue)
             {
-                parameters.AddOptionalParameter("startTime", ServerTimeClient.ToUnixTimestamp(startTime ?? DateTime.MinValue).ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+                parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             }
 
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("current", current?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("archived", archived);
@@ -276,21 +292,16 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("txId", transactionId?.ToString(CultureInfo.InvariantCulture));
 
             // TxId or startTime must be sent. txId takes precedence.
             if (!transactionId.HasValue)
             {
-                parameters.AddOptionalParameter("startTime", ServerTimeClient.ToUnixTimestamp(startTime ?? DateTime.MinValue).ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                parameters.AddOptionalParameter("startTime", startTime != null ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+                parameters.AddOptionalParameter("startTime", startTime != null ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             }
 
-            parameters.AddOptionalParameter("endTime", endTime != null ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture) : null);
+            parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("current", current?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("size", size?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("isolatedSymbol", isolatedSymbol);
@@ -323,15 +334,14 @@ namespace BinanceAPI.SubClients.Margin
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("asset", asset);
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("current", current?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("isolatedSymbol", isolatedSymbol);
             parameters.AddOptionalParameter("archived", archived);
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceInterestHistory>>(GetUri.New(_baseClient.BaseAddress, interestHistoryEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -359,13 +369,12 @@ namespace BinanceAPI.SubClients.Margin
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() },
                 { "asset", asset! }
             };
             parameters.AddOptionalParameter("vipLevel", vipLevel?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<IEnumerable<BinanceInterestRateHistory>>(GetUri.New(_baseClient.BaseAddress, interestRateHistoryEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -388,7 +397,6 @@ namespace BinanceAPI.SubClients.Margin
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
 
             parameters.AddOptionalParameter("coin", asset);
@@ -399,6 +407,32 @@ namespace BinanceAPI.SubClients.Margin
         }
 
         #endregion Get Interest Rate Margin Data
+
+        #region Get Interest Rate Isolated Margin Data
+
+        /// <summary>
+        /// Get interest isolated margin data
+        /// </summary>
+        /// <param name="asset">Filter by asset</param>
+        /// <param name="vipLevel">Vip level</param>
+        /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
+        /// <param name="ct">Cancellation token</param>
+        public async Task<WebCallResult<IEnumerable<BinanceInterestIsolatedMarginData>>> GetInterestIsolatedMarginDataAsync(string? asset = null, string? vipLevel = null, long? receiveWindow = null, CancellationToken ct = default)
+        {
+            asset?.ValidateNotNull(nameof(asset));
+
+            var parameters = new Dictionary<string, object>
+            {
+            };
+
+            parameters.AddOptionalParameter("coin", asset);
+            parameters.AddOptionalParameter("vipLevel", vipLevel?.ToString(CultureInfo.InvariantCulture));
+            parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceInterestIsolatedMarginData>>(GetUri.New(_baseClient.BaseAddress, interestIsolatedMarginDataEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+        }
+
+        #endregion Get Interest Rate Isolated Margin Data
 
         #region Get Force Liquidation Record
 
@@ -419,13 +453,12 @@ namespace BinanceAPI.SubClients.Margin
 
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("page", page?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("isolatedSymbol", isolatedSymbol);
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
             return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceForcedLiquidation>>(GetUri.New(_baseClient.BaseAddress, forceLiquidationHistoryEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
@@ -445,7 +478,6 @@ namespace BinanceAPI.SubClients.Margin
         {
             var parameters = new Dictionary<string, object>
             {
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
@@ -471,7 +503,6 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
 
             parameters.AddOptionalParameter("isolatedSymbol", isolatedSymbol);
@@ -499,7 +530,6 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 { "asset", asset },
-                { "timestamp", ServerTimeClient.GetTimestamp() }
             };
 
             parameters.AddOptionalParameter("isolatedSymbol", isolatedSymbol);
@@ -538,7 +568,6 @@ namespace BinanceAPI.SubClients.Margin
             var parameters = new Dictionary<string, object>
             {
                 {"symbol", symbol},
-                {"timestamp", ServerTimeClient.GetTimestamp()}
             };
 
             parameters.AddOptionalParameter("asset", asset);
@@ -552,11 +581,11 @@ namespace BinanceAPI.SubClients.Margin
                     : JsonConvert.SerializeObject(to, new IsolatedMarginTransferDirectionConverter(false)));
             parameters.AddOptionalParameter("startTime",
                 startTime != null
-                    ? ServerTimeClient.ToUnixTimestamp(startTime.Value).ToString(CultureInfo.InvariantCulture)
+                    ? TimeHelper.ToUnixTimestamp(startTime.Value.Ticks).ToString(CultureInfo.InvariantCulture)
                     : null);
             parameters.AddOptionalParameter("endTime",
                 endTime != null
-                    ? ServerTimeClient.ToUnixTimestamp(endTime.Value).ToString(CultureInfo.InvariantCulture)
+                    ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture)
                     : null);
             parameters.AddOptionalParameter("current", current?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("size", limit?.ToString(CultureInfo.InvariantCulture));
@@ -581,7 +610,6 @@ namespace BinanceAPI.SubClients.Margin
         {
             var parameters = new Dictionary<string, object>
             {
-                {"timestamp", ServerTimeClient.GetTimestamp()}
             };
 
             parameters.AddOptionalParameter("recvWindow",
@@ -606,8 +634,7 @@ namespace BinanceAPI.SubClients.Margin
         {
             var parameters = new Dictionary<string, object>
             {
-                {"symbol", symbol},
-                {"timestamp", ServerTimeClient.GetTimestamp()},
+                {"symbol", symbol}
             };
 
             parameters.AddOptionalParameter("recvWindow",
@@ -632,8 +659,7 @@ namespace BinanceAPI.SubClients.Margin
         {
             var parameters = new Dictionary<string, object>
             {
-                {"symbol", symbol},
-                {"timestamp", ServerTimeClient.GetTimestamp()},
+                {"symbol", symbol}
             };
 
             parameters.AddOptionalParameter("recvWindow",
@@ -657,7 +683,6 @@ namespace BinanceAPI.SubClients.Margin
         {
             var parameters = new Dictionary<string, object>
             {
-                {"timestamp", ServerTimeClient.GetTimestamp()}
             };
 
             parameters.AddOptionalParameter("recvWindow",
@@ -695,7 +720,6 @@ namespace BinanceAPI.SubClients.Margin
                 {"transFrom", JsonConvert.SerializeObject(from, new IsolatedMarginTransferDirectionConverter(false))},
                 {"transTo", JsonConvert.SerializeObject(to, new IsolatedMarginTransferDirectionConverter(false))},
                 {"amount", amount.ToString(CultureInfo.InvariantCulture)},
-                {"timestamp", ServerTimeClient.GetTimestamp()}
             };
             parameters.AddOptionalParameter("recvWindow",
                 receiveWindow?.ToString(CultureInfo.InvariantCulture) ??

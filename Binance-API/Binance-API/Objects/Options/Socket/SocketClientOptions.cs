@@ -1,5 +1,26 @@
-﻿using BinanceAPI.Authentication;
-using System;
+﻿/*
+*MIT License
+*
+*Copyright (c) 2022 S Christison
+*
+*Permission is hereby granted, free of charge, to any person obtaining a copy
+*of this software and associated documentation files (the "Software"), to deal
+*in the Software without restriction, including without limitation the rights
+*to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*copies of the Software, and to permit persons to whom the Software is
+*furnished to do so, subject to the following conditions:
+*
+*The above copyright notice and this permission notice shall be included in all
+*copies or substantial portions of the Software.
+*
+*THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*SOFTWARE.
+*/
 
 namespace BinanceAPI.Options
 {
@@ -9,24 +30,9 @@ namespace BinanceAPI.Options
     public class SocketClientOptions : ClientOptions
     {
         /// <summary>
-        /// Whether or not the socket should automatically reconnect when losing connection
-        /// </summary>
-        public bool AutoReconnect { get; set; } = true;
-
-        /// <summary>
-        /// Time to wait between reconnect attempts
-        /// </summary>
-        public TimeSpan ReconnectInterval { get; set; } = TimeSpan.FromSeconds(5);
-
-        /// <summary>
         /// The maximum number of times to try to reconnect
         /// </summary>
-        public int? MaxReconnectTries { get; set; }
-
-        /// <summary>
-        /// The maximum number of times to try to resubscribe after reconnecting
-        /// </summary>
-        public int? MaxResubscribeTries { get; set; } = 5;
+        public int? MaxReconnectTries { get; set; } = 50;
 
         /// <summary>
         /// Max number of concurrent resubscription tasks per socket after reconnecting a socket
@@ -34,59 +40,11 @@ namespace BinanceAPI.Options
         public int MaxConcurrentResubscriptionsPerSocket { get; set; } = 5;
 
         /// <summary>
-        /// The time to wait for a socket response before giving a timeout
-        /// </summary>
-        public TimeSpan SocketResponseTimeout { get; set; } = TimeSpan.FromSeconds(10);
-
-        /// <summary>
-        /// The time after which the connection is assumed to be dropped. This can only be used for socket connections where a steady flow of data is expected.
-        /// </summary>
-        public TimeSpan SocketNoDataTimeout { get; set; }
-
-        /// <summary>
-        /// The amount of subscriptions that should be made on a single socket connection. Not all exchanges support multiple subscriptions on a single socket.
-        /// Setting this to a higher number increases subscription speed because not every subscription needs to connect to the server, but having more subscriptions on a
-        /// single connection will also increase the amount of traffic on that single connection, potentially leading to issues.
-        /// </summary>
-        public int? SocketSubscriptionsCombineTarget { get; set; }
-
-        /// <summary>
         /// ctor
         /// </summary>
         /// <param name="baseAddress">The base address to use</param>
         public SocketClientOptions(string baseAddress) : base(baseAddress)
         {
-        }
-
-        /// <summary>
-        /// Create a copy of the options
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Copy<T>() where T : SocketClientOptions, new()
-        {
-            var copy = new T
-            {
-                BaseAddress = BaseAddress,
-                LogLevel = LogLevel,
-                Proxy = Proxy,
-                AutoReconnect = AutoReconnect,
-                ReconnectInterval = ReconnectInterval,
-                SocketResponseTimeout = SocketResponseTimeout,
-                SocketSubscriptionsCombineTarget = SocketSubscriptionsCombineTarget,
-                LogPath = LogPath,                
-            };
-
-            if (ApiCredentials != null)
-                copy.ApiCredentials = ApiCredentials.Copy();
-
-            return copy;
-        }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            return $"{base.ToString()}, AutoReconnect: {AutoReconnect}, ReconnectInterval: {ReconnectInterval}, SocketResponseTimeout: {SocketResponseTimeout:c}, SocketSubscriptionsCombineTarget: {SocketSubscriptionsCombineTarget}";
         }
     }
 }
