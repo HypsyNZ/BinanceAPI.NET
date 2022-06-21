@@ -1,6 +1,6 @@
 # Whats Supported?
 
-[![](https://user-images.githubusercontent.com/54571583/173321360-737e4e55-0e46-40aa-ac4e-0ac01875ce96.png)](https://github.com/HypsyNZ/BinanceAPI.NET/wiki) [![Nuget](https://img.shields.io/nuget/v/BinanceAPI.NET)](https://www.nuget.org/packages/BinanceAPI.NET)
+[![](https://user-images.githubusercontent.com/54571583/173321360-737e4e55-0e46-40aa-ac4e-0ac01875ce96.png)](https://github.com/HypsyNZ/BinanceAPI.NET/wiki) [![](https://buildstats.info/nuget/BinanceAPI.NET)](https://www.nuget.org/packages/BinanceAPI.NET)
 
 Supports all Basic Features of the [Binance API](https://binance-docs.github.io/apidocs/spot/en/#change-log), Including some that aren't in the list below
 
