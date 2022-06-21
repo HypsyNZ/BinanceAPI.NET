@@ -7500,6 +7500,16 @@
             This class is very different in Debug vs Release Mode and will affect performance greatly
             </summary>
         </member>
+        <member name="P:BinanceAPI.Json.OutputOriginalData">
+            <summary>
+            (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Json.ShouldCheckObjects">
+            <summary>
+            (Global) Should check objects for missing properties based on the model and the received JSON
+            </summary>
+        </member>
         <member name="M:BinanceAPI.Json.#ctor">
             <summary>
             Create a Json Serializer/Deserializer

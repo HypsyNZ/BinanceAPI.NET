@@ -23,6 +23,7 @@
 */
 
 using BinanceAPI.Objects;
+using Newtonsoft.Json;
 using SemaphoreLite;
 using System;
 using System.Collections.Concurrent;
@@ -342,7 +343,10 @@ namespace BinanceAPI.Clients
         {
             Logging.SocketLog?.Debug($"Socket {Id} resetting");
 
+            _startedReceive = false;
+            _startedSent = false;
             _ctsSource = new CancellationTokenSource();
+            _ctsDigest = new CancellationTokenSource();
             _closing = false;
 
             while (_sendBuffer.TryDequeue(out _)) { } // Clear send buffer
@@ -356,7 +360,7 @@ namespace BinanceAPI.Clients
         private ClientWebSocket CreateSocket()
         {
             var socket = new ClientWebSocket();
-            socket.Options.KeepAliveInterval = TimeSpan.FromDays(3);
+            socket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
             socket.Options.SetBuffer(65536, 65536);
             return socket;
         }
