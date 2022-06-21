@@ -356,7 +356,7 @@ namespace BinanceAPI.Clients
         private ClientWebSocket CreateSocket()
         {
             var socket = new ClientWebSocket();
-            socket.Options.KeepAliveInterval = TimeSpan.FromDays(3);
+            socket.Options.KeepAliveInterval = TimeSpan.FromMinutes(6);
             socket.Options.SetBuffer(65536, 65536);
             return socket;
         }
