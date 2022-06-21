@@ -1,3 +1,6 @@
+### Version 6.0.3.5
+- [x] Added Symbol Filter: `NOTIONAL`
+
 ### Version 6.0.3.4
 - [x] Exchange Info: `cancelReplaceAllowed`
 - [x] Exchange Info: `allowTrailingStop`
