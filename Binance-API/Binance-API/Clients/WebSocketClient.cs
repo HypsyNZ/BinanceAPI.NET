@@ -91,7 +91,11 @@ namespace BinanceAPI.Clients
         private Task? _receiveTask;
 
         private CancellationTokenSource _ctsSource;
+        private CancellationTokenSource _ctsDigest;
+
         private Encoding _encoding = Encoding.UTF8;
+
+        private SemaphoreLight semaphoreLight = new SemaphoreLight();
 
         private readonly AsyncResetEvent _sendEvent;
         private readonly ConcurrentQueue<byte[]> _sendBuffer;
@@ -191,7 +195,7 @@ namespace BinanceAPI.Clients
             _sendEvent = new AsyncResetEvent();
             _sendBuffer = new ConcurrentQueue<byte[]>();
             _ctsSource = new CancellationTokenSource();
-
+            _ctsDigest = new CancellationTokenSource();
             Socket = CreateSocket();
         }
 
@@ -312,6 +316,7 @@ namespace BinanceAPI.Clients
                 tasksToAwait.Add(Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default));
 
             _ctsSource.Cancel();
+            _ctsDigest.Cancel();
             _sendEvent.Set();
             if (waitSend)
                 tasksToAwait.Add(_sendTask!);
@@ -351,7 +356,7 @@ namespace BinanceAPI.Clients
         private ClientWebSocket CreateSocket()
         {
             var socket = new ClientWebSocket();
-            socket.Options.KeepAliveInterval = TimeSpan.FromSeconds(0);
+            socket.Options.KeepAliveInterval = TimeSpan.FromDays(3);
             socket.Options.SetBuffer(65536, 65536);
             return socket;
         }
@@ -374,7 +379,7 @@ namespace BinanceAPI.Clients
                         bool s = _sendBuffer.TryDequeue(out var data);
                         if (s)
                         {
-                            await Socket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, _ctsSource.Token).ConfigureAwait(false);
+                            await Socket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, default).ConfigureAwait(false);
                             _outgoingMessages.Add(DateTime.UtcNow);
 #if DEBUG
                             Logging.SocketLog?.Trace($"Socket {Id} sent {data.Length} bytes");
@@ -394,14 +399,12 @@ namespace BinanceAPI.Clients
             }
         }
 
-        private SemaphoreLight semaphoreLight = new SemaphoreLight();
-
         private async Task DigestLoop()
         {
             _startedReceive = true;
             try
             {
-                while (!_ctsSource.Token.IsCancellationRequested)
+                while (!_ctsDigest.Token.IsCancellationRequested)
                 {
                     var taken = await semaphoreLight.IsTakenAsync(ReceiveLoopAsync, false).ConfigureAwait(false);
                     if (taken)
@@ -436,7 +439,7 @@ namespace BinanceAPI.Clients
                 MemoryStream? memoryStream = null;
                 WebSocketReceiveResult? receiveResult = null;
 
-                while (!_ctsSource.Token.IsCancellationRequested)
+                while (!_ctsDigest.Token.IsCancellationRequested)
                 {
                     receiveResult = await Socket.ReceiveAsync(buffer, default).ConfigureAwait(false);
                     received += receiveResult.Count;
