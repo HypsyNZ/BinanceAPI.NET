@@ -29,6 +29,7 @@ using BinanceAPI.Sockets;
 using SimpleLog4.NET;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -133,49 +134,60 @@ namespace API_Test
                     Console.WriteLine("Error: " + status.Error.ToString());
                 }
 
-                // ORDER TEST
+                // EXCHANGE INFO
                 _ = Task.Run(async () =>
                 {
-                    DateTime testStartTime = DateTime.UtcNow + TimeSpan.FromMinutes(10);
-                    Stopwatch testTime = Stopwatch.StartNew();
-                    while (true)
+                    var result = await client.Spot.System.GetExchangeInfoAsync().ConfigureAwait(false);
+
+                    if (result.Success)
                     {
-                        if (testStartTime < DateTime.UtcNow)
-                        {
-                            Console.WriteLine("Passed");
-                            return;
-                        }
-
-                        await Task.Delay(200).ConfigureAwait(false);
-
-                        // Guesser Test
-                        var serverTime = ServerTimeClient.GetServerTimeTicksAsync().Result;
-                        var guess = ServerTimeClient.GetRequestTimestampLong();
-                        var guessAheadBy = (guess - serverTime) / 10000;
-                        // Guesser Test
-
-                        Console.WriteLine("Guess: " + guess.ToString() + " | ServerTime: " + serverTime.ToString() + "| GuessAheadBy: " + guessAheadBy);
-
-                        if (guessAheadBy < 1000 && guessAheadBy > -1000)
-                        {
-                            var result = await client.Spot.Order.PlaceTestOrderAsync("TestOrder", BinanceAPI.Enums.OrderSide.Sell, BinanceAPI.Enums.OrderType.Market, quantity: 123).ConfigureAwait(false);
-                            if (!r.Success)
-                            {
-                                Console.WriteLine("Order Failed: " + r.Error.ToString());
-                                return;
-                            }
-                            else
-                            {
-                                Console.WriteLine(r.Success.ToString() + "| MissedPings: " + ServerTimeClient.MissedPingCount + "| CorrectionAttempts: " + ServerTimeClient.CorrectionCount + "| GuesserRanToCompletion: " + ServerTimeClient.GuesserAttemptCount);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Ahead/Behind Server Time by 1000ms");
-                            return;
-                        }
+                        Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
                     }
                 }).ConfigureAwait(false);
+
+                //// ORDER TEST
+                //_ = Task.Run(async () =>
+                //{
+                //    DateTime testStartTime = DateTime.UtcNow + TimeSpan.FromMinutes(10);
+                //    Stopwatch testTime = Stopwatch.StartNew();
+                //    while (true)
+                //    {
+                //        if (testStartTime < DateTime.UtcNow)
+                //        {
+                //            Console.WriteLine("Passed");
+                //            return;
+                //        }
+
+                //        await Task.Delay(200).ConfigureAwait(false);
+
+                //        // Guesser Test
+                //        var serverTime = ServerTimeClient.GetServerTimeTicksAsync().Result;
+                //        var guess = ServerTimeClient.GetRequestTimestampLong();
+                //        var guessAheadBy = (guess - serverTime) / 10000;
+                //        // Guesser Test
+
+                //        Console.WriteLine("Guess: " + guess.ToString() + " | ServerTime: " + serverTime.ToString() + "| GuessAheadBy: " + guessAheadBy);
+
+                //        if (guessAheadBy < 1000 && guessAheadBy > -1000)
+                //        {
+                //            var result = await client.Spot.Order.PlaceTestOrderAsync("TestOrder", BinanceAPI.Enums.OrderSide.Sell, BinanceAPI.Enums.OrderType.Market, quantity: 123).ConfigureAwait(false);
+                //            if (!r.Success)
+                //            {
+                //                Console.WriteLine("Order Failed: " + r.Error.ToString());
+                //                return;
+                //            }
+                //            else
+                //            {
+                //                Console.WriteLine(r.Success.ToString() + "| MissedPings: " + ServerTimeClient.MissedPingCount + "| CorrectionAttempts: " + ServerTimeClient.CorrectionCount + "| GuesserRanToCompletion: " + ServerTimeClient.GuesserAttemptCount);
+                //            }
+                //        }
+                //        else
+                //        {
+                //            Console.WriteLine("Ahead/Behind Server Time by 1000ms");
+                //            return;
+                //        }
+                //    }
+                //}).ConfigureAwait(false);
 
                 // SOCKET TEST
                 //_ = Task.Run(() =>

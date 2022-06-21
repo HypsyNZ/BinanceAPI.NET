@@ -87,6 +87,11 @@ namespace BinanceAPI.Enums
         /// <summary>
         /// Max Iceberg Orders filter
         /// </summary>
-        IcebergOrders = 11
+        IcebergOrders = 11,
+
+        /// <summary>
+        /// The NOTIONAL filter defines the acceptable notional range allowed for an order on a symbol.
+        /// </summary>
+        Notional = 12,
     }
 }

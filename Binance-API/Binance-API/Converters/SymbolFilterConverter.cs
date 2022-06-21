@@ -73,6 +73,17 @@ namespace BinanceAPI.Converters
                     };
                     break;
 
+                case SymbolFilterType.Notional:
+                    result = new BinanceSymbolNotionalFilter
+                    {
+                        MinNotional = (decimal)obj["minNotional"],
+                        ApplyMinToMarketOrders = (bool)obj["applyMinToMarket"],
+                        MaxNotional = (decimal)obj["maxNotional"],
+                        ApplyMaxToMarketOrders = (bool)obj["applyMaxToMarket"],
+                        AveragePriceMinutes = (int)obj["avgPriceMins"]
+                    };
+                    break;
+
                 case SymbolFilterType.Price:
                     result = new BinanceSymbolPriceFilter
                     {
@@ -132,7 +143,7 @@ namespace BinanceAPI.Converters
                 case SymbolFilterType.IcebergOrders:
                     result = new BinanceMaxNumberOfIcebergOrdersFilter
                     {
-                        MaxNumberOfIcebergOrders = (int)obj["maxNumIcebergOrders"]
+                        MaxNumIcebergOrders = obj.ContainsKey("maxNumIcebergOrders") ? (int)obj["maxNumIcebergOrders"] : 0
                     };
                     break;
 
@@ -184,6 +195,20 @@ namespace BinanceAPI.Converters
                     writer.WriteValue(minNotionalFilter.ApplyToMarketOrders);
                     writer.WritePropertyName("avgPriceMins");
                     writer.WriteValue(minNotionalFilter.AveragePriceMinutes);
+                    break;
+
+                case SymbolFilterType.Notional:
+                    var NotionalFilter = (BinanceSymbolNotionalFilter)filter;
+                    writer.WritePropertyName("minNotional");
+                    writer.WriteValue(NotionalFilter.MinNotional);
+                    writer.WritePropertyName("applyMinToMarket");
+                    writer.WriteValue(NotionalFilter.ApplyMinToMarketOrders);
+                    writer.WritePropertyName("maxNotional");
+                    writer.WriteValue(NotionalFilter.MaxNotional);
+                    writer.WritePropertyName("applyMaxToMarket");
+                    writer.WriteValue(NotionalFilter.ApplyMaxToMarketOrders);
+                    writer.WritePropertyName("avgPriceMins");
+                    writer.WriteValue(NotionalFilter.AveragePriceMinutes);
                     break;
 
                 case SymbolFilterType.Price:
@@ -242,7 +267,7 @@ namespace BinanceAPI.Converters
                     var MaxNumIcebergOrders = (BinanceMaxNumberOfIcebergOrdersFilter)filter;
                     {
                         writer.WritePropertyName("maxNumIcebergOrders");
-                        writer.WriteValue(MaxNumIcebergOrders.MaxNumberOfIcebergOrders);
+                        writer.WriteValue(MaxNumIcebergOrders.MaxNumIcebergOrders);
                     };
                     break;
 

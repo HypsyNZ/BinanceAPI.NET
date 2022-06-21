@@ -1815,6 +1815,11 @@
             Max Iceberg Orders filter
             </summary>
         </member>
+        <member name="F:BinanceAPI.Enums.SymbolFilterType.Notional">
+            <summary>
+            The NOTIONAL filter defines the acceptable notional range allowed for an order on a symbol.
+            </summary>
+        </member>
         <member name="T:BinanceAPI.Enums.SymbolStatus">
             <summary>
             Status of a symbol
@@ -5195,6 +5200,11 @@
             Filter for the minimal size of an order for this symbol
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.NotionalFilter">
+            <summary>
+            Filter for the notional range allowed for an order on a symbol.
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.PriceFilter">
             <summary>
             Filter for the max accuracy of the price for this symbol
@@ -5330,6 +5340,36 @@
             The amount of minutes the average price of trades is calculated over for market orders. 0 means the last price is used
             </summary>
         </member>
+        <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter">
+            <summary>
+            Notional filter
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter.MinNotional">
+            <summary>
+            The minimal total size of an order. This is calculated by Price * Quantity.
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter.ApplyMinToMarketOrders">
+            <summary>
+            Whether or not this filter is applied to market orders. If so the average trade price is used.
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter.MaxNotional">
+            <summary>
+            The maximum total size of an order. This is calculated by Price * Quantity.
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter.ApplyMaxToMarketOrders">
+            <summary>
+            Whether or not this filter is applied to market orders. If so the average trade price is used.
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolNotionalFilter.AveragePriceMinutes">
+            <summary>
+            The amount of minutes the average price of trades is calculated over for market orders. 0 means the last price is used
+            </summary>
+        </member>
         <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolMaxOrdersFilter">
              <summary>
             Max orders filter
@@ -5400,7 +5440,7 @@
             Max Iceberg Orders Filter
             </summary>
         </member>
-        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceMaxNumberOfIcebergOrdersFilter.MaxNumberOfIcebergOrders">
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceMaxNumberOfIcebergOrdersFilter.MaxNumIcebergOrders">
             <summary>
             Maximum number of iceberg orders for this symbol
             </summary>
@@ -7458,6 +7498,16 @@
             <summary>
             Serialize / Deserialize / Debug Json
             This class is very different in Debug vs Release Mode and will affect performance greatly
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Json.OutputOriginalData">
+            <summary>
+            (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Json.ShouldCheckObjects">
+            <summary>
+            (Global) Should check objects for missing properties based on the model and the received JSON
             </summary>
         </member>
         <member name="M:BinanceAPI.Json.#ctor">

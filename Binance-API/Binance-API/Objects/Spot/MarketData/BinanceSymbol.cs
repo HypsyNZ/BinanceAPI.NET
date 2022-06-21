@@ -169,6 +169,12 @@ namespace BinanceAPI.Objects.Spot.MarketData
         public BinanceSymbolMinNotionalFilter? MinNotionalFilter => Filters.OfType<BinanceSymbolMinNotionalFilter>().FirstOrDefault();
 
         /// <summary>
+        /// Filter for the notional range allowed for an order on a symbol.
+        /// </summary>
+        [JsonIgnore]
+        public BinanceSymbolNotionalFilter? NotionalFilter => Filters.OfType<BinanceSymbolNotionalFilter>().FirstOrDefault();
+
+        /// <summary>
         /// Filter for the max accuracy of the price for this symbol
         /// </summary>
         [JsonIgnore]
