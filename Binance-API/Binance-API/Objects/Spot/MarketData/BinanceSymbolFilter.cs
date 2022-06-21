@@ -214,4 +214,16 @@ namespace BinanceAPI.Objects.Spot.MarketData
         /// </summary>
         public int MaxTrailingBelowDelta { get; set; }
     }
+
+    /// <summary>
+    /// Max Iceberg Orders Filter
+    /// </summary>
+    public class BinanceMaxNumberOfIcebergOrdersFilter : BinanceSymbolFilter
+    {
+        /// <summary>
+        /// Maximum number of iceberg orders for this symbol
+        /// </summary>
+        [JsonProperty("maxNumIcebergOrders")]
+        public int MaxNumberOfIcebergOrders { get; set; }
+    }
 }

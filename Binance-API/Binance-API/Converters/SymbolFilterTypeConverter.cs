@@ -49,6 +49,7 @@ namespace BinanceAPI.Converters
             new KeyValuePair<SymbolFilterType, string>(SymbolFilterType.MaxNumberAlgorithmicOrders, "MAX_NUM_ALGO_ORDERS"),
             new KeyValuePair<SymbolFilterType, string>(SymbolFilterType.MaxPosition, "MAX_POSITION"),
             new KeyValuePair<SymbolFilterType, string>(SymbolFilterType.TrailingDelta, "TRAILING_DELTA"),
+            new KeyValuePair<SymbolFilterType, string>(SymbolFilterType.IcebergOrders, "EXCHANGE_MAX_NUM_ICEBERG_ORDERS"),
         };
     }
 }

@@ -129,6 +129,13 @@ namespace BinanceAPI.Converters
                     };
                     break;
 
+                case SymbolFilterType.IcebergOrders:
+                    result = new BinanceMaxNumberOfIcebergOrdersFilter
+                    {
+                        MaxNumberOfIcebergOrders = (int)obj["maxNumIcebergOrders"]
+                    };
+                    break;
+
                 default:
                     Debug.WriteLine("Can't parse symbol filter of type: " + obj["filterType"]);
                     result = new BinanceSymbolFilter();
@@ -228,6 +235,14 @@ namespace BinanceAPI.Converters
                         writer.WriteValue(TrailingDelta.MinTrailingAboveDelta);
                         writer.WritePropertyName("minTrailingBelowDelta");
                         writer.WriteValue(TrailingDelta.MinTrailingBelowDelta);
+                    };
+                    break;
+
+                case SymbolFilterType.IcebergOrders:
+                    var MaxNumIcebergOrders = (BinanceMaxNumberOfIcebergOrdersFilter)filter;
+                    {
+                        writer.WritePropertyName("maxNumIcebergOrders");
+                        writer.WriteValue(MaxNumIcebergOrders.MaxNumberOfIcebergOrders);
                     };
                     break;
 

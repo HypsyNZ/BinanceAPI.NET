@@ -82,6 +82,11 @@ namespace BinanceAPI.Enums
         /// <summary>
         /// Trailing delta filter
         /// </summary>,
-        TrailingDelta = 10
+        TrailingDelta = 10,
+
+        /// <summary>
+        /// Max Iceberg Orders filter
+        /// </summary>
+        IcebergOrders = 11
     }
 }

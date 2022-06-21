@@ -112,6 +112,16 @@ namespace BinanceAPI.Objects.Spot.MarketData
         public int QuoteCommissionPrecision { get; set; }
 
         /// <summary>
+        /// True if the symbol allows trailing stops
+        /// </summary>
+        public bool AllowTrailingStop { get; set; }
+
+        /// <summary>
+        /// True if the symbol allows Cancel Replace
+        /// </summary>
+        public bool CancelReplaceAllowed { get; set; }
+
+        /// <summary>
         /// Permissions types
         /// </summary>
         [JsonProperty(ItemConverterType = typeof(AccountTypeConverter))]
@@ -181,5 +191,11 @@ namespace BinanceAPI.Objects.Spot.MarketData
         /// </summary>
         [JsonIgnore]
         public BinanceSymbolTrailingDeltaFilter? TrailingDeltaFilter => Filters.OfType<BinanceSymbolTrailingDeltaFilter>().FirstOrDefault();
+
+        /// <summary>
+        /// Filter for the max number of iceberg orders allowed on a symbol
+        /// </summary>
+        [JsonIgnore]
+        public BinanceMaxNumberOfIcebergOrdersFilter? MaxIcebergFilter => Filters.OfType<BinanceMaxNumberOfIcebergOrdersFilter>().FirstOrDefault();
     }
 }

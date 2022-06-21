@@ -1810,6 +1810,11 @@
             Trailing delta filter
             </summary>,
         </member>
+        <member name="F:BinanceAPI.Enums.SymbolFilterType.IcebergOrders">
+            <summary>
+            Max Iceberg Orders filter
+            </summary>
+        </member>
         <member name="T:BinanceAPI.Enums.SymbolStatus">
             <summary>
             Status of a symbol
@@ -5140,6 +5145,16 @@
             The precision of the quote asset commission
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.AllowTrailingStop">
+            <summary>
+            True if the symbol allows trailing stops
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.CancelReplaceAllowed">
+            <summary>
+            True if the symbol allows Cancel Replace
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.Permissions">
             <summary>
             Permissions types
@@ -5198,6 +5213,11 @@
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.TrailingDeltaFilter">
             <summary>
             Filter for the trailing delta values
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbol.MaxIcebergFilter">
+            <summary>
+            Filter for the max number of iceberg orders allowed on a symbol
             </summary>
         </member>
         <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolFilter">
@@ -5373,6 +5393,16 @@
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceSymbolTrailingDeltaFilter.MaxTrailingBelowDelta">
             <summary>
             The MaxTrailingBelowDelta filter defines the minimum amount in Basis Point or BIPS below the price to activate the order.
+            </summary>
+        </member>
+        <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceMaxNumberOfIcebergOrdersFilter">
+            <summary>
+            Max Iceberg Orders Filter
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceMaxNumberOfIcebergOrdersFilter.MaxNumberOfIcebergOrders">
+            <summary>
+            Maximum number of iceberg orders for this symbol
             </summary>
         </member>
         <member name="T:BinanceAPI.Objects.Spot.MarketStream.BinanceStreamAggregatedTrade">
