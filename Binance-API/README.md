@@ -1,3 +1,8 @@
+### Version 6.0.3.4
+- [x] Exchange Info: `cancelReplaceAllowed`
+- [x] Exchange Info: `allowTrailingStop`
+- [x] Exchange Info: `EXCHANGE_MAX_NUM_ICEBERG_ORDERS`
+
 ### Version 6.0.3.3
 - [x] If you call `ServerTimeClient.Start` it will automatically wait until the first timestamp is produced
 
