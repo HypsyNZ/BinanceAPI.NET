@@ -325,11 +325,11 @@ namespace BinanceAPI.Clients
         /// Send data over the websocket
         /// </summary>
         /// <param name="data">Data to send</param>
-        public Task Send(string data)
+        public void Send(string data)
         {
             if (_closing)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             var bytes = Encoding.GetBytes(data);
@@ -338,8 +338,6 @@ namespace BinanceAPI.Clients
 #endif
             _sendBuffer.Enqueue(bytes);
             _sendEvent.Set();
-
-            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -517,8 +515,6 @@ namespace BinanceAPI.Clients
                     strData = DataInterpreterString(strData);
                 }
 
-                Console.WriteLine(strData);
-
                 Handle(messageHandlers, strData);
             }
             catch (Exception)
@@ -574,6 +570,7 @@ namespace BinanceAPI.Clients
 #endif
             Socket.Dispose();
             _ctsSource.Dispose();
+            _ctsDigest.Dispose();
 
             errorHandlers.Clear();
             openHandlers.Clear();
