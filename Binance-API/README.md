@@ -1,3 +1,6 @@
+### Version 6.0.3.7
+- [x] Some Cleanup
+
 ### Version 6.0.3.6
 - [x] Fixes bug in User Subscriptions caused by an [error](https://github.com/dotnet/runtime/blob/7cbf0a7011813cb84c6c858ef19acb770daa777e/src/libraries/Common/src/System/Net/WebSockets/ManagedWebSocket.cs#L525) in the `.NET Runtime`
 
