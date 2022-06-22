@@ -33,7 +33,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.3.0 Test - Time Sync Changes - https://i.imgur.com/KLI7Jat.png
+// 6.0.3.7 Test - Time Sync Changes - https://i.imgur.com/KLI7Jat.png
 namespace API_Test
 {
     internal class Program
@@ -190,42 +190,42 @@ namespace API_Test
                 //}).ConfigureAwait(false);
 
                 // SOCKET TEST
-                //_ = Task.Run(() =>
-                //{
-                //    // // // // // // // // // // // //
+                _ = Task.Run(() =>
+                {
+                    // // // // // // // // // // // //
 
-                //    //var _breakpoint = socketClient;
-                //    //_ = _breakpoint;
+                    //var _breakpoint = socketClient;
+                    //_ = _breakpoint;
 
-                //    _ = Task.Run(async () =>
-                //    {
-                //        await Task.Delay(2000).ConfigureAwait(false);
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(2000).ConfigureAwait(false);
 
-                //        UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
-                //        {
-                //            // Uncomment to see output from the Socket
-                //            //Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
-                //        }).Result.Data;
+                        UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
+                        {
+                            // Uncomment to see output from the Socket
+                            //   Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
+                        }).Result.Data;
 
-                //        await Task.Delay(2000).ConfigureAwait(false);
+                        await Task.Delay(2000).ConfigureAwait(false);
 
-                //        // Reconnect Update Subscription
-                //        await sub.ReconnectAsync().ConfigureAwait(false);
+                        // Reconnect Update Subscription
+                        await sub.ReconnectAsync().ConfigureAwait(false);
 
-                //        // TEST BEGINS
-                //        for (int i = 0; i < 1000; i++)
-                //        {
-                //            await Task.Delay(1).ConfigureAwait(false);
+                        //// TEST BEGINS
+                        //for (int i = 0; i < 1000; i++)
+                        //{
+                        //    await Task.Delay(1).ConfigureAwait(false);
 
-                //            // Last Subscription Socket Action Time In Ticks
-                //            Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
-                //        }
+                        //    // Last Subscription Socket Action Time In Ticks
+                        //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
+                        //}
 
-                //        _ = socketClient.UnsubscribeAllAsync();
-                //    }).ConfigureAwait(false);
+                        // _ = socketClient.UnsubscribeAllAsync();
+                    }).ConfigureAwait(false);
 
-                //    // // // // // // // // // // // //
-                //});
+                    // // // // // // // // // // // //
+                });
             });
 
             Console.ReadLine();

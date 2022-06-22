@@ -95,16 +95,15 @@ namespace BinanceAPI.Clients
         private CancellationTokenSource _ctsDigest;
 
         private Encoding _encoding = Encoding.UTF8;
-
         private SemaphoreLight semaphoreLight = new SemaphoreLight();
 
-        private readonly AsyncResetEvent _sendEvent;
-        private readonly ConcurrentQueue<byte[]> _sendBuffer;
-        private readonly List<DateTime> _outgoingMessages;
+        private AsyncResetEvent _sendEvent;
+        private ConcurrentQueue<byte[]> _sendBuffer;
+        private List<DateTime> _outgoingMessages;
 
-        private bool _closing;
-        private bool _startedSent;
-        private bool _startedReceive;
+        private volatile bool _closing;
+        private volatile bool _startedSent;
+        private volatile bool _startedReceive;
 
         /// <summary>
         /// Handlers for when an error happens on the socket
@@ -191,13 +190,35 @@ namespace BinanceAPI.Clients
         {
             Id = NextStreamId();
             Url = url;
+            NewSocket();
+        }
+
+        /// <summary>
+        /// Create the socket object
+        /// </summary>
+        //[InConstructor]
+        public void NewSocket(bool reset = false)
+        {
+            if (reset)
+            {
+                Logging.SocketLog?.Debug($"Socket {Id} resetting");
+            }
+
+            _startedReceive = false;
+            _startedSent = false;
 
             _outgoingMessages = new List<DateTime>();
             _sendEvent = new AsyncResetEvent();
             _sendBuffer = new ConcurrentQueue<byte[]>();
+
             _ctsSource = new CancellationTokenSource();
             _ctsDigest = new CancellationTokenSource();
-            Socket = CreateSocket();
+
+            Socket = new ClientWebSocket();
+            Socket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+            Socket.Options.SetBuffer(65536, 65536);
+
+            _closing = false;
         }
 
         /// <summary>
@@ -215,7 +236,9 @@ namespace BinanceAPI.Clients
                 };
 
             if (proxy.Login != null)
+            {
                 Socket.Options.Proxy.Credentials = new NetworkCredential(proxy.Login, proxy.Password);
+            }
         }
 
         /// <summary>
@@ -270,13 +293,44 @@ namespace BinanceAPI.Clients
         }
 
         /// <summary>
+        /// Internal close method, will wait for each task to complete to gracefully close
+        /// </summary>
+        /// <returns></returns>
+        public async Task CloseAsync()
+        {
+            if (_closing)
+            {
+                return;
+            }
+
+            _closing = true;
+
+            if (Socket.State == WebSocketState.Open)
+            {
+                Logging.SocketLog?.Debug($"Socket {Id} is closing");
+                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
+                _sendEvent.Set();
+            }
+            else
+            {
+                Logging.SocketLog?.Debug($"Socket {Id} was already closed");
+            }
+
+            _ctsSource.Cancel();
+            _ctsDigest.Cancel();
+            Handle(closeHandlers);
+        }
+
+        /// <summary>
         /// Send data over the websocket
         /// </summary>
         /// <param name="data">Data to send</param>
-        public virtual void Send(string data)
+        public Task Send(string data)
         {
             if (_closing)
-                return;
+            {
+                return Task.CompletedTask;
+            }
 
             var bytes = Encoding.GetBytes(data);
 #if DEBUG
@@ -284,89 +338,12 @@ namespace BinanceAPI.Clients
 #endif
             _sendBuffer.Enqueue(bytes);
             _sendEvent.Set();
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
-        /// Close the websocket
-        /// </summary>
-        /// <returns></returns>
-        public virtual async Task CloseAsync()
-        {
-#if DEBUG
-            Logging.SocketLog?.Debug($"Socket {Id} closing");
-#endif
-            await CloseInternalAsync(true, true).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Internal close method, will wait for each task to complete to gracefully close
-        /// </summary>
-        /// <param name="waitSend"></param>
-        /// <param name="waitReceive"></param>
-        /// <returns></returns>
-        internal async Task CloseInternalAsync(bool waitSend, bool waitReceive)
-        {
-            semaphoreLight.Release(); // This would be quite exceptional but just in case, It can't hurt.
-
-            if (_closing)
-                return;
-
-            _closing = true;
-            var tasksToAwait = new List<Task>();
-            if (Socket.State == WebSocketState.Open)
-                tasksToAwait.Add(Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default));
-
-            _ctsSource.Cancel();
-            _ctsDigest.Cancel();
-            _sendEvent.Set();
-            if (waitSend)
-                tasksToAwait.Add(_sendTask!);
-            if (waitReceive)
-                tasksToAwait.Add(_receiveTask!);
-
-            Logging.SocketLog?.Trace($"Socket {Id} waiting for communication loops to finish");
-
-            await Task.WhenAll(tasksToAwait).ConfigureAwait(false);
-
-            _startedReceive = false;
-            _startedSent = false;
-
-            Logging.SocketLog?.Debug($"Socket {Id} closed");
-
-            Handle(closeHandlers);
-        }
-
-        /// <summary>
-        /// Reset the socket so a new connection can be attempted after it has been connected before
-        /// </summary>
-        public void Reset()
-        {
-            Logging.SocketLog?.Debug($"Socket {Id} resetting");
-
-            _startedReceive = false;
-            _startedSent = false;
-            _ctsSource = new CancellationTokenSource();
-            _ctsDigest = new CancellationTokenSource();
-            _closing = false;
-
-            while (_sendBuffer.TryDequeue(out _)) { } // Clear send buffer
-
-            Socket = CreateSocket();
-        }
-
-        /// <summary>
-        /// Create the socket object
-        /// </summary>
-        private ClientWebSocket CreateSocket()
-        {
-            var socket = new ClientWebSocket();
-            socket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
-            socket.Options.SetBuffer(65536, 65536);
-            return socket;
-        }
-
-        /// <summary>
-        /// Loop for sending data
+        /// Loop for sending dataW
         /// </summary>
         /// <returns></returns>
         private async Task SendLoopAsync()
@@ -399,7 +376,7 @@ namespace BinanceAPI.Clients
             }
             catch
             {
-                await CloseInternalAsync(false, true).ConfigureAwait(false);
+                await CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -425,7 +402,7 @@ namespace BinanceAPI.Clients
             }
             finally
             {
-                await CloseInternalAsync(true, false).ConfigureAwait(false);
+                await CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -451,7 +428,7 @@ namespace BinanceAPI.Clients
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
                         Logging.SocketLog?.Debug($"Socket {Id} received `Close` message");
-                        await CloseInternalAsync(false, false).ConfigureAwait(false);
+                        await CloseAsync().ConfigureAwait(false);
                         return;
                     }
 
@@ -503,7 +480,7 @@ namespace BinanceAPI.Clients
             catch
             {
                 Logging.SocketLog?.Debug($"Socket {Id} caught an exception and is Closing");
-                await CloseInternalAsync(true, false).ConfigureAwait(false);
+                await CloseAsync().ConfigureAwait(false);
             }
         }
 
@@ -539,6 +516,8 @@ namespace BinanceAPI.Clients
                 {
                     strData = DataInterpreterString(strData);
                 }
+
+                Console.WriteLine(strData);
 
                 Handle(messageHandlers, strData);
             }

@@ -323,7 +323,7 @@ namespace BinanceAPI.Sockets
                         }
 
                         ReconnectTry++;
-                        Socket.Reset();
+                        Socket.NewSocket(true);
                         if (!await Socket.ConnectAsync().ConfigureAwait(false)) // Try Connect
                         {
                             if (ReconnectTry >= socketClient.MaxReconnectTries)

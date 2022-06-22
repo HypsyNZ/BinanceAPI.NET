@@ -493,6 +493,11 @@
             </summary>
             <param name="url">The url the socket should connect to</param>
         </member>
+        <member name="M:BinanceAPI.Clients.WebSocketClient.NewSocket(System.Boolean)">
+            <summary>
+            Create the socket object
+            </summary>
+        </member>
         <member name="M:BinanceAPI.Clients.WebSocketClient.SetProxy(BinanceAPI.Objects.ApiProxy)">
             <summary>
             Set a proxy to use. Should be set before connecting
@@ -505,39 +510,21 @@
             </summary>
             <returns>True if successfull</returns>
         </member>
+        <member name="M:BinanceAPI.Clients.WebSocketClient.CloseAsync">
+            <summary>
+            Internal close method, will wait for each task to complete to gracefully close
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:BinanceAPI.Clients.WebSocketClient.Send(System.String)">
             <summary>
             Send data over the websocket
             </summary>
             <param name="data">Data to send</param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.CloseAsync">
-            <summary>
-            Close the websocket
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.CloseInternalAsync(System.Boolean,System.Boolean)">
-            <summary>
-            Internal close method, will wait for each task to complete to gracefully close
-            </summary>
-            <param name="waitSend"></param>
-            <param name="waitReceive"></param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.Reset">
-            <summary>
-            Reset the socket so a new connection can be attempted after it has been connected before
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.CreateSocket">
-            <summary>
-            Create the socket object
-            </summary>
-        </member>
         <member name="M:BinanceAPI.Clients.WebSocketClient.SendLoopAsync">
             <summary>
-            Loop for sending data
+            Loop for sending dataW
             </summary>
             <returns></returns>
         </member>
@@ -7498,16 +7485,6 @@
             <summary>
             Serialize / Deserialize / Debug Json
             This class is very different in Debug vs Release Mode and will affect performance greatly
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Json.OutputOriginalData">
-            <summary>
-            (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Json.ShouldCheckObjects">
-            <summary>
-            (Global) Should check objects for missing properties based on the model and the received JSON
             </summary>
         </member>
         <member name="M:BinanceAPI.Json.#ctor">

@@ -103,9 +103,9 @@ namespace BinanceAPI.Sockets
         /// Close the socket to cause a reconnect
         /// </summary>
         /// <returns></returns>
-        public Task ReconnectAsync()
+        public async Task ReconnectAsync()
         {
-            return Connection.Socket.CloseAsync();
+            await Connection.Socket.CloseAsync().ConfigureAwait(false);
         }
 
         /// <summary>
