@@ -1,4 +1,4 @@
-### Version 6.0.3.7
+### Version 6.0.3.8
 - [x] Some Cleanup
 
 ### Version 6.0.3.6
