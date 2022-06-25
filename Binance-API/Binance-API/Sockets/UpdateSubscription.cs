@@ -72,7 +72,7 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// The id of the socket
         /// </summary>
-        public int SocketId => Connection.Socket.Id;
+        public int SocketId => Connection.BinanceSocket.Id;
 
         /// <summary>
         /// The id of the subscription
@@ -105,7 +105,7 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         public async Task ReconnectAsync()
         {
-            await Connection.Socket.CloseAsync().ConfigureAwait(false);
+            await Connection.BinanceSocket.CloseAsync().ConfigureAwait(false);
         }
 
         /// <summary>

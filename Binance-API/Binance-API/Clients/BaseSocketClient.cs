@@ -42,12 +42,12 @@ namespace BinanceAPI.Clients
     /// <summary>
     /// A wrapper around System.Net.WebSockets.ClientWebSocket
     /// </summary>
-    public class WebSocketClient
+    public class BaseSocketClient
     {
         /// <summary>
         /// The Real Underlying Socket
         /// </summary>
-        public ClientWebSocket Socket { get; protected set; }
+        public ClientWebSocket ClientSocket { get; protected set; }
 
         /// <summary>
         /// Socket closed event
@@ -131,9 +131,9 @@ namespace BinanceAPI.Clients
         public int Id { get; internal set; }
 
         /// <summary>
-        /// Whether this socket is currently reconnecting
+        /// Whether this socket is currently connecting/reconnecting
         /// </summary>
-        public bool Reconnecting { get; internal set; }
+        public bool Connecting { get; internal set; }
 
         /// <summary>
         /// The timestamp this socket has been active for the last time
@@ -158,7 +158,7 @@ namespace BinanceAPI.Clients
         /// <summary>
         /// If the connection is closed
         /// </summary>
-        public bool IsClosed => Socket.State == WebSocketState.Closed;
+        public bool IsClosed => ClientSocket.State == WebSocketState.Closed;
 
         /// <summary>
         /// If the connection is closing
@@ -168,7 +168,7 @@ namespace BinanceAPI.Clients
         /// <summary>
         /// If the connection is open
         /// </summary>
-        public bool IsOpen => Socket.State == WebSocketState.Open && !IsClosing;
+        public bool IsOpen => ClientSocket.State == WebSocketState.Open && !IsClosing;
 
         /// <summary>
         /// Encoding used for decoding the received bytes into a string
@@ -186,7 +186,7 @@ namespace BinanceAPI.Clients
         /// The Client for this Socket
         /// </summary>
         /// <param name="url">The url the socket should connect to</param>
-        public WebSocketClient(string url)
+        public BaseSocketClient(string url)
         {
             Id = NextStreamId();
             Url = url;
@@ -214,9 +214,9 @@ namespace BinanceAPI.Clients
             _ctsSource = new CancellationTokenSource();
             _ctsDigest = new CancellationTokenSource();
 
-            Socket = new ClientWebSocket();
-            Socket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
-            Socket.Options.SetBuffer(65536, 65536);
+            ClientSocket = new ClientWebSocket();
+            ClientSocket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+            ClientSocket.Options.SetBuffer(65536, 65536);
 
             _closing = false;
         }
@@ -228,16 +228,16 @@ namespace BinanceAPI.Clients
         public virtual void SetProxy(ApiProxy proxy)
         {
             Uri.TryCreate($"{proxy.Host}:{proxy.Port}", UriKind.Absolute, out var uri);
-            Socket.Options.Proxy = uri?.Scheme == null
-                ? Socket.Options.Proxy = new WebProxy(proxy.Host, proxy.Port)
-                : Socket.Options.Proxy = new WebProxy
+            ClientSocket.Options.Proxy = uri?.Scheme == null
+                ? ClientSocket.Options.Proxy = new WebProxy(proxy.Host, proxy.Port)
+                : ClientSocket.Options.Proxy = new WebProxy
                 {
                     Address = uri
                 };
 
             if (proxy.Login != null)
             {
-                Socket.Options.Proxy.Credentials = new NetworkCredential(proxy.Login, proxy.Password);
+                ClientSocket.Options.Proxy.Credentials = new NetworkCredential(proxy.Login, proxy.Password);
             }
         }
 
@@ -247,13 +247,41 @@ namespace BinanceAPI.Clients
         /// <returns>True if successfull</returns>
         public virtual async Task<bool> ConnectAsync()
         {
+            Connecting = true;
 #if DEBUG
             Logging.SocketLog?.Debug($"Socket {Id} connecting");
 #endif
             try
             {
-                await Socket.ConnectAsync(new Uri(Url), default).ConfigureAwait(false);
+                await ClientSocket.ConnectAsync(new Uri(Url), default).ConfigureAwait(false);
                 Handle(openHandlers);
+#if DEBUG
+            Logging.SocketLog?.Trace($"Socket {Id} connection succeeded, starting communication");
+#endif
+                _sendTask = Task.Factory.StartNew(SendLoopAsync, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
+                _receiveTask = Task.Factory.StartNew(DigestLoop, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
+
+                var sw = Stopwatch.StartNew();
+                while (!_startedSent || !_startedReceive)
+                {
+                    // Wait for the tasks to have actually started
+                    await Task.Delay(1).ConfigureAwait(false);
+
+                    if (sw.ElapsedMilliseconds > 5000)
+                    {
+                        _ = ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", default);
+#if DEBUG
+                    Logging.SocketLog?.Debug($"Socket {Id} startup interupted");
+#endif
+                        Connecting = false;
+                        return false;
+                    }
+                }
+#if DEBUG
+            Logging.SocketLog?.Debug($"Socket {Id} connected");
+#endif
+                Connecting = false;
+                return true;
             }
             catch
 #if DEBUG
@@ -265,31 +293,10 @@ namespace BinanceAPI.Clients
 #endif
                 return false;
             }
-#if DEBUG
-            Logging.SocketLog?.Trace($"Socket {Id} connection succeeded, starting communication");
-#endif
-            _sendTask = Task.Factory.StartNew(SendLoopAsync, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
-            _receiveTask = Task.Factory.StartNew(DigestLoop, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
-
-            var sw = Stopwatch.StartNew();
-            while (!_startedSent || !_startedReceive)
+            finally
             {
-                // Wait for the tasks to have actually started
-                await Task.Delay(1).ConfigureAwait(false);
-
-                if (sw.ElapsedMilliseconds > 5000)
-                {
-                    _ = Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", default);
-#if DEBUG
-                    Logging.SocketLog?.Debug($"Socket {Id} startup interupted");
-#endif
-                    return false;
-                }
+                Connecting = false;
             }
-#if DEBUG
-            Logging.SocketLog?.Debug($"Socket {Id} connected");
-#endif
-            return true;
         }
 
         /// <summary>
@@ -302,13 +309,13 @@ namespace BinanceAPI.Clients
             {
                 return;
             }
-
             _closing = true;
+            Connecting = false;
 
-            if (Socket.State == WebSocketState.Open)
+            if (ClientSocket.State == WebSocketState.Open)
             {
                 Logging.SocketLog?.Debug($"Socket {Id} is closing");
-                await Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
+                await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
                 _sendEvent.Set();
             }
             else
@@ -358,7 +365,7 @@ namespace BinanceAPI.Clients
                         bool s = _sendBuffer.TryDequeue(out var data);
                         if (s)
                         {
-                            await Socket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, default).ConfigureAwait(false);
+                            await ClientSocket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, default).ConfigureAwait(false);
                             _outgoingMessages.Add(DateTime.UtcNow);
 #if DEBUG
                             Logging.SocketLog?.Trace($"Socket {Id} sent {data.Length} bytes");
@@ -420,7 +427,7 @@ namespace BinanceAPI.Clients
 
                 while (!_ctsDigest.Token.IsCancellationRequested)
                 {
-                    receiveResult = await Socket.ReceiveAsync(buffer, default).ConfigureAwait(false);
+                    receiveResult = await ClientSocket.ReceiveAsync(buffer, default).ConfigureAwait(false);
                     received += receiveResult.Count;
 
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
@@ -568,7 +575,7 @@ namespace BinanceAPI.Clients
 #if DEBUG
             Logging.SocketLog?.Debug($"Socket {Id} disposing");
 #endif
-            Socket.Dispose();
+            ClientSocket.Dispose();
             _ctsSource.Dispose();
             _ctsDigest.Dispose();
 

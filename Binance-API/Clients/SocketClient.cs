@@ -149,7 +149,7 @@ namespace BinanceAPI.Clients
                 if (!sockets.Any())
                     return 0;
 
-                return sockets.Sum(s => s.Value.Socket.IncomingKbps);
+                return sockets.Sum(s => s.Value.BinanceSocket.IncomingKbps);
             }
         }
 
@@ -212,7 +212,7 @@ namespace BinanceAPI.Clients
             if (!connectResult)
                 return new CallResult<UpdateSubscription>(null, connectResult.Error);
             if (needsConnecting)
-                SocketLog?.Debug($"Socket {socketConnection.Socket.Id} connected to {url} {(request == null ? "" : "with request " + JsonConvert.SerializeObject(request))}");
+                SocketLog?.Debug($"Socket {socketConnection.BinanceSocket.Id} connected to {url} {(request == null ? "" : "with request " + JsonConvert.SerializeObject(request))}");
             if (request != null)
             {
                 // Send the request and wait for answer
@@ -353,7 +353,7 @@ namespace BinanceAPI.Clients
                 Id = NextId()
             };
 
-            if (!connection.Socket.IsOpen)
+            if (!connection.BinanceSocket.IsOpen)
                 return true;
 
             await connection.SendAndWaitAsync(unsub, TimeSpan.FromSeconds(3),
@@ -408,7 +408,7 @@ namespace BinanceAPI.Clients
                 var desResult = Json.Deserialize<T>(messageEvent.JsonData, false);
                 if (!desResult)
                 {
-                    SocketLog?.Warning($"Socket {connection.Socket.Id} Failed to deserialize data into type {typeof(T)}: {desResult.Error}");
+                    SocketLog?.Warning($"Socket {connection.BinanceSocket.Id} Failed to deserialize data into type {typeof(T)}: {desResult.Error}");
                     return;
                 }
 #if DEBUG
@@ -438,13 +438,13 @@ namespace BinanceAPI.Clients
         /// <returns></returns>
         protected async Task<CallResult<bool>> ConnectSocketAsync(SocketConnection socketConnection)
         {
-            if (await socketConnection.Socket.ConnectAsync().ConfigureAwait(false))
+            if (await socketConnection.BinanceSocket.ConnectAsync().ConfigureAwait(false))
             {
-                sockets.TryAdd(socketConnection.Socket.Id, socketConnection);
+                sockets.TryAdd(socketConnection.BinanceSocket.Id, socketConnection);
                 return new CallResult<bool>(true, null);
             }
 
-            socketConnection.Socket.Dispose();
+            socketConnection.BinanceSocket.Dispose();
             return new CallResult<bool>(false, new CantConnectError());
         }
 
@@ -453,9 +453,9 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <param name="address">The address the socket should connect to</param>
         /// <returns></returns>
-        protected WebSocketClient CreateSocket(string address)
+        protected BaseSocketClient CreateSocket(string address)
         {
-            WebSocketClient socket = new WebSocketClient(address);
+            BaseSocketClient socket = new BaseSocketClient(address);
 #if DEBUG
             SocketLog?.Debug($"Socket {socket.Id} new socket created for " + address);
 #endif

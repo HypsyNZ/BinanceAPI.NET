@@ -311,154 +311,154 @@
             Dispose
             </summary>
         </member>
-        <member name="T:BinanceAPI.Clients.WebSocketClient">
+        <member name="T:BinanceAPI.Clients.BaseSocketClient">
             <summary>
             A wrapper around System.Net.WebSockets.ClientWebSocket
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.Socket">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.ClientSocket">
             <summary>
             The Real Underlying Socket
             </summary>
         </member>
-        <member name="E:BinanceAPI.Clients.WebSocketClient.OnClose">
+        <member name="E:BinanceAPI.Clients.BaseSocketClient.OnClose">
             <summary>
             Socket closed event
             </summary>
         </member>
-        <member name="E:BinanceAPI.Clients.WebSocketClient.OnMessage">
+        <member name="E:BinanceAPI.Clients.BaseSocketClient.OnMessage">
             <summary>
             Socket message received event
             </summary>
         </member>
-        <member name="E:BinanceAPI.Clients.WebSocketClient.OnError">
+        <member name="E:BinanceAPI.Clients.BaseSocketClient.OnError">
             <summary>
             Socket error event
             </summary>
         </member>
-        <member name="E:BinanceAPI.Clients.WebSocketClient.OnOpen">
+        <member name="E:BinanceAPI.Clients.BaseSocketClient.OnOpen">
             <summary>
             Socket opened event
             </summary>
         </member>
-        <member name="F:BinanceAPI.Clients.WebSocketClient.errorHandlers">
+        <member name="F:BinanceAPI.Clients.BaseSocketClient.errorHandlers">
             <summary>
             Handlers for when an error happens on the socket
             </summary>
         </member>
-        <member name="F:BinanceAPI.Clients.WebSocketClient.openHandlers">
+        <member name="F:BinanceAPI.Clients.BaseSocketClient.openHandlers">
             <summary>
             Handlers for when the socket connection is opened
             </summary>
         </member>
-        <member name="F:BinanceAPI.Clients.WebSocketClient.closeHandlers">
+        <member name="F:BinanceAPI.Clients.BaseSocketClient.closeHandlers">
             <summary>
             Handlers for when the connection is closed
             </summary>
         </member>
-        <member name="F:BinanceAPI.Clients.WebSocketClient.messageHandlers">
+        <member name="F:BinanceAPI.Clients.BaseSocketClient.messageHandlers">
             <summary>
             Handlers for when a message is received
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.Id">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.Id">
             <summary>
             The id of this socket
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.Reconnecting">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.Connecting">
             <summary>
-            Whether this socket is currently reconnecting
+            Whether this socket is currently connecting/reconnecting
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.LastActionTime">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.LastActionTime">
             <summary>
             The timestamp this socket has been active for the last time
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.DataInterpreterBytes">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.DataInterpreterBytes">
             <summary>
             Delegate used for processing byte data received from socket connections before it is processed by handlers
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.DataInterpreterString">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.DataInterpreterString">
             <summary>
             Delegate used for processing string data received from socket connections before it is processed by handlers
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.Url">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.Url">
             <summary>
             Url this socket connects to
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.IsClosed">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.IsClosed">
             <summary>
             If the connection is closed
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.IsClosing">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.IsClosing">
             <summary>
             If the connection is closing
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.IsOpen">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.IsOpen">
             <summary>
             If the connection is open
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.Encoding">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.Encoding">
             <summary>
             Encoding used for decoding the received bytes into a string
             </summary>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.#ctor(System.String)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.#ctor(System.String)">
             <summary>
             The Client for this Socket
             </summary>
             <param name="url">The url the socket should connect to</param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.NewSocket(System.Boolean)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.NewSocket(System.Boolean)">
             <summary>
             Create the socket object
             </summary>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.SetProxy(BinanceAPI.Objects.ApiProxy)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.SetProxy(BinanceAPI.Objects.ApiProxy)">
             <summary>
             Set a proxy to use. Should be set before connecting
             </summary>
             <param name="proxy"></param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.ConnectAsync">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.ConnectAsync">
             <summary>
             Connect the websocket
             </summary>
             <returns>True if successfull</returns>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.CloseAsync">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.CloseAsync">
             <summary>
             Internal close method, will wait for each task to complete to gracefully close
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.Send(System.String)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.Send(System.String)">
             <summary>
             Send data over the websocket
             </summary>
             <param name="data">Data to send</param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.SendLoopAsync">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.SendLoopAsync">
             <summary>
             Loop for sending dataW
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.ReceiveLoopAsync">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.ReceiveLoopAsync">
             <summary>
             Loop for receiving and reassembling data
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.HandleMessage(System.Byte[],System.Int32,System.Int32,System.Net.WebSockets.WebSocketMessageType)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.HandleMessage(System.Byte[],System.Int32,System.Int32,System.Net.WebSockets.WebSocketMessageType)">
             <summary>
             Handles the message
             </summary>
@@ -467,13 +467,13 @@
             <param name="count"></param>
             <param name="messageType"></param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.Handle(System.Collections.Generic.List{System.Action})">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.Handle(System.Collections.Generic.List{System.Action})">
             <summary>
             Helper to invoke handlers
             </summary>
             <param name="handlers"></param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.Handle``1(System.Collections.Generic.List{System.Action{``0}},``0)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.Handle``1(System.Collections.Generic.List{System.Action{``0}},``0)">
             <summary>
             Helper to invoke handlers
             </summary>
@@ -481,21 +481,21 @@
             <param name="handlers"></param>
             <param name="data"></param>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.NextStreamId">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.NextStreamId">
             <summary>
             Get the next identifier
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.WebSocketClient.Dispose">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.Dispose">
             <summary>
             Dispose the socket
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.SSLProtocols">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.SSLProtocols">
             <inheritdoc/>
         </member>
-        <member name="P:BinanceAPI.Clients.WebSocketClient.IncomingKbps">
+        <member name="P:BinanceAPI.Clients.BaseSocketClient.IncomingKbps">
             <inheritdoc/>
         </member>
         <member name="T:BinanceAPI.Clients.SocketClient">
@@ -7738,7 +7738,7 @@
             If connection is made
             </summary>
         </member>
-        <member name="P:BinanceAPI.Sockets.SocketConnection.Socket">
+        <member name="P:BinanceAPI.Sockets.SocketConnection.BinanceSocket">
             <summary>
             The underlying socket
             </summary>
@@ -7753,7 +7753,7 @@
             Time of disconnecting
             </summary>
         </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.#ctor(BinanceAPI.Clients.SocketClient,BinanceAPI.Clients.WebSocketClient)">
+        <member name="M:BinanceAPI.Sockets.SocketConnection.#ctor(BinanceAPI.Clients.SocketClient,BinanceAPI.Clients.BaseSocketClient)">
             <summary>
             New socket connection
             </summary>
