@@ -42,7 +42,7 @@ namespace BinanceAPI.Sockets
         public event Action<Exception>? Exception;
 
         /// <summary>
-        /// Message handlers for this subscription. Should return true if the message is handled and should not be distributed to the other handlers
+        /// Message handler for this subscription.
         /// </summary>
         public Action<MessageEvent> MessageHandler { get; set; }
 
@@ -50,11 +50,6 @@ namespace BinanceAPI.Sockets
         /// Request object
         /// </summary>
         public object? Request { get; set; }
-
-        /// <summary>
-        /// Subscription identifier
-        /// </summary>
-        public string? Identifier { get; set; }
 
         /// <summary>
         /// Is user subscription or generic
@@ -66,13 +61,12 @@ namespace BinanceAPI.Sockets
         /// </summary>
         public bool Confirmed { get; set; }
 
-        private SocketSubscription(int id, object? request, string? identifier, bool userSubscription, Action<MessageEvent> dataHandler)
+        private SocketSubscription(int id, object? request, bool userSubscription, Action<MessageEvent> dataHandler)
         {
             Id = id;
             UserSubscription = userSubscription;
             MessageHandler = dataHandler;
             Request = request;
-            Identifier = identifier;
         }
 
         /// <summary>
@@ -86,21 +80,7 @@ namespace BinanceAPI.Sockets
         public static SocketSubscription CreateForRequest(int id, object request, bool userSubscription,
             Action<MessageEvent> dataHandler)
         {
-            return new SocketSubscription(id, request, null, userSubscription, dataHandler);
-        }
-
-        /// <summary>
-        /// Create SocketSubscription for an identifier
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="identifier"></param>
-        /// <param name="userSubscription"></param>
-        /// <param name="dataHandler"></param>
-        /// <returns></returns>
-        public static SocketSubscription CreateForIdentifier(int id, string identifier, bool userSubscription,
-            Action<MessageEvent> dataHandler)
-        {
-            return new SocketSubscription(id, null, identifier, userSubscription, dataHandler);
+            return new SocketSubscription(id, request, userSubscription, dataHandler);
         }
 
         /// <summary>

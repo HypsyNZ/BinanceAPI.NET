@@ -52,41 +52,6 @@ namespace BinanceAPI
         }
 
         /// <summary>
-        /// Add a parameter
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="converter"></param>
-        public static void AddParameter(this Dictionary<string, object> parameters, string key, string value, JsonConverter converter)
-        {
-            parameters.Add(key, JsonConvert.SerializeObject(value, converter));
-        }
-
-        /// <summary>
-        /// Add a parameter
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        public static void AddParameter(this Dictionary<string, object> parameters, string key, object value)
-        {
-            parameters.Add(key, value);
-        }
-
-        /// <summary>
-        /// Add a parameter
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="converter"></param>
-        public static void AddParameter(this Dictionary<string, object> parameters, string key, object value, JsonConverter converter)
-        {
-            parameters.Add(key, JsonConvert.SerializeObject(value, converter));
-        }
-
-        /// <summary>
         /// Add an optional parameter. Not added if value is null
         /// </summary>
         /// <param name="parameters"></param>
@@ -96,44 +61,6 @@ namespace BinanceAPI
         {
             if (value != null)
                 parameters.Add(key, value);
-        }
-
-        /// <summary>
-        /// Add an optional parameter. Not added if value is null
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="converter"></param>
-        public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object? value, JsonConverter converter)
-        {
-            if (value != null)
-                parameters.Add(key, JsonConvert.SerializeObject(value, converter));
-        }
-
-        /// <summary>
-        /// Add an optional parameter. Not added if value is null
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        public static void AddOptionalParameter(this Dictionary<string, string> parameters, string key, string? value)
-        {
-            if (value != null)
-                parameters.Add(key, value);
-        }
-
-        /// <summary>
-        /// Add an optional parameter. Not added if value is null
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="converter"></param>
-        public static void AddOptionalParameter(this Dictionary<string, string> parameters, string key, string? value, JsonConverter converter)
-        {
-            if (value != null)
-                parameters.Add(key, JsonConvert.SerializeObject(value, converter));
         }
 
         /// <summary>
@@ -228,7 +155,7 @@ namespace BinanceAPI
                 {
                     var info = $"Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}. Data: {stringData}";
                     Logging.SocketLog?.Error(info);
-                });
+                }).ConfigureAwait(false);
 
                 return null;
             }
@@ -238,7 +165,7 @@ namespace BinanceAPI
                 {
                     var info = $"Deserialize JsonSerializationException: {jse.Message}. Data: {stringData}";
                     Logging.SocketLog?.Error(info);
-                });
+                }).ConfigureAwait(false);
 
                 return null;
             }
@@ -283,17 +210,6 @@ namespace BinanceAPI
         }
 
         /// <summary>
-        /// Validates a string is null or not empty
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="argumentName"></param>
-        public static void ValidateNullOrNotEmpty(this string value, string argumentName)
-        {
-            if (value != null && string.IsNullOrEmpty(value))
-                throw new ArgumentException($"No value provided for parameter {argumentName}", argumentName);
-        }
-
-        /// <summary>
         /// Validates an object is not null
         /// </summary>
         /// <param name="value">The value of the object</param>
@@ -314,6 +230,8 @@ namespace BinanceAPI
             if (value == null || !value.Any())
                 throw new ArgumentException($"No values provided for parameter {argumentName}", argumentName);
         }
+
+#if DEBUG
 
         /// <summary>
         /// Format an exception and inner exception to a readable string
@@ -341,5 +259,7 @@ namespace BinanceAPI
 
             return message.ToString();
         }
+
+#endif
     }
 }

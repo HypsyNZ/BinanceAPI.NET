@@ -86,7 +86,7 @@ namespace BinanceAPI.Clients
                 Id = NextId()
             };
 
-            return SubscribeAsync(url, request, null, false, onData);
+            return SubscribeAsync(url, request, false, onData);
         }
 
         #endregion methods
@@ -140,12 +140,6 @@ namespace BinanceAPI.Clients
         protected bool disposing;
 
         /// <summary>
-        /// If true; data which is a response to a query will also be distributed to subscriptions
-        /// If false; data which is a response to a query won't get forwarded to subscriptions as well
-        /// </summary>
-        protected internal bool ContinueOnQueryResponse { get; protected set; }
-
-        /// <summary>
         /// The current kilobytes per second of data being received by all connection from this client, averaged over the last 3 seconds
         /// </summary>
         public double IncomingKbps
@@ -197,20 +191,20 @@ namespace BinanceAPI.Clients
         /// <typeparam name="T">The type of the expected data</typeparam>
         /// <param name="url">The URL to connect to</param>
         /// <param name="request">The optional request object to send, will be serialized to json</param>
-        /// <param name="identifier">The identifier to use, necessary if no request object is sent</param>
         /// <param name="authenticated">If the subscription is to an authenticated endpoint</param>
         /// <param name="dataHandler">The handler of update data</param>
         /// <returns></returns>
-        protected virtual async Task<CallResult<UpdateSubscription>> SubscribeAsync<T>(string url, object? request, string? identifier, bool authenticated, Action<DataEvent<T>> dataHandler)
+        protected async Task<CallResult<UpdateSubscription>> SubscribeAsync<T>(string url, object request, bool authenticated, Action<DataEvent<T>> dataHandler)
         {
             SocketConnection socketConnection;
             SocketSubscription subscription;
 
             // Get a new or existing socket connection
-            socketConnection = GetSocketConnection(url, authenticated);
+            socketConnection = new SocketConnection(this, CreateSocket(url));
+            socketConnection.UnhandledMessage += HandleUnhandledMessage;
 
             // Add a subscription on the socket connection
-            subscription = AddSubscription(request, identifier, true, socketConnection, dataHandler);
+            subscription = AddSubscription(request, true, socketConnection, dataHandler);
 
             var needsConnecting = !socketConnection.Connected;
 
@@ -246,10 +240,10 @@ namespace BinanceAPI.Clients
         /// <param name="request">The request to send, will be serialized to json</param>
         /// <param name="subscription">The subscription the request is for</param>
         /// <returns></returns>
-        protected internal virtual async Task<CallResult<bool>> SubscribeAndWaitAsync(SocketConnection socketConnection, object request, SocketSubscription subscription)
+        protected internal async Task<CallResult<bool>> SubscribeAndWaitAsync(SocketConnection socketConnection, object request, SocketSubscription subscription)
         {
             CallResult<object>? callResult = null;
-            await socketConnection.SendAndWaitAsync(request, TimeSpan.FromSeconds(5), data => HandleSubscriptionResponse(request, data, out callResult)).ConfigureAwait(false);
+            await socketConnection.SendAndWaitAsync(request, TimeSpan.FromSeconds(3), data => HandleSubscriptionResponse(request, data, out callResult)).ConfigureAwait(false);
 
             if (callResult?.Success == true)
                 subscription.Confirmed = true;
@@ -263,7 +257,7 @@ namespace BinanceAPI.Clients
         /// <param name="socket">The connection to check</param>
         /// <param name="authenticated">Whether the socket should authenticated</param>
         /// <returns></returns>
-        protected virtual async Task<CallResult<bool>> ConnectIfNeededAsync(SocketConnection socket, bool authenticated)
+        protected async Task<CallResult<bool>> ConnectIfNeededAsync(SocketConnection socket, bool authenticated)
         {
             if (socket.Connected)
                 return new CallResult<bool>(true, null);
@@ -349,45 +343,42 @@ namespace BinanceAPI.Clients
         /// <returns></returns>
         public async Task<bool> UnsubscribeAsync(SocketConnection connection, SocketSubscription subscription)
         {
-            var topics = ((BinanceSocketRequest)subscription.Request!).Params;
-            var unsub = new BinanceSocketRequest { Method = "UNSUBSCRIBE", Params = topics, Id = NextId() };
             var result = false;
+            var topics = ((BinanceSocketRequest)subscription.Request!).Params;
+
+            var unsub = new BinanceSocketRequest
+            {
+                Method = "UNSUBSCRIBE",
+                Params = topics,
+                Id = NextId()
+            };
 
             if (!connection.Socket.IsOpen)
                 return true;
 
-            await connection.SendAndWaitAsync(unsub, TimeSpan.FromSeconds(5), data =>
-            {
-                if (data.Type != JTokenType.Object)
-                    return false;
-
-                var id = data["id"];
-                if (id == null)
-                    return false;
-
-                if ((int)id != unsub.Id)
-                    return false;
-
-                var result = data["result"];
-                if (result?.Type == JTokenType.Null)
+            await connection.SendAndWaitAsync(unsub, TimeSpan.FromSeconds(3),
+                data =>
                 {
-                    result = true;
+                    if (data.Type != JTokenType.Object)
+                        return false;
+
+                    var id = data["id"];
+                    if (id == null)
+                        return false;
+
+                    if ((int)id != unsub.Id)
+                        return false;
+
+                    var result = data["result"];
+                    if (result?.Type == JTokenType.Null)
+                    {
+                        result = true;
+                        return true;
+                    }
+
                     return true;
-                }
-
-                return true;
-            }).ConfigureAwait(false);
+                }).ConfigureAwait(false);
             return result;
-        }
-
-        /// <summary>
-        /// Optional handler to interpolate data before sending it to the handlers
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        protected internal virtual JToken ProcessTokenData(JToken message)
-        {
-            return message;
         }
 
         /// <summary>
@@ -395,12 +386,11 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <typeparam name="T">The type of data the subscription expects</typeparam>
         /// <param name="request">The request of the subscription</param>
-        /// <param name="identifier">The identifier of the subscription (can be null if request param is used)</param>
         /// <param name="userSubscription">Whether or not this is a user subscription (counts towards the max amount of handlers on a socket)</param>
         /// <param name="connection">The socket connection the handler is on</param>
         /// <param name="dataHandler">The handler of the data received</param>
         /// <returns></returns>
-        protected virtual SocketSubscription AddSubscription<T>(object? request, string? identifier, bool userSubscription, SocketConnection connection, Action<DataEvent<T>> dataHandler)
+        protected SocketSubscription AddSubscription<T>(object request, bool userSubscription, SocketConnection connection, Action<DataEvent<T>> dataHandler)
         {
             void InternalHandler(MessageEvent messageEvent)
             {
@@ -428,39 +418,16 @@ namespace BinanceAPI.Clients
 #endif
             }
 
-            var subscription = request == null
-                ? SocketSubscription.CreateForIdentifier(NextId(), identifier!, userSubscription, InternalHandler)
-                : SocketSubscription.CreateForRequest(NextId(), request, userSubscription, InternalHandler);
+            var subscription = SocketSubscription.CreateForRequest(NextId(), request, userSubscription, InternalHandler);
             connection.AddSubscription(subscription);
             return subscription;
-        }
-
-        /// <summary>
-        /// Gets a connection for a new subscription or query. Can be an existing if there are open position or a new one.
-        /// </summary>
-        /// <param name="address">The address the socket is for</param>
-        /// <param name="authenticated">Whether the socket should be authenticated</param>
-        /// <returns></returns>
-        protected virtual SocketConnection GetSocketConnection(string address, bool authenticated)
-        {
-            var socketConnection = new SocketConnection(this, CreateSocket(address));
-
-            socketConnection.UnhandledMessage += HandleUnhandledMessage;
-
-            foreach (var kvp in genericHandlers)
-            {
-                var handler = SocketSubscription.CreateForIdentifier(NextId(), kvp.Key, false, kvp.Value);
-                socketConnection.AddSubscription(handler);
-            }
-
-            return socketConnection;
         }
 
         /// <summary>
         /// Process an unhandled message
         /// </summary>
         /// <param name="token">The token that wasn't processed</param>
-        protected virtual void HandleUnhandledMessage(JToken token)
+        protected void HandleUnhandledMessage(JToken token)
         {
         }
 
@@ -469,7 +436,7 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <param name="socketConnection">The socket to connect</param>
         /// <returns></returns>
-        protected virtual async Task<CallResult<bool>> ConnectSocketAsync(SocketConnection socketConnection)
+        protected async Task<CallResult<bool>> ConnectSocketAsync(SocketConnection socketConnection)
         {
             if (await socketConnection.Socket.ConnectAsync().ConfigureAwait(false))
             {
@@ -486,7 +453,7 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <param name="address">The address the socket should connect to</param>
         /// <returns></returns>
-        protected virtual WebSocketClient CreateSocket(string address)
+        protected WebSocketClient CreateSocket(string address)
         {
             WebSocketClient socket = new WebSocketClient(address);
 #if DEBUG
@@ -515,7 +482,7 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <param name="subscription">The subscription to unsubscribe</param>
         /// <returns></returns>
-        public virtual async Task UnsubscribeAsync(UpdateSubscription subscription)
+        public async Task UnsubscribeAsync(UpdateSubscription subscription)
         {
             if (subscription == null)
                 throw new ArgumentNullException(nameof(subscription));
@@ -529,7 +496,7 @@ namespace BinanceAPI.Clients
         /// Unsubscribe all subscriptions
         /// </summary>
         /// <returns></returns>
-        public virtual async Task UnsubscribeAllAsync()
+        public async Task UnsubscribeAllAsync()
         {
 #if DEBUG
             SocketLog?.Debug($"Closing all {sockets.Count} subscriptions");

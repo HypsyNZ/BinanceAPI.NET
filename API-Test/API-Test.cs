@@ -86,7 +86,7 @@ namespace API_Test
 
             // API Keys need to be set to go any further
             // They don't have to be valid they just have to be set
-            BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
+            //  BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
 
             // Create a Binance Client, It will start the Server Time Client for you
             BinanceClient client = new BinanceClient(serverTimeStartWaitToken.Token);
@@ -204,7 +204,7 @@ namespace API_Test
                         UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
                         {
                             // Uncomment to see output from the Socket
-                            //   Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
+                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
                         }).Result.Data;
 
                         await Task.Delay(2000).ConfigureAwait(false);

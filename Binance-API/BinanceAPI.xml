@@ -29,17 +29,6 @@
             The api secret to authenticate requests
             </summary>
         </member>
-        <member name="P:BinanceAPI.Authentication.ApiCredentials.PrivateKey">
-            <summary>
-            The private key to authenticate requests
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Authentication.ApiCredentials.#ctor(BinanceAPI.Authentication.PrivateKey)">
-            <summary>
-            Create Api credentials providing a private key for authentication
-            </summary>
-            <param name="privateKey">The private key used for signing</param>
-        </member>
         <member name="M:BinanceAPI.Authentication.ApiCredentials.#ctor(System.Security.SecureString,System.Security.SecureString)">
             <summary>
             Create Api credentials providing an api key and secret for authentication
@@ -60,14 +49,6 @@
             Copy the credentials
             </summary>
             <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Authentication.ApiCredentials.#ctor(System.IO.Stream,System.String,System.String)">
-            <summary>
-            Create Api credentials providing a stream containing json data. The json data should include two values: apiKey and apiSecret
-            </summary>
-            <param name="inputStream">The stream containing the json data</param>
-            <param name="identifierKey">A key to identify the credentials for the API. For example, when set to `binanceKey` the json data should contain a value for the property `binanceKey`. Defaults to 'apiKey'.</param>
-            <param name="identifierSecret">A key to identify the credentials for the API. For example, when set to `binanceSecret` the json data should contain a value for the property `binanceSecret`. Defaults to 'apiSecret'.</param>
         </member>
         <member name="M:BinanceAPI.Authentication.ApiCredentials.TryGetValue(Newtonsoft.Json.Linq.JToken,System.String)">
             <summary>
@@ -647,12 +628,6 @@
             If client is disposing
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.SocketClient.ContinueOnQueryResponse">
-            <summary>
-            If true; data which is a response to a query will also be distributed to subscriptions
-            If false; data which is a response to a query won't get forwarded to subscriptions as well
-            </summary>
-        </member>
         <member name="P:BinanceAPI.Clients.SocketClient.IncomingKbps">
             <summary>
             The current kilobytes per second of data being received by all connection from this client, averaged over the last 3 seconds
@@ -671,14 +646,13 @@
             <param name="byteHandler">Handler for byte data</param>
             <param name="stringHandler">Handler for string data</param>
         </member>
-        <member name="M:BinanceAPI.Clients.SocketClient.SubscribeAsync``1(System.String,System.Object,System.String,System.Boolean,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
+        <member name="M:BinanceAPI.Clients.SocketClient.SubscribeAsync``1(System.String,System.Object,System.Boolean,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
             <summary>
             Connect to an url and listen for data
             </summary>
             <typeparam name="T">The type of the expected data</typeparam>
             <param name="url">The URL to connect to</param>
             <param name="request">The optional request object to send, will be serialized to json</param>
-            <param name="identifier">The identifier to use, necessary if no request object is sent</param>
             <param name="authenticated">If the subscription is to an authenticated endpoint</param>
             <param name="dataHandler">The handler of update data</param>
             <returns></returns>
@@ -730,31 +704,15 @@
             <param name="subscription">The subscription to unsubscribe</param>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.SocketClient.ProcessTokenData(Newtonsoft.Json.Linq.JToken)">
-            <summary>
-            Optional handler to interpolate data before sending it to the handlers
-            </summary>
-            <param name="message"></param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Clients.SocketClient.AddSubscription``1(System.Object,System.String,System.Boolean,BinanceAPI.Sockets.SocketConnection,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
+        <member name="M:BinanceAPI.Clients.SocketClient.AddSubscription``1(System.Object,System.Boolean,BinanceAPI.Sockets.SocketConnection,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
             <summary>
             Add a subscription to a connection
             </summary>
             <typeparam name="T">The type of data the subscription expects</typeparam>
             <param name="request">The request of the subscription</param>
-            <param name="identifier">The identifier of the subscription (can be null if request param is used)</param>
             <param name="userSubscription">Whether or not this is a user subscription (counts towards the max amount of handlers on a socket)</param>
             <param name="connection">The socket connection the handler is on</param>
             <param name="dataHandler">The handler of the data received</param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Clients.SocketClient.GetSocketConnection(System.String,System.Boolean)">
-            <summary>
-            Gets a connection for a new subscription or query. Can be an existing if there are open position or a new one.
-            </summary>
-            <param name="address">The address the socket is for</param>
-            <param name="authenticated">Whether the socket should be authenticated</param>
             <returns></returns>
         </member>
         <member name="M:BinanceAPI.Clients.SocketClient.HandleUnhandledMessage(Newtonsoft.Json.Linq.JToken)">
@@ -7339,32 +7297,6 @@
             <param name="key"></param>
             <param name="value"></param>
         </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddParameter(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.String,Newtonsoft.Json.JsonConverter)">
-            <summary>
-            Add a parameter
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-            <param name="converter"></param>
-        </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddParameter(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Object)">
-            <summary>
-            Add a parameter
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-        </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddParameter(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Object,Newtonsoft.Json.JsonConverter)">
-            <summary>
-            Add a parameter
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-            <param name="converter"></param>
-        </member>
         <member name="M:BinanceAPI.ExtensionMethods.AddOptionalParameter(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Object)">
             <summary>
             Add an optional parameter. Not added if value is null
@@ -7372,32 +7304,6 @@
             <param name="parameters"></param>
             <param name="key"></param>
             <param name="value"></param>
-        </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddOptionalParameter(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Object,Newtonsoft.Json.JsonConverter)">
-            <summary>
-            Add an optional parameter. Not added if value is null
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-            <param name="converter"></param>
-        </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddOptionalParameter(System.Collections.Generic.Dictionary{System.String,System.String},System.String,System.String)">
-            <summary>
-            Add an optional parameter. Not added if value is null
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-        </member>
-        <member name="M:BinanceAPI.ExtensionMethods.AddOptionalParameter(System.Collections.Generic.Dictionary{System.String,System.String},System.String,System.String,Newtonsoft.Json.JsonConverter)">
-            <summary>
-            Add an optional parameter. Not added if value is null
-            </summary>
-            <param name="parameters"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-            <param name="converter"></param>
         </member>
         <member name="M:BinanceAPI.ExtensionMethods.CreateParamString(System.Collections.Generic.Dictionary{System.String,System.Object},System.Boolean,BinanceAPI.Enums.ArrayParametersSerialization)">
             <summary>
@@ -7453,13 +7359,6 @@
             <param name="value">The value of the string</param>
             <param name="argumentName">Name of the parameter</param>
         </member>
-        <member name="M:BinanceAPI.ExtensionMethods.ValidateNullOrNotEmpty(System.String,System.String)">
-            <summary>
-            Validates a string is null or not empty
-            </summary>
-            <param name="value"></param>
-            <param name="argumentName"></param>
-        </member>
         <member name="M:BinanceAPI.ExtensionMethods.ValidateNotNull(System.Object,System.String)">
             <summary>
             Validates an object is not null
@@ -7474,27 +7373,10 @@
             <param name="value">The value of the object</param>
             <param name="argumentName">Name of the parameter</param>
         </member>
-        <member name="M:BinanceAPI.ExtensionMethods.ToLogString(System.Exception)">
-            <summary>
-            Format an exception and inner exception to a readable string
-            </summary>
-            <param name="exception"></param>
-            <returns></returns>
-        </member>
         <member name="T:BinanceAPI.Json">
             <summary>
             Serialize / Deserialize / Debug Json
             This class is very different in Debug vs Release Mode and will affect performance greatly
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Json.OutputOriginalData">
-            <summary>
-            (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Json.ShouldCheckObjects">
-            <summary>
-            (Global) Should check objects for missing properties based on the model and the received JSON
             </summary>
         </member>
         <member name="M:BinanceAPI.Json.#ctor">
@@ -8016,17 +7898,12 @@
         </member>
         <member name="P:BinanceAPI.Sockets.SocketSubscription.MessageHandler">
             <summary>
-            Message handlers for this subscription. Should return true if the message is handled and should not be distributed to the other handlers
+            Message handler for this subscription.
             </summary>
         </member>
         <member name="P:BinanceAPI.Sockets.SocketSubscription.Request">
             <summary>
             Request object
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Sockets.SocketSubscription.Identifier">
-            <summary>
-            Subscription identifier
             </summary>
         </member>
         <member name="P:BinanceAPI.Sockets.SocketSubscription.UserSubscription">
@@ -8045,16 +7922,6 @@
             </summary>
             <param name="id"></param>
             <param name="request"></param>
-            <param name="userSubscription"></param>
-            <param name="dataHandler"></param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketSubscription.CreateForIdentifier(System.Int32,System.String,System.Boolean,System.Action{BinanceAPI.Sockets.MessageEvent})">
-            <summary>
-            Create SocketSubscription for an identifier
-            </summary>
-            <param name="id"></param>
-            <param name="identifier"></param>
             <param name="userSubscription"></param>
             <param name="dataHandler"></param>
             <returns></returns>

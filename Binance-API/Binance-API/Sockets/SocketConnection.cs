@@ -126,48 +126,42 @@ namespace BinanceAPI.Sockets
                     return;
             }
 
-            var handledResponse = false;
-            PendingRequest[] requests;
-            lock (pendingRequests)
-            {
-                requests = pendingRequests.ToArray();
-            }
-
-            // Check if this message is an answer on any pending requests
-            foreach (var request in requests)
-            {
-                if (request.Completed)
-                {
-                    lock (pendingRequests)
-                    {
-                        pendingRequests.Remove(request);
-                    }
-                }
-                else
-                if (request.CheckData(tokenData))
-                {
-                    lock (pendingRequests)
-                    {
-                        pendingRequests.Remove(request);
-                    }
-
-                    if (!socketClient.ContinueOnQueryResponse)
-                    {
-                        return;
-                    }
-
-                    handledResponse = true;
-                }
-            }
-
             // Message was not a request response, check data handlers
 #if DEBUG
             var messageEvent = new MessageEvent(this, tokenData, Json.OutputOriginalData ? data : null, timestamp);
 #else
             var messageEvent = new MessageEvent(this, tokenData, null, timestamp);
 #endif
-            if (!HandleData(messageEvent) && !handledResponse)
+            if (!HandleData(messageEvent))
             {
+                PendingRequest[] requests;
+                lock (pendingRequests)
+                {
+                    requests = pendingRequests.ToArray();
+                }
+
+                // Check if this message is an answer on any pending requests
+                foreach (var request in requests)
+                {
+                    if (request.Completed)
+                    {
+                        lock (pendingRequests)
+                        {
+                            pendingRequests.Remove(request);
+                        }
+                    }
+                    else
+                    if (request.CheckData(tokenData))
+                    {
+                        lock (pendingRequests)
+                        {
+                            pendingRequests.Remove(request);
+                        }
+
+                        return;
+                    }
+                }
+
                 SocketLog?.Error($"Socket {Socket.Id} Message not handled: " + tokenData.ToString());
                 UnhandledMessage?.Invoke(tokenData);
             }
@@ -203,7 +197,7 @@ namespace BinanceAPI.Sockets
                 {
                     if (socketClient.MessageMatchesHandler(messageEvent.JsonData, Subscription!.Request))
                     {
-                        messageEvent.JsonData = socketClient.ProcessTokenData(messageEvent.JsonData);
+                        messageEvent.JsonData = (JToken)messageEvent.JsonData;
                         Subscription.MessageHandler(messageEvent);
                         return true;
                     }
@@ -211,7 +205,7 @@ namespace BinanceAPI.Sockets
             }
             catch (Exception ex)
             {
-                SocketLog?.Error($"Socket {Socket.Id} Exception during message processing\r\nException: {ex.ToLogString()}\r\nData: {messageEvent.JsonData}");
+                SocketLog?.Error($"Socket {Socket.Id} Exception during message processing Data: {messageEvent.JsonData}", ex);
             }
 
             return false;
@@ -365,11 +359,9 @@ namespace BinanceAPI.Sockets
                                 {
                                     socketClient.sockets.TryRemove(Socket.Id, out _);
                                 }
-
-                                //    //Closed?.Invoke();
-                                //    // _ = Task.Run(() => ConnectionClosed?.Invoke());
-
                                 SocketLog?.Debug($"Socket {Socket.Id} failed to resubscribe after {ResubscribeTry} tries, closing");
+
+                                _ = Task.Run(() => ConnectionClosed?.Invoke());
                             }
                             else
                             {
@@ -379,10 +371,6 @@ namespace BinanceAPI.Sockets
                             if (Socket.IsOpen)
                             {
                                 await CloseAsync().ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                DisconnectTime = DateTime.UtcNow;
                             }
                         }
                         else
@@ -463,6 +451,7 @@ namespace BinanceAPI.Sockets
             }
 
             await Socket.CloseAsync().ConfigureAwait(false);
+            DisconnectTime = DateTime.UtcNow;
             Socket.Dispose();
         }
 
