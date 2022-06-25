@@ -1,3 +1,7 @@
+### Version 6.0.3.9
+- [x] Another refactor of `WebSocket` for some small gains
+- [x] Fix a `Task` that wasn't Awaited correctly
+
 ### Version 6.0.3.8
 - [x] Some Cleanup
 
