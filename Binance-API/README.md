@@ -1,3 +1,9 @@
+### Version 6.0.4.1
+- [x] Improve `Connected` indicator for `Sockets`
+- [x] Rename `Reconnecting` to `Connecting`
+- [x] Improve `Connecting` indicator for `Sockets`
+- [x] Rename `Sockets` for clarity
+
 ### Version 6.0.4.0
 - [x] Another refactor of `WebSocket` for some small gains
 - [x] Fix a `Task` that wasn't Awaited correctly
