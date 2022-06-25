@@ -154,63 +154,6 @@
             The addresses to connect to binance.us.
             </summary>
         </member>
-        <member name="T:BinanceAPI.Authentication.PrivateKey">
-            <summary>
-            Private key info
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Authentication.PrivateKey.Key">
-            <summary>
-            The private key
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Authentication.PrivateKey.Passphrase">
-            <summary>
-            The private key's pass phrase
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Authentication.PrivateKey.IsEncrypted">
-            <summary>
-            Indicates if the private key is encrypted or not
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.#ctor(System.Security.SecureString,System.Security.SecureString)">
-            <summary>
-            Create a private key providing an encrypted key information
-            </summary>
-            <param name="key">The private key used for signing</param>
-            <param name="passphrase">The private key's passphrase</param>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.#ctor(System.String,System.String)">
-            <summary>
-            Create a private key providing an encrypted key information
-            </summary>
-            <param name="key">The private key used for signing</param>
-            <param name="passphrase">The private key's passphrase</param>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.#ctor(System.Security.SecureString)">
-            <summary>
-            Create a private key providing an unencrypted key information
-            </summary>
-            <param name="key">The private key used for signing</param>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.#ctor(System.String)">
-            <summary>
-            Create a private key providing an encrypted key information
-            </summary>
-            <param name="key">The private key used for signing</param>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.Copy">
-            <summary>
-            Copy the private key
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Authentication.PrivateKey.Dispose">
-            <summary>
-            Dispose
-            </summary>
-        </member>
         <member name="T:BinanceAPI.BinanceHelpers">
             <summary>
             Helper methods for the Binance API
