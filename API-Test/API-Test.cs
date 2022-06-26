@@ -34,7 +34,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.4.1 Test - Connection Status - https://i.imgur.com/ceKg211.png
+// 6.0.4.3 Test - Connection Status - https://i.imgur.com/AVwQ1o5.png
 
 namespace API_Test
 {
@@ -94,7 +94,7 @@ namespace API_Test
             BinanceClientHost client = new BinanceClientHost(serverTimeStartWaitToken.Token);
             SocketClientHost socketClient = new SocketClientHost();
 
-            // [Version 6.0.3.0] Start Test
+            // [Version 6.0.4.3] Start Test
             Trace.WriteLine("Starting Test..");
             Task.Run(async () =>
             {
@@ -147,6 +147,60 @@ namespace API_Test
                     }
                 }).ConfigureAwait(false);
 
+                // SOCKET TEST
+                _ = Task.Run(() =>
+                {
+                    //var _breakpoint = socketClient;
+                    //_ = _breakpoint;
+
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(2000).ConfigureAwait(false);
+
+                        // Create Update Subscription
+                        UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
+                        {
+                            // Uncomment to see output from the Socket
+                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
+                        }).Result.Data;
+
+                        // Subscribe to Update Subscription Status Changed Events
+                        sub.StatusChanged += BinanceSocket_StatusChanged;
+
+                        // Connect Update Subscription
+                        _ = sub.ConnectAsync().ConfigureAwait(false);
+
+                        // work work
+                        await Task.Delay(5000).ConfigureAwait(false);
+
+                        // Reconnect Update Subscription
+                        await sub.ReconnectAsync().ConfigureAwait(false);
+
+                        // work work
+                        await Task.Delay(5000).ConfigureAwait(false);
+
+                        // Reconnect Update Subscription
+                        await sub.ReconnectAsync().ConfigureAwait(false);
+
+                        // work work
+                        await Task.Delay(5000).ConfigureAwait(false);
+
+                        // Destroy everything and unsubscribe, this should cause UnsubscribeAllAsync to do nothing
+                        await sub.CloseAndDisposeAsync().ConfigureAwait(false);
+
+                        //// TEST BEGINS
+                        //for (int i = 0; i < 1000; i++)
+                        //{
+                        //    await Task.Delay(1).ConfigureAwait(false);
+
+                        //    // Last Subscription Socket Action Time In Ticks
+                        //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
+                        //}
+
+                        _ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
+                    }).ConfigureAwait(false);
+                });
+
                 //// ORDER TEST
                 //_ = Task.Run(async () =>
                 //{
@@ -190,47 +244,6 @@ namespace API_Test
                 //        }
                 //    }
                 //}).ConfigureAwait(false);
-
-                // SOCKET TEST
-                _ = Task.Run(() =>
-                {
-                    //var _breakpoint = socketClient;
-                    //_ = _breakpoint;
-
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(2000).ConfigureAwait(false);
-
-                        UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
-                        {
-                            // Uncomment to see output from the Socket
-                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
-                        }).Result.Data;
-
-                        sub.StatusChanged += BinanceSocket_StatusChanged;
-
-                        await Task.Delay(2000).ConfigureAwait(false);
-
-                        // Reconnect Update Subscription
-                        await sub.ReconnectAsync().ConfigureAwait(false);
-
-                        await Task.Delay(5000).ConfigureAwait(false);
-
-                        // Reconnect Update Subscription
-                        await sub.ReconnectAsync().ConfigureAwait(false);
-
-                        //// TEST BEGINS
-                        //for (int i = 0; i < 1000; i++)
-                        //{
-                        //    await Task.Delay(1).ConfigureAwait(false);
-
-                        //    // Last Subscription Socket Action Time In Ticks
-                        //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
-                        //}
-
-                        // _ = socketClient.UnsubscribeAllAsync();
-                    }).ConfigureAwait(false);
-                });
             });
 
             Console.ReadLine();

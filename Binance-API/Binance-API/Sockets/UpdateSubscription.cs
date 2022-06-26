@@ -34,7 +34,7 @@ namespace BinanceAPI.Sockets
     /// </summary>
     public class UpdateSubscription
     {
-        internal DateTime _lastReconnectAttempt = DateTime.MinValue;
+        internal DateTime _lastConnectAttempt = DateTime.MinValue;
 
         /// <summary>
         /// The Connection
@@ -118,10 +118,28 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         public async Task ReconnectAsync()
         {
-            if (DateTime.UtcNow > (_lastReconnectAttempt + TimeSpan.FromSeconds(5)))
+            if (DateTime.UtcNow > (_lastConnectAttempt + TimeSpan.FromSeconds(5)))
             {
-                _lastReconnectAttempt = DateTime.UtcNow;
+                _lastConnectAttempt = DateTime.UtcNow;
                 await Connection.BinanceSocket.InternalResetAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                Logging.SocketLog?.Info("Attempted to connect Socket [" + Connection.BinanceSocket.Id + "] when it is likely already connecting..");
+            }
+        }
+
+        /// <summary>
+        /// Close the socket to cause a reconnect
+        /// You can only attempt this once every 5 Seconds
+        /// </summary>
+        /// <returns></returns>
+        public async Task ConnectAsync()
+        {
+            if (DateTime.UtcNow > (_lastConnectAttempt + TimeSpan.FromSeconds(5)))
+            {
+                _lastConnectAttempt = DateTime.UtcNow;
+                await Connection.BinanceSocket.InternalResetAsync(true).ConfigureAwait(false);
             }
             else
             {

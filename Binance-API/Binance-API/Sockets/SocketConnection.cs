@@ -79,7 +79,7 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// If the socket should be reconnected upon closing
         /// </summary>
-        public bool ShouldReconnect { get; set; }
+        public bool ShouldReconnect { get; set; } = true;
 
         /// <summary>
         /// Time of disconnecting
@@ -107,12 +107,13 @@ namespace BinanceAPI.Sockets
 
             BinanceSocket = socket;
             BinanceSocket.StatusChanged += SocketOnStatusChanged;
+            BinanceSocket.OnConnect += SocketOnConnect;
             BinanceSocket.OnMessage += ProcessMessage;
             BinanceSocket.OnClose += SocketOnClose;
             BinanceSocket.OnOpen += SocketOnOpen;
         }
 
-        private void SocketOnStatusChanged(ConnectionStatus obj)
+        internal void SocketOnStatusChanged(ConnectionStatus obj)
         {
             SocketConnectionStatus = obj;
             ConnectionStatusChanged?.Invoke(obj);
@@ -283,6 +284,105 @@ namespace BinanceAPI.Sockets
             SocketLog?.Debug($"Socket {BinanceSocket.Id} connected to {BinanceSocket.Url}");
         }
 
+        private void SocketOnConnect()
+        {
+            _ = Task.Run(async () =>
+            {
+                await ReconnectAttempt().ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+
+        internal async Task ReconnectAttempt()
+        {
+            if (SocketConnectionStatus == ConnectionStatus.Connecting)
+            {
+                return; // Already connecting
+            }
+
+            var ReconnectTry = 0;
+            var ResubscribeTry = 0;
+
+            // Connection
+            while (ShouldReconnect)
+            {
+                await Task.Delay(1980).ConfigureAwait(false);
+
+                // Should reconnect changed
+                if (!ShouldReconnect)
+                {
+                    SocketOnStatusChanged(ConnectionStatus.Disconnected);
+                    return;
+                }
+
+                ReconnectTry++;
+                BinanceSocket.NewSocket(true);
+                if (!await BinanceSocket.ConnectAsync().ConfigureAwait(false)) // Try Connect
+                {
+                    if (ReconnectTry >= socketClient.MaxReconnectTries)
+                    {
+                        if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
+                        {
+                            socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
+                        }
+
+                        //Closed?.Invoke();
+
+                        ShouldReconnect = false;
+                        SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to reconnect after {ReconnectTry} tries, closing");
+                        return; // Failed
+                    } // Fail And Return
+
+                    SocketLog?.Debug($"[{DateTime.UtcNow - DisconnectTime}]Socket [{BinanceSocket.Id}]  Failed to Reconnect - Attempts: {ReconnectTry}/{socketClient.MaxReconnectTries}");
+                    // Try Again
+                }
+                else
+                {
+                    SocketLog?.Info($"[{DateTime.UtcNow - DisconnectTime}]Socket [{BinanceSocket.Id}] Reconnected - Attempts: {ReconnectTry}/{socketClient.MaxReconnectTries}");
+                    break; // Reconnected
+                }
+            }
+
+            // Subscription
+            while (ShouldReconnect)
+            {
+                var reconnectResult = await ProcessResubscriptionAsync().ConfigureAwait(false);
+                if (!reconnectResult)
+                {
+                    ResubscribeTry++;
+
+                    if (ResubscribeTry >= socketClient.MaxReconnectTries)
+                    {
+                        ShouldReconnect = false;
+                        if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
+                        {
+                            socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
+                        }
+                        SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to resubscribe after {ResubscribeTry} tries, closing");
+
+                        _ = Task.Run(() => ConnectionClosed?.Invoke());
+                    }
+                    else
+                    {
+                        SocketLog?.Debug($"Socket {BinanceSocket.Id} resubscribing subscription on reconnected socket{(socketClient.MaxReconnectTries != null ? $", try {ResubscribeTry}/{socketClient.MaxReconnectTries}" : "")}. Disconnecting and reconnecting.");
+                    }
+
+                    if (BinanceSocket.IsOpen)
+                    {
+                        await CloseAndDisposeAsync().ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    ReconnectTry = 0;
+                    ResubscribeTry = 0;
+                    SocketLog?.Debug($"Socket {BinanceSocket.Id} data connection restored.");
+                    _ = Task.Run(() => ConnectionRestored?.Invoke(DisconnectTime.HasValue ? DateTime.UtcNow - DisconnectTime.Value : TimeSpan.FromSeconds(0))).ConfigureAwait(false);
+
+                    break;
+                }
+            }
+        }
+
         /// <summary>
         /// Handler for a socket closing. Reconnects the socket if needed, or removes it from the active socket list if not
         /// </summary>
@@ -313,100 +413,12 @@ namespace BinanceAPI.Sockets
 
                 _ = Task.Run(async () =>
                 {
-                    var ReconnectTry = 0;
-                    var ResubscribeTry = 0;
-
-                    // Connection
-                    while (ShouldReconnect)
-                    {
-                        await Task.Delay(1980).ConfigureAwait(false);
-
-                        // Should reconnect changed
-                        if (!ShouldReconnect)
-                        {
-                            SocketOnStatusChanged(ConnectionStatus.Disconnected);
-                            return;
-                        }
-
-                        ReconnectTry++;
-                        BinanceSocket.NewSocket(true);
-                        if (!await BinanceSocket.ConnectAsync().ConfigureAwait(false)) // Try Connect
-                        {
-                            if (ReconnectTry >= socketClient.MaxReconnectTries)
-                            {
-                                if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
-                                {
-                                    socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
-                                }
-
-                                //Closed?.Invoke();
-
-                                ShouldReconnect = false;
-                                SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to reconnect after {ReconnectTry} tries, closing");
-                                return; // Failed
-                            } // Fail And Return
-
-                            SocketLog?.Debug($"[{DateTime.UtcNow - DisconnectTime}]Socket [{BinanceSocket.Id}]  Failed to Reconnect - Attempts: {ReconnectTry}/{socketClient.MaxReconnectTries}");
-                            // Try Again
-                        }
-                        else
-                        {
-                            SocketLog?.Info($"[{DateTime.UtcNow - DisconnectTime}]Socket [{BinanceSocket.Id}] Reconnected - Attempts: {ReconnectTry}/{socketClient.MaxReconnectTries}");
-                            break; // Reconnected
-                        }
-                    }
-
-                    // Subscription
-                    while (ShouldReconnect)
-                    {
-                        var reconnectResult = await ProcessResubscriptionAsync().ConfigureAwait(false);
-                        if (!reconnectResult)
-                        {
-                            ResubscribeTry++;
-
-                            if (ResubscribeTry >= socketClient.MaxReconnectTries)
-                            {
-                                ShouldReconnect = false;
-                                if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
-                                {
-                                    socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
-                                }
-                                SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to resubscribe after {ResubscribeTry} tries, closing");
-
-                                _ = Task.Run(() => ConnectionClosed?.Invoke());
-                            }
-                            else
-                            {
-                                SocketLog?.Debug($"Socket {BinanceSocket.Id} resubscribing subscription on reconnected socket{(socketClient.MaxReconnectTries != null ? $", try {ResubscribeTry}/{socketClient.MaxReconnectTries}" : "")}. Disconnecting and reconnecting.");
-                            }
-
-                            if (BinanceSocket.IsOpen)
-                            {
-                                await CloseAndDisposeAsync().ConfigureAwait(false);
-                            }
-                        }
-                        else
-                        {
-                            ReconnectTry = 0;
-                            ResubscribeTry = 0;
-                            SocketLog?.Debug($"Socket {BinanceSocket.Id} data connection restored.");
-                            _ = Task.Run(() => ConnectionRestored?.Invoke(DisconnectTime.HasValue ? DateTime.UtcNow - DisconnectTime.Value : TimeSpan.FromSeconds(0))).ConfigureAwait(false);
-
-                            break;
-                        }
-                    }
+                    await ReconnectAttempt().ConfigureAwait(false);
                 }).ConfigureAwait(false);
             }
             else
             {
-                SocketLog?.Info($"Socket {BinanceSocket.Id} closed");
-
-                if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
-                {
-                    socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
-                }
-
-                SocketOnStatusChanged(ConnectionStatus.Disconnected);
+                CloseAndDisposeAsync().ConfigureAwait(false);
 
                 _ = Task.Run(() =>
                 {
@@ -454,13 +466,15 @@ namespace BinanceAPI.Sockets
         /// <returns></returns>
         public async Task CloseAndDisposeAsync()
         {
+            SocketLog?.Info($"Socket {BinanceSocket.Id} closed");
             ShouldReconnect = false;
+            await BinanceSocket.InternalResetAsync().ConfigureAwait(false);
+
             if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
             {
                 socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
             }
 
-            await BinanceSocket.InternalResetAsync().ConfigureAwait(false);
             DisconnectTime = DateTime.UtcNow;
             BinanceSocket.Dispose();
         }
@@ -483,9 +497,14 @@ namespace BinanceAPI.Sockets
                 var result = await socketClient.UnsubscribeAsync(this, subscription).ConfigureAwait(false);
                 if (result)
                 {
-                    SocketLog?.Debug($"Socket {BinanceSocket.Id} subscription successfully unsubscribed, Closing connection");
-                    await CloseAndDisposeAsync().ConfigureAwait(false);
+                    SocketLog?.Debug($"Socket {BinanceSocket.Id} subscription successfully unsubscribed, Closing connection..");
                 }
+                else
+                {
+                    SocketLog?.Debug($"Socket {BinanceSocket.Id} subscription seems to already be unsubscribed, Closing connection..");
+                }
+
+                await CloseAndDisposeAsync().ConfigureAwait(false);
             }
         }
     }

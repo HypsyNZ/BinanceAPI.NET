@@ -326,6 +326,11 @@
             Socket closed event
             </summary>
         </member>
+        <member name="E:BinanceAPI.Clients.BaseSocketClient.OnConnect">
+            <summary>
+            Socket connect event
+            </summary>
+        </member>
         <member name="E:BinanceAPI.Clients.BaseSocketClient.OnMessage">
             <summary>
             Socket message received event
@@ -359,6 +364,11 @@
         <member name="F:BinanceAPI.Clients.BaseSocketClient.closeHandlers">
             <summary>
             Handlers for when the connection is closed
+            </summary>
+        </member>
+        <member name="F:BinanceAPI.Clients.BaseSocketClient.connectHandlers">
+            <summary>
+            Handlers for when the the connecting is opening
             </summary>
         </member>
         <member name="F:BinanceAPI.Clients.BaseSocketClient.messageHandlers">
@@ -434,7 +444,7 @@
             </summary>
             <returns>True if successfull</returns>
         </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.InternalResetAsync">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.InternalResetAsync(System.Boolean)">
             <summary>
             Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
             </summary>
@@ -7943,6 +7953,13 @@
             <returns></returns>
         </member>
         <member name="M:BinanceAPI.Sockets.UpdateSubscription.ReconnectAsync">
+            <summary>
+            Close the socket to cause a reconnect
+            You can only attempt this once every 5 Seconds
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:BinanceAPI.Sockets.UpdateSubscription.ConnectAsync">
             <summary>
             Close the socket to cause a reconnect
             You can only attempt this once every 5 Seconds

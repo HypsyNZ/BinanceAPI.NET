@@ -60,6 +60,15 @@ namespace BinanceAPI.Clients
         }
 
         /// <summary>
+        /// Socket connect event
+        /// </summary>
+        public event Action OnConnect
+        {
+            add => connectHandlers.Add(value);
+            remove => connectHandlers.Remove(value);
+        }
+
+        /// <summary>
         /// Socket message received event
         /// </summary>
         public event Action<string> OnMessage
@@ -97,7 +106,6 @@ namespace BinanceAPI.Clients
         private Task? _sendTask;
         private Task? _receiveTask;
 
-        private CancellationTokenSource _ctsSource;
         private CancellationTokenSource _ctsDigest;
 
         private Encoding _encoding = Encoding.UTF8;
@@ -107,7 +115,7 @@ namespace BinanceAPI.Clients
         private ConcurrentQueue<byte[]> _sendBuffer;
         private List<DateTime> _outgoingMessages;
 
-        private volatile bool _closing;
+        private volatile bool _resetting;
         private volatile bool _startedSent;
         private volatile bool _startedReceive;
 
@@ -125,6 +133,11 @@ namespace BinanceAPI.Clients
         /// Handlers for when the connection is closed
         /// </summary>
         protected readonly List<Action> closeHandlers = new();
+
+        /// <summary>
+        /// Handlers for when the the connecting is opening
+        /// </summary>
+        protected readonly List<Action> connectHandlers = new();
 
         /// <summary>
         /// Handlers for when a message is received
@@ -164,7 +177,7 @@ namespace BinanceAPI.Clients
         /// <summary>
         /// If the connection is closing
         /// </summary>
-        public bool IsClosing => _closing;
+        public bool IsClosing => _resetting;
 
         /// <summary>
         /// If the connection is open
@@ -212,14 +225,13 @@ namespace BinanceAPI.Clients
             _sendEvent = new AsyncResetEvent();
             _sendBuffer = new ConcurrentQueue<byte[]>();
 
-            _ctsSource = new CancellationTokenSource();
             _ctsDigest = new CancellationTokenSource();
 
             ClientSocket = new ClientWebSocket();
             ClientSocket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
             ClientSocket.Options.SetBuffer(65536, 65536);
 
-            _closing = false;
+            _resetting = false;
         }
 
         /// <summary>
@@ -300,30 +312,40 @@ namespace BinanceAPI.Clients
         /// Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
         /// </summary>
         /// <returns></returns>
-        public async Task InternalResetAsync()
+        public async Task InternalResetAsync(bool connectAttempt = false)
         {
-            if (_closing)
+            if (_resetting)
             {
                 return;
             }
 
-            _closing = true;
+            _resetting = true;
+            _ctsDigest.Cancel();
+            _sendEvent.Set();
 
-            if (ClientSocket.State == WebSocketState.Open)
+            if (connectAttempt)
             {
-                Logging.SocketLog?.Debug($"Socket {Id} is closing..");
-                await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
-                StatusChanged?.Invoke(ConnectionStatus.Disconnected);
-                _sendEvent.Set();
+                Logging.SocketLog?.Debug($"Connecting Socket {Id}..");
+                Handle(connectHandlers);
             }
             else
             {
-                Logging.SocketLog?.Debug($"Socket {Id} was already closed..");
-            }
+                if (ClientSocket.State == WebSocketState.Open)
+                {
+                    // Websocket is in the process of being aborted here because the digest loop is always cancelled
+                    // Which tells the server at the other end its okay to hang up without responding
+                    // Trying to "Close" the socket here will always result in some Exception or another
 
-            _ctsSource.Cancel();
-            _ctsDigest.Cancel();
-            Handle(closeHandlers);
+                    Logging.SocketLog?.Debug($"Socket {Id} is closing..");
+                    StatusChanged?.Invoke(ConnectionStatus.Disconnected);
+                }
+                else
+                {
+                    Logging.SocketLog?.Debug($"Socket {Id} was already closed..");
+                }
+
+                Handle(closeHandlers);
+            }
         }
 
         /// <summary>
@@ -332,7 +354,7 @@ namespace BinanceAPI.Clients
         /// <param name="data">Data to send</param>
         public void Send(string data)
         {
-            if (_closing)
+            if (_resetting)
             {
                 return;
             }
@@ -355,10 +377,10 @@ namespace BinanceAPI.Clients
             try
             {
                 // Send Loop
-                while (!_ctsSource.Token.IsCancellationRequested)
+                while (!_resetting)
                 {
                     await _sendEvent.WaitAsync().ConfigureAwait(false);
-                    while (!_ctsSource.Token.IsCancellationRequested)
+                    while (!_resetting)
                     {
                         bool s = _sendBuffer.TryDequeue(out var data);
                         if (s)
@@ -388,7 +410,7 @@ namespace BinanceAPI.Clients
             _startedReceive = true;
             try
             {
-                while (!_ctsDigest.Token.IsCancellationRequested)
+                while (!_resetting)
                 {
                     var taken = await semaphoreLight.IsTakenAsync(ReceiveLoopAsync, false).ConfigureAwait(false);
                     if (taken)
@@ -423,10 +445,18 @@ namespace BinanceAPI.Clients
                 MemoryStream? memoryStream = null;
                 WebSocketReceiveResult? receiveResult = null;
 
-                while (!_ctsDigest.Token.IsCancellationRequested)
+                while (!_resetting)
                 {
-                    receiveResult = await ClientSocket.ReceiveAsync(buffer, default).ConfigureAwait(false);
+                    receiveResult = await ClientSocket.ReceiveAsync(buffer, _ctsDigest.Token).ConfigureAwait(false);
                     received += receiveResult.Count;
+
+                    if (receiveResult == null)
+                    {
+#if DEBUG
+                        Logging.SocketLog?.Debug($"Socket {Id} received null result and returned to look for more work..");
+#endif
+                        return;
+                    }
 
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
@@ -471,14 +501,6 @@ namespace BinanceAPI.Clients
                         return;
                     }
                 }
-#if DEBUG
-                if (receiveResult == null)
-                {
-                    Logging.SocketLog?.Debug($"Socket {Id} received null result and returned to look for more work..");
-
-                    return;
-                }
-#endif
             }
             catch
             {
@@ -522,8 +544,9 @@ namespace BinanceAPI.Clients
 
                 Handle(messageHandlers, strData);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Logging.SocketLog?.Error("Exception during message handling loop: ", ex);
                 return;
             }
         }
@@ -535,7 +558,7 @@ namespace BinanceAPI.Clients
         protected void Handle(List<Action> handlers)
         {
             LastActionTime = DateTime.UtcNow;
-            foreach (var handle in handlers)
+            foreach (var handle in handlers.ToArray())
                 handle?.Invoke();
         }
 
@@ -548,7 +571,7 @@ namespace BinanceAPI.Clients
         protected void Handle<T>(List<Action<T>> handlers, T data)
         {
             LastActionTime = DateTime.UtcNow;
-            foreach (var handle in handlers)
+            foreach (var handle in handlers.ToArray())
                 handle?.Invoke(data);
         }
 
@@ -574,7 +597,6 @@ namespace BinanceAPI.Clients
             Logging.SocketLog?.Debug($"Socket {Id} disposing..");
 #endif
             ClientSocket.Dispose();
-            _ctsSource.Dispose();
             _ctsDigest.Dispose();
 
             errorHandlers.Clear();

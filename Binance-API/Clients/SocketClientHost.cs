@@ -205,9 +205,7 @@ namespace BinanceAPI.Clients
 
             // Add a subscription on the socket connection
             subscription = AddSubscription(request, true, socketConnection, dataHandler);
-
             subscription.Confirmed = true;
-            socketConnection.ShouldReconnect = true;
             return new CallResult<UpdateSubscription>(new UpdateSubscription(socketConnection, subscription), null);
         }
 
@@ -321,7 +319,7 @@ namespace BinanceAPI.Clients
         /// <returns></returns>
         public async Task<bool> UnsubscribeAsync(SocketConnection connection, SocketSubscription subscription)
         {
-            var result = false;
+            var returnresult = false;
             var topics = ((BinanceSocketRequest)subscription.Request!).Params;
 
             var unsub = new BinanceSocketRequest
@@ -350,13 +348,13 @@ namespace BinanceAPI.Clients
                     var result = data["result"];
                     if (result?.Type == JTokenType.Null)
                     {
-                        result = true;
+                        returnresult = true;
                         return true;
                     }
 
                     return true;
                 }).ConfigureAwait(false);
-            return result;
+            return returnresult;
         }
 
         /// <summary>
