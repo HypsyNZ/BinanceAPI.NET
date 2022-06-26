@@ -1,3 +1,7 @@
+### Version 6.0.4.3
+- [x] `UpdateSubscriptions` are now manually connected using [`sub.ConnectAsync()`](<https://github.com/HypsyNZ/BinanceAPI.NET/blob/c02c8c712abbca2e528daf316e65ca0b95067b90/API-Test/API-Test.cs#L171>)
+- [x] Please [see the example](<https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Simple-Socket-Example>) for more information
+
 ### Version 6.0.4.2
 - [x] This release has multiple breaking changes that you should be able to fix in about 10 seconds.
 - [x] Improve `Connected` indicator for `UserSubscriptions`
