@@ -43,9 +43,9 @@ namespace BinanceAPI.Clients
         private const int PING_DIVIDED_BY_2 = 5000;
         private static bool _guesserRanToCompletion = false;
 
-        private static BinanceClient? Client { get; set; }
+        private static BinanceClientHost? Client { get; set; }
         private static Stopwatch ServerTimeOffset = new Stopwatch();
-        private static BinanceClientOptions? options;
+        private static BinanceClientHostOptions? options;
         private static readonly object ExistsLock = new object();
         private static readonly object UpdateLock = new object();
 
@@ -115,7 +115,7 @@ namespace BinanceAPI.Clients
         /// </summary>
         /// <param name="clientOptions"></param>
         /// <param name="waitToken">Cancellation token for the Start Wait</param>
-        public static async Task Start(BinanceClientOptions clientOptions, CancellationToken waitToken)
+        public static async Task Start(BinanceClientHostOptions clientOptions, CancellationToken waitToken)
         {
             if (!Exists)
             {

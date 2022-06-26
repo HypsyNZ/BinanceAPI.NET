@@ -61,28 +61,6 @@ namespace BinanceAPI.Options
             HttpClient = httpClient;
         }
 
-        /// <summary>
-        /// Create a copy of the options
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Copy<T>() where T : RestClientOptions, new()
-        {
-            var copy = new T
-            {
-                BaseAddress = BaseAddress,
-                LogLevel = LogLevel,
-                Proxy = Proxy,
-                RequestTimeout = RequestTimeout,
-                HttpClient = HttpClient
-            };
-
-            if (ApiCredentials != null)
-                copy.ApiCredentials = ApiCredentials.Copy();
-
-            return copy;
-        }
-
         /// <inheritdoc />
         public override string ToString()
         {

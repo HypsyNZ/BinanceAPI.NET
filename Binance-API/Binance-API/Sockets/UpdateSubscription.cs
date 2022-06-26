@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using System;
 using System.Threading.Tasks;
@@ -33,6 +34,8 @@ namespace BinanceAPI.Sockets
     /// </summary>
     public class UpdateSubscription
     {
+        internal DateTime _lastReconnectAttempt = DateTime.MinValue;
+
         /// <summary>
         /// The Connection
         /// </summary>
@@ -70,6 +73,15 @@ namespace BinanceAPI.Sockets
         }
 
         /// <summary>
+        /// Occurs when the status of the socket changes
+        /// </summary>
+        public event Action<ConnectionStatus>? StatusChanged
+        {
+            add => Connection.ConnectionStatusChanged += value;
+            remove => Connection.ConnectionStatusChanged -= value;
+        }
+
+        /// <summary>
         /// The id of the socket
         /// </summary>
         public int SocketId => Connection.BinanceSocket.Id;
@@ -91,21 +103,30 @@ namespace BinanceAPI.Sockets
         }
 
         /// <summary>
-        /// Close the subscription
+        /// Close the subscription and release the managed resources it is consuming
         /// </summary>
         /// <returns></returns>
-        public Task CloseAsync()
+        public Task CloseAndDisposeAsync()
         {
-            return Connection.CloseAsync(subscription);
+            return Connection.CloseAndDisposeSubscriptionAsync(subscription);
         }
 
         /// <summary>
         /// Close the socket to cause a reconnect
+        /// You can only attempt this once every 5 Seconds
         /// </summary>
         /// <returns></returns>
         public async Task ReconnectAsync()
         {
-            await Connection.BinanceSocket.CloseAsync().ConfigureAwait(false);
+            if (DateTime.UtcNow > (_lastReconnectAttempt + TimeSpan.FromSeconds(5)))
+            {
+                _lastReconnectAttempt = DateTime.UtcNow;
+                await Connection.BinanceSocket.InternalResetAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                Logging.SocketLog?.Info("Attempted to reconnect Socket [" + Connection.BinanceSocket.Id + "] when it is likely already reconnecting..");
+            }
         }
 
         /// <summary>

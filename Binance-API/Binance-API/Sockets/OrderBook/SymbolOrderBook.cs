@@ -383,7 +383,7 @@ namespace BinanceAPI.OrderBook
                 await _processTask.ConfigureAwait(false);
 
             if (subscription != null)
-                await subscription.CloseAsync().ConfigureAwait(false);
+                await subscription.CloseAndDisposeAsync().ConfigureAwait(false);
 #if DEBUG
             OrderBookLog?.Debug($"{Id} order book {Symbol} stopped");
 #endif

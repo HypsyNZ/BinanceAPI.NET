@@ -68,10 +68,10 @@ namespace BinanceAPI.SocketSubClients
 
         #endregion fields
 
-        private readonly SocketClient _baseClient;
+        private readonly SocketClientHost _baseClient;
         private readonly string _baseAddress;
 
-        internal BinanceSocketClientSpot(SocketClient baseClient, BinanceSocketClientOptions options)
+        internal BinanceSocketClientSpot(SocketClientHost baseClient, SocketClientHostOptions options)
         {
             _baseClient = baseClient;
             _baseAddress = options.BaseAddress;

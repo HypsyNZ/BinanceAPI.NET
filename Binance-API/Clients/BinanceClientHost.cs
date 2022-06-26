@@ -56,7 +56,7 @@ namespace BinanceAPI
     /// <summary>
     /// Base Rest Client
     /// </summary>
-    public class BinanceClient : BaseClient
+    public class BinanceClientHost : BaseClient
     {
         internal readonly TimeSpan DefaultReceiveWindow;
 
@@ -77,13 +77,13 @@ namespace BinanceAPI
         /// The Default Options or the Options that you Set
         /// <para>new BinanceClientOptions() creates the standard defaults regardless of what you set this to</para>
         /// </summary>
-        public static BinanceClientOptions DefaultOptions { get; set; } = new();
+        public static BinanceClientHostOptions DefaultOptions { get; set; } = new();
 
         /// <summary>
         /// Set the default options to be used when creating new clients
         /// </summary>
         /// <param name="options"></param>
-        public static void SetDefaultOptions(BinanceClientOptions options)
+        public static void SetDefaultOptions(BinanceClientHostOptions options)
         {
             DefaultOptions = options;
         }
@@ -91,7 +91,7 @@ namespace BinanceAPI
         /// <summary>
         /// Create a new instance of BinanceClient using the default options
         /// </summary>
-        public BinanceClient(CancellationToken waitToken = default) : this(DefaultOptions, waitToken)
+        public BinanceClientHost(CancellationToken waitToken = default) : this(DefaultOptions, waitToken)
         {
         }
 
@@ -100,7 +100,7 @@ namespace BinanceAPI
         /// </summary>
         /// <param name="options">BinanceClientOptions</param>
         /// <param name="waitToken">Wait token for Server Time Client</param>
-        public BinanceClient(BinanceClientOptions options, CancellationToken waitToken) : base(options)
+        public BinanceClientHost(BinanceClientHostOptions options, CancellationToken waitToken) : base(options)
         {
             if (options == null)
                 throw new ArgumentNullException(nameof(options));

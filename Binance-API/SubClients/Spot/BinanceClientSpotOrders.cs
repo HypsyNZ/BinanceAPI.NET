@@ -65,9 +65,9 @@ namespace BinanceAPI.SubClients.Spot
         private const string getAllOcoOrderEndpoint = "allOrderList";
         private const string getOpenOcoOrderEndpoint = "openOrderList";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientSpotOrder(BinanceClient baseClient)
+        internal BinanceClientSpotOrder(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }
@@ -181,7 +181,7 @@ namespace BinanceAPI.SubClients.Spot
                 receiveWindow,
                 ct).ConfigureAwait(false);
             if (result)
-                BinanceClient.OnOrderPlaced?.Invoke(null, result.Data);
+                BinanceClientHost.OnOrderPlaced?.Invoke(null, result.Data);
             return result;
         }
 
@@ -215,7 +215,7 @@ namespace BinanceAPI.SubClients.Spot
 
             var result = await _baseClient.SendRequestInternal<BinanceCanceledOrder>(GetUri.New(_baseClient.BaseAddress, cancelOrderEndpoint, api, signedVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
             if (result)
-                BinanceClient.OnOrderCanceled?.Invoke(null, result.Data);
+                BinanceClientHost.OnOrderCanceled?.Invoke(null, result.Data);
             return result;
         }
 

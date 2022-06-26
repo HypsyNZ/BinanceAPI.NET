@@ -59,9 +59,9 @@ namespace BinanceAPI.SubClients
         private const string lendingInterestHistoryEndpoint = "lending/union/interestHistory";
         private const string positionChangedEndpoint = "lending/positionChanged";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientLending(BinanceClient baseClient)
+        internal BinanceClientLending(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

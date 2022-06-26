@@ -45,9 +45,9 @@ namespace BinanceAPI.SubClients.Spot
         private const string api = "api";
         private const string userDataStreamVersion = "1";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientSpotUserStream(BinanceClient baseClient)
+        internal BinanceClientSpotUserStream(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

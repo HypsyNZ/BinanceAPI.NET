@@ -53,9 +53,9 @@ namespace BinanceAPI.SubClients.Margin
         private const string isolatedMarginSymbolEndpoint = "margin/isolated/pair";
         private const string isolatedMarginAllSymbolEndpoint = "margin/isolated/allPairs";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientMarginMarket(BinanceClient baseClient)
+        internal BinanceClientMarginMarket(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

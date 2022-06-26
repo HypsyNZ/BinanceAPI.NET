@@ -70,9 +70,9 @@ namespace BinanceAPI.SubClients
 
         private const string universalTransferEndpoint = "asset/transfer";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientGeneral(BinanceClient baseClient)
+        internal BinanceClientGeneral(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

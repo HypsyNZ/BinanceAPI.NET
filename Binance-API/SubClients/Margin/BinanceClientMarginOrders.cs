@@ -65,9 +65,9 @@ namespace BinanceAPI.SubClients.Margin
         private const string allMarginOCOOrderEndpoint = "margin/allOrderList";
         private const string openMarginOCOOrderEndpoint = "margin/openOrderList";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientMarginOrders(BinanceClient baseClient)
+        internal BinanceClientMarginOrders(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

@@ -34,7 +34,7 @@ namespace BinanceAPI.Objects
     /// <summary>
     /// Options for the binance client
     /// </summary>
-    public class BinanceClientOptions : RestClientOptions
+    public class BinanceClientHostOptions : RestClientOptions
     {
         /// <summary>
         /// Path to the Time Log
@@ -55,7 +55,7 @@ namespace BinanceAPI.Objects
         /// <summary>
         /// Constructor with default endpoints
         /// </summary>
-        public BinanceClientOptions() : this(BinanceApiAddresses.Default)
+        public BinanceClientHostOptions() : this(BinanceApiAddresses.Default)
         {
         }
 
@@ -63,7 +63,7 @@ namespace BinanceAPI.Objects
         /// Constructor with default endpoints
         /// </summary>
         /// <param name="client">HttpClient to use for requests from this client</param>
-        public BinanceClientOptions(HttpClient client) : this(BinanceApiAddresses.Default, client)
+        public BinanceClientHostOptions(HttpClient client) : this(BinanceApiAddresses.Default, client)
         {
         }
 
@@ -71,7 +71,7 @@ namespace BinanceAPI.Objects
         /// Constructor with custom endpoints
         /// </summary>
         /// <param name="addresses">The base addresses to use</param>
-        public BinanceClientOptions(BinanceApiAddresses addresses) : this(addresses.RestClientAddress, null)
+        public BinanceClientHostOptions(BinanceApiAddresses addresses) : this(addresses.RestClientAddress, null)
         {
         }
 
@@ -80,7 +80,7 @@ namespace BinanceAPI.Objects
         /// </summary>
         /// <param name="addresses">The base addresses to use</param>
         /// <param name="client">HttpClient to use for requests from this client</param>
-        public BinanceClientOptions(BinanceApiAddresses addresses, HttpClient client) : this(addresses.RestClientAddress, client)
+        public BinanceClientHostOptions(BinanceApiAddresses addresses, HttpClient client) : this(addresses.RestClientAddress, client)
         {
         }
 
@@ -88,7 +88,7 @@ namespace BinanceAPI.Objects
         /// Constructor with custom endpoints
         /// </summary>
         /// <param name="spotBaseAddress">Сustom url for the SPOT API</param>
-        public BinanceClientOptions(string spotBaseAddress) : this(spotBaseAddress, null)
+        public BinanceClientHostOptions(string spotBaseAddress) : this(spotBaseAddress, null)
         {
         }
 
@@ -97,7 +97,7 @@ namespace BinanceAPI.Objects
         /// </summary>
         /// <param name="spotBaseAddress">Сustom url for the SPOT API</param>
         /// <param name="client">HttpClient to use for requests from this client</param>
-        public BinanceClientOptions(string spotBaseAddress, HttpClient? client) : base(spotBaseAddress)
+        public BinanceClientHostOptions(string spotBaseAddress, HttpClient? client) : base(spotBaseAddress)
         {
             HttpClient = client;
         }

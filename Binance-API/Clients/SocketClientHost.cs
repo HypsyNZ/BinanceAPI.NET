@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Other;
 using BinanceAPI.Options;
@@ -42,13 +43,13 @@ namespace BinanceAPI.Clients
     /// <summary>
     /// Base for socket client implementations
     /// </summary>
-    public class SocketClient : BaseClient
+    public class SocketClientHost : BaseClient
     {
         /// <summary>
         /// The Default Options or the Options that you Set
         /// <para>new BinanceSocketClientOptions() creates the standard defaults regardless of what you set this to</para>
         /// </summary>
-        public static BinanceSocketClientOptions DefaultOptions = new();
+        public static SocketClientHostOptions DefaultOptions = new();
 
         /// <summary>
         /// Spot streams
@@ -60,7 +61,7 @@ namespace BinanceAPI.Clients
         /// <summary>
         /// Create a new instance of BinanceSocketClient with default options
         /// </summary>
-        public SocketClient() : this(DefaultOptions)
+        public SocketClientHost() : this(DefaultOptions)
         {
         }
 
@@ -72,7 +73,7 @@ namespace BinanceAPI.Clients
         /// Set the default options to be used when creating new socket clients
         /// </summary>
         /// <param name="options"></param>
-        public static void SetDefaultOptions(BinanceSocketClientOptions options)
+        public static void SetDefaultOptions(SocketClientHostOptions options)
         {
             DefaultOptions = options;
         }
@@ -103,10 +104,10 @@ namespace BinanceAPI.Clients
         /// </summary>
         public int MaxSocketConnections { get; protected set; } = 9999;
 
-        /// <inheritdoc cref="SocketClientOptions.MaxReconnectTries"/>
+        /// <inheritdoc cref="SocketClientHostOptions.MaxReconnectTries"/>
         public int? MaxReconnectTries { get; protected set; }
 
-        /// <inheritdoc cref="SocketClientOptions.MaxConcurrentResubscriptionsPerSocket"/>
+        /// <inheritdoc cref="SocketClientHostOptions.MaxConcurrentResubscriptionsPerSocket"/>
         public int MaxConcurrentResubscriptionsPerSocket { get; protected set; }
 
         /// <summary>
@@ -159,7 +160,7 @@ namespace BinanceAPI.Clients
         /// Create a new instance of BinanceSocketClient using provided options
         /// </summary>
         /// <param name="options">The options to use for this client</param>
-        public SocketClient(BinanceSocketClientOptions options) : base(options)
+        public SocketClientHost(SocketClientHostOptions options) : base(options)
         {
             Spot = new BinanceSocketClientSpot(this, options);
 
@@ -199,36 +200,13 @@ namespace BinanceAPI.Clients
             SocketConnection socketConnection;
             SocketSubscription subscription;
 
-            // Get a new or existing socket connection
             socketConnection = new SocketConnection(this, CreateSocket(url));
             socketConnection.UnhandledMessage += HandleUnhandledMessage;
 
             // Add a subscription on the socket connection
             subscription = AddSubscription(request, true, socketConnection, dataHandler);
 
-            var needsConnecting = !socketConnection.Connected;
-
-            var connectResult = await ConnectIfNeededAsync(socketConnection, authenticated).ConfigureAwait(false);
-            if (!connectResult)
-                return new CallResult<UpdateSubscription>(null, connectResult.Error);
-            if (needsConnecting)
-                SocketLog?.Debug($"Socket {socketConnection.BinanceSocket.Id} connected to {url} {(request == null ? "" : "with request " + JsonConvert.SerializeObject(request))}");
-            if (request != null)
-            {
-                // Send the request and wait for answer
-                var subResult = await SubscribeAndWaitAsync(socketConnection, request, subscription).ConfigureAwait(false);
-                if (!subResult)
-                {
-                    await socketConnection.CloseAsync(subscription).ConfigureAwait(false);
-                    return new CallResult<UpdateSubscription>(null, subResult.Error);
-                }
-            }
-            else
-            {
-                // No request to be sent, so just mark the subscription as comfirmed
-                subscription.Confirmed = true;
-            }
-
+            subscription.Confirmed = true;
             socketConnection.ShouldReconnect = true;
             return new CallResult<UpdateSubscription>(new UpdateSubscription(socketConnection, subscription), null);
         }
@@ -259,7 +237,7 @@ namespace BinanceAPI.Clients
         /// <returns></returns>
         protected async Task<CallResult<bool>> ConnectIfNeededAsync(SocketConnection socket, bool authenticated)
         {
-            if (socket.Connected)
+            if (socket.SocketConnectionStatus == ConnectionStatus.Connected)
                 return new CallResult<bool>(true, null);
 
             var connectResult = await ConnectSocketAsync(socket).ConfigureAwait(false);
@@ -489,7 +467,7 @@ namespace BinanceAPI.Clients
 #if DEBUG
             SocketLog?.Info("Closing subscription " + subscription.Id);
 #endif
-            await subscription.CloseAsync().ConfigureAwait(false);
+            await subscription.CloseAndDisposeAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -508,7 +486,7 @@ namespace BinanceAPI.Clients
                     var socketList = sockets.Values;
                     foreach (var sub in socketList)
                     {
-                        tasks.Add(sub.CloseAsync());
+                        tasks.Add(sub.CloseAndDisposeAsync());
                     }
                 }
 

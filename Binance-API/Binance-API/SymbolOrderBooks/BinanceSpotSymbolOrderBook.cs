@@ -38,8 +38,8 @@ namespace BinanceAPI.SymbolOrderBooks
     /// </summary>
     public class BinanceSpotSymbolOrderBook : SymbolOrderBook
     {
-        private readonly BinanceClient _restClient;
-        private readonly SocketClient _socketClient;
+        private readonly BinanceClientHost _restClient;
+        private readonly SocketClientHost _socketClient;
         private readonly bool _restOwner;
         private readonly bool _socketOwner;
         private readonly int? _updateInterval;
@@ -53,8 +53,8 @@ namespace BinanceAPI.SymbolOrderBooks
         {
             Levels = options?.Limit;
             _updateInterval = options?.UpdateInterval;
-            _socketClient = options?.SocketClient ?? new SocketClient();
-            _restClient = options?.RestClient ?? new BinanceClient();
+            _socketClient = options?.SocketClient ?? new SocketClientHost();
+            _restClient = options?.RestClient ?? new BinanceClientHost();
             _restOwner = options?.RestClient == null;
             _socketOwner = options?.SocketClient == null;
         }

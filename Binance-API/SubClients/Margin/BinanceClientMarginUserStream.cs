@@ -44,9 +44,9 @@ namespace BinanceAPI.SubClients.Margin
         private const string keepListenKeyAliveEndpoint = "userDataStream";
         private const string closeListenKeyEndpoint = "userDataStream";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientMarginUserStream(BinanceClient baseClient)
+        internal BinanceClientMarginUserStream(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

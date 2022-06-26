@@ -24,6 +24,7 @@
 
 using BinanceAPI;
 using BinanceAPI.Clients;
+using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Sockets;
 using SimpleLog4.NET;
@@ -33,7 +34,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.3.7 Test - Time Sync Changes - https://i.imgur.com/KLI7Jat.png
+// 6.0.4.1 Test - Connection Status - https://i.imgur.com/ceKg211.png
+
 namespace API_Test
 {
     internal class Program
@@ -51,7 +53,7 @@ namespace API_Test
             Console.WindowHeight = (int)(Console.LargestWindowHeight / 2.5);
 
             // Default Client Options
-            var options = new BinanceClientOptions()
+            var options = new BinanceClientHostOptions()
             {
                 BaseAddress = "http://api3.binance.com",
                 LogLevel = LogLevel.Trace,
@@ -62,10 +64,10 @@ namespace API_Test
                 ReceiveWindow = TimeSpan.FromMilliseconds(1000)
             };
 
-            BinanceClient.SetDefaultOptions(options);
+            BinanceClientHost.SetDefaultOptions(options);
 
             // Default Socket Client Options
-            SocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
+            SocketClientHost.SetDefaultOptions(new SocketClientHostOptions()
             {
                 LogLevel = LogLevel.Debug,
                 LogPath = socketLogs,
@@ -74,10 +76,10 @@ namespace API_Test
                 MaxReconnectTries = 50
             });
 
-            var YouDontNeedToCopyTheDefaultsBtw = new BinanceClientOptions();
-            var TheDefaultsThatYouSetOnLineSeventy = BinanceClient.DefaultOptions;
+            var YouDontNeedToCopyTheDefaultsBtw = new BinanceClientHostOptions();
+            var TheDefaultsThatYouSetOnLineSeventy = BinanceClientHost.DefaultOptions;
 
-            //_ = true; // breakpoint here and read the values;
+            _ = true; // breakpoint here and read the values;
 
             //#if DEBUG
             //            Json.ShouldCheckObjects = true;
@@ -86,11 +88,11 @@ namespace API_Test
 
             // API Keys need to be set to go any further
             // They don't have to be valid they just have to be set
-            //  BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
+            BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
 
             // Create a Binance Client, It will start the Server Time Client for you
-            BinanceClient client = new BinanceClient(serverTimeStartWaitToken.Token);
-            SocketClient socketClient = new SocketClient();
+            BinanceClientHost client = new BinanceClientHost(serverTimeStartWaitToken.Token);
+            SocketClientHost socketClient = new SocketClientHost();
 
             // [Version 6.0.3.0] Start Test
             Trace.WriteLine("Starting Test..");
@@ -192,8 +194,6 @@ namespace API_Test
                 // SOCKET TEST
                 _ = Task.Run(() =>
                 {
-                    // // // // // // // // // // // //
-
                     //var _breakpoint = socketClient;
                     //_ = _breakpoint;
 
@@ -207,7 +207,14 @@ namespace API_Test
                             Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
                         }).Result.Data;
 
+                        sub.StatusChanged += BinanceSocket_StatusChanged;
+
                         await Task.Delay(2000).ConfigureAwait(false);
+
+                        // Reconnect Update Subscription
+                        await sub.ReconnectAsync().ConfigureAwait(false);
+
+                        await Task.Delay(5000).ConfigureAwait(false);
 
                         // Reconnect Update Subscription
                         await sub.ReconnectAsync().ConfigureAwait(false);
@@ -223,30 +230,15 @@ namespace API_Test
 
                         // _ = socketClient.UnsubscribeAllAsync();
                     }).ConfigureAwait(false);
-
-                    // // // // // // // // // // // //
                 });
             });
 
             Console.ReadLine();
         }
 
-        // Socket Log
-        //[06/18/22 01:01:44:589][Debug] Socket 1 new socket created for wss://stream.binance.com:9443/stream
-        //[06/18/22 01:01:44:593][Debug] Socket 1 connecting
-        //[06/18/22 01:01:45:595][Debug] Socket 1 connected
-        //[06/18/22 01:01:45:603][Debug] Socket 1 connected to wss://stream.binance.com:9443/stream with request {"method":"SUBSCRIBE","params":["btcusdt@bookTicker"],"id":9}
-        //[06/18/22 01:01:45:604][Debug] Socket 1 sending data: {"method":"SUBSCRIBE","params":["btcusdt@bookTicker"],"id":9}
-        //[06/18/22 01:01:47:802][Debug] Socket 1 closing
-        //[06/18/22 01:01:47:826][Debug] Socket 1 received `Close` message
-        //[06/18/22 01:01:47:826][Debug] Socket 1 closed
-        //[06/18/22 01:01:47:828][Info] Socket 1 Connection lost, will try to reconnect after 2000ms
-        //[06/18/22 01:01:49:809][Debug] Socket 1 resetting
-        //[06/18/22 01:01:49:809][Debug] Socket 1 connecting
-        //[06/18/22 01:01:50:555][Debug] Socket 1 connected
-        //[06/18/22 01:01:57:499][Info][00:00:09.6722449] Socket[1] Reconnected - Attempts: 1/50
-        //[06/18/22 01:01:57:500][Debug] Socket 1 sending data: {"method":"SUBSCRIBE","params":["btcusdt@bookTicker"],"id":9}
-        //[06/18/22 01:01:57:719][Debug] Socket 1 subscription successfully resubscribed on reconnected socket.
-        //[06/18/22 01:01:57:719][Debug] Socket 1 data connection restored.
+        private static void BinanceSocket_StatusChanged(ConnectionStatus obj)
+        {
+            Console.WriteLine(obj.ToString());
+        }
     }
 }

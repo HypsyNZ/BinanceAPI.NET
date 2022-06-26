@@ -72,7 +72,7 @@ namespace BinanceAPI.SubClients.Margin
         private const string isolatedMarginAccountLimitEndpoint = "margin/isolated/accountLimit";
         private const string transferIsolatedMarginAccountEndpoint = "margin/isolated/transfer";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
         /// <summary>
         /// Margin market endpoints
@@ -94,7 +94,7 @@ namespace BinanceAPI.SubClients.Margin
         /// </summary>
         public BinanceClientIsolatedMarginUserStream IsolatedUserStream { get; }
 
-        internal BinanceClientMargin(BinanceClient baseClient)
+        internal BinanceClientMargin(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
             Market = new BinanceClientMarginMarket(_baseClient);

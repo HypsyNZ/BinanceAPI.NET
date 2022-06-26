@@ -36,12 +36,12 @@ namespace BinanceAPI.Objects
         /// <summary>
         /// The rest client to use for requesting the initial order book
         /// </summary>
-        public BinanceClient? RestClient { get; set; }
+        public BinanceClientHost? RestClient { get; set; }
 
         /// <summary>
         /// The client to use for the socket connection. When using the same client for multiple order books the connection can be shared.
         /// </summary>
-        public SocketClient? SocketClient { get; set; }
+        public SocketClientHost? SocketClient { get; set; }
 
         /// <summary>
         /// The top amount of results to keep in sync. If for example limit=10 is used, the order book will contain the 10 best bids and 10 best asks. Leaving this null will sync the full order book
@@ -63,7 +63,7 @@ namespace BinanceAPI.Objects
         /// <param name="logPath">Path to the log</param>
         /// <param name="logLevel">Log level for the log</param>
         /// <param name="logToConsole">Ture if messages should also be logged to the console</param>
-        public BinanceOrderBookOptions(int? limit = null, int? updateInterval = null, SocketClient? socketClient = null, BinanceClient? restClient = null, string logPath = "", SimpleLog4.NET.LogLevel logLevel = SimpleLog4.NET.LogLevel.Information, bool logToConsole = true) : base("Binance", limit == null, false, "", SimpleLog4.NET.LogLevel.Information, logToConsole)
+        public BinanceOrderBookOptions(int? limit = null, int? updateInterval = null, SocketClientHost? socketClient = null, BinanceClientHost? restClient = null, string logPath = "", SimpleLog4.NET.LogLevel logLevel = SimpleLog4.NET.LogLevel.Information, bool logToConsole = true) : base("Binance", limit == null, false, "", SimpleLog4.NET.LogLevel.Information, logToConsole)
         {
             Limit = limit;
             UpdateInterval = updateInterval;

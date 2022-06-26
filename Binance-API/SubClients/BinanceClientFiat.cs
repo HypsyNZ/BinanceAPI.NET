@@ -48,9 +48,9 @@ namespace BinanceAPI.SubClients
         private const string fiatDepositWithdrawHistoryEndpoint = "fiat/orders";
         private const string fiatPaymentHistoryEndpoint = "fiat/payments";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientFiat(BinanceClient baseClient)
+        internal BinanceClientFiat(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

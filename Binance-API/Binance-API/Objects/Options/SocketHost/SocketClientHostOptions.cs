@@ -30,12 +30,22 @@ namespace BinanceAPI.Objects
     /// <summary>
     /// Binance socket client options
     /// </summary>
-    public class BinanceSocketClientOptions : SocketClientOptions
+    public class SocketClientHostOptions : ClientOptions
     {
+        /// <summary>
+        /// The maximum number of times to try to reconnect
+        /// </summary>
+        public int? MaxReconnectTries { get; set; } = 50;
+
+        /// <summary>
+        /// Max number of concurrent resubscription tasks per socket after reconnecting a socket
+        /// </summary>
+        public int MaxConcurrentResubscriptionsPerSocket { get; set; } = 5;
+
         /// <summary>
         /// ctor
         /// </summary>
-        public BinanceSocketClientOptions() : this(BinanceApiAddresses.Default)
+        public SocketClientHostOptions() : this(BinanceApiAddresses.Default)
         {
         }
 
@@ -43,7 +53,7 @@ namespace BinanceAPI.Objects
         /// ctor
         /// </summary>
         /// <param name="addresses">The base addresses to use</param>
-        public BinanceSocketClientOptions(BinanceApiAddresses addresses) : this(addresses.SocketClientAddress)
+        public SocketClientHostOptions(BinanceApiAddresses addresses) : this(addresses.SocketClientAddress)
         {
         }
 
@@ -51,7 +61,7 @@ namespace BinanceAPI.Objects
         /// ctor
         /// </summary>
         /// <param name="address">Custom address for spot API</param>
-        public BinanceSocketClientOptions(string address) : base(address)
+        public SocketClientHostOptions(string address) : base(address)
         {
         }
     }

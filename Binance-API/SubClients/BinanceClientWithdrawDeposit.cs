@@ -49,9 +49,9 @@ namespace BinanceAPI.SubClients
         private const string depositHistoryEndpoint = "capital/deposit/hisrec";
         private const string depositAddressEndpoint = "capital/deposit/address";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientWithdrawDeposit(BinanceClient baseClient)
+        internal BinanceClientWithdrawDeposit(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

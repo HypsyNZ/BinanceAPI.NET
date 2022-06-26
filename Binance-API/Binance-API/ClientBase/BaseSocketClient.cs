@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using Newtonsoft.Json;
 using SemaphoreLite;
@@ -85,6 +86,11 @@ namespace BinanceAPI.Clients
             remove => openHandlers.Remove(value);
         }
 
+        /// <summary>
+        /// Occurs when the status of the socket changes
+        /// </summary>
+        public event Action<ConnectionStatus>? StatusChanged;
+
         internal static int _lastStreamId;
         private static readonly object _streamIdLock = new();
 
@@ -129,11 +135,6 @@ namespace BinanceAPI.Clients
         /// The id of this socket
         /// </summary>
         public int Id { get; internal set; }
-
-        /// <summary>
-        /// Whether this socket is currently connecting/reconnecting
-        /// </summary>
-        public bool Connecting { get; internal set; }
 
         /// <summary>
         /// The timestamp this socket has been active for the last time
@@ -201,7 +202,7 @@ namespace BinanceAPI.Clients
         {
             if (reset)
             {
-                Logging.SocketLog?.Debug($"Socket {Id} resetting");
+                Logging.SocketLog?.Debug($"Socket {Id} resetting..");
             }
 
             _startedReceive = false;
@@ -247,16 +248,16 @@ namespace BinanceAPI.Clients
         /// <returns>True if successfull</returns>
         public virtual async Task<bool> ConnectAsync()
         {
-            Connecting = true;
 #if DEBUG
-            Logging.SocketLog?.Debug($"Socket {Id} connecting");
+            Logging.SocketLog?.Debug($"Socket {Id} connecting..");
 #endif
+            StatusChanged?.Invoke(ConnectionStatus.Connecting);
             try
             {
                 await ClientSocket.ConnectAsync(new Uri(Url), default).ConfigureAwait(false);
                 Handle(openHandlers);
 #if DEBUG
-            Logging.SocketLog?.Trace($"Socket {Id} connection succeeded, starting communication");
+                Logging.SocketLog?.Trace($"Socket {Id} connection succeeded, starting communication..");
 #endif
                 _sendTask = Task.Factory.StartNew(SendLoopAsync, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
                 _receiveTask = Task.Factory.StartNew(DigestLoop, default, TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Unwrap();
@@ -271,16 +272,15 @@ namespace BinanceAPI.Clients
                     {
                         _ = ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", default);
 #if DEBUG
-                    Logging.SocketLog?.Debug($"Socket {Id} startup interupted");
+                        Logging.SocketLog?.Debug($"Socket {Id} startup interupted..");
 #endif
-                        Connecting = false;
+                        StatusChanged?.Invoke(ConnectionStatus.Disconnected);
                         return false;
                     }
                 }
 #if DEBUG
-            Logging.SocketLog?.Debug($"Socket {Id} connected");
+                Logging.SocketLog?.Debug($"Socket {Id} connected..");
 #endif
-                Connecting = false;
                 return true;
             }
             catch
@@ -291,36 +291,34 @@ namespace BinanceAPI.Clients
 #if DEBUG
                 Logging.SocketLog?.Debug($"Socket {Id} connection failed: " + e.ToLogString());
 #endif
+                StatusChanged?.Invoke(ConnectionStatus.Error);
                 return false;
-            }
-            finally
-            {
-                Connecting = false;
             }
         }
 
         /// <summary>
-        /// Internal close method, will wait for each task to complete to gracefully close
+        /// Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
         /// </summary>
         /// <returns></returns>
-        public async Task CloseAsync()
+        public async Task InternalResetAsync()
         {
             if (_closing)
             {
                 return;
             }
+
             _closing = true;
-            Connecting = false;
 
             if (ClientSocket.State == WebSocketState.Open)
             {
-                Logging.SocketLog?.Debug($"Socket {Id} is closing");
+                Logging.SocketLog?.Debug($"Socket {Id} is closing..");
                 await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
+                StatusChanged?.Invoke(ConnectionStatus.Disconnected);
                 _sendEvent.Set();
             }
             else
             {
-                Logging.SocketLog?.Debug($"Socket {Id} was already closed");
+                Logging.SocketLog?.Debug($"Socket {Id} was already closed..");
             }
 
             _ctsSource.Cancel();
@@ -341,7 +339,7 @@ namespace BinanceAPI.Clients
 
             var bytes = Encoding.GetBytes(data);
 #if DEBUG
-            Logging.SocketLog?.Trace($"Socket {Id} Adding {bytes.Length} to sent buffer");
+            Logging.SocketLog?.Trace($"Socket {Id} Adding {bytes.Length} to sent buffer..");
 #endif
             _sendBuffer.Enqueue(bytes);
             _sendEvent.Set();
@@ -368,7 +366,7 @@ namespace BinanceAPI.Clients
                             await ClientSocket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, default).ConfigureAwait(false);
                             _outgoingMessages.Add(DateTime.UtcNow);
 #if DEBUG
-                            Logging.SocketLog?.Trace($"Socket {Id} sent {data.Length} bytes");
+                            Logging.SocketLog?.Trace($"Socket {Id} sent {data.Length} bytes..");
 #endif
                         }
                         else
@@ -381,7 +379,7 @@ namespace BinanceAPI.Clients
             }
             catch
             {
-                await CloseAsync().ConfigureAwait(false);
+                await InternalResetAsync().ConfigureAwait(false);
             }
         }
 
@@ -407,7 +405,7 @@ namespace BinanceAPI.Clients
             }
             finally
             {
-                await CloseAsync().ConfigureAwait(false);
+                await InternalResetAsync().ConfigureAwait(false);
             }
         }
 
@@ -432,8 +430,8 @@ namespace BinanceAPI.Clients
 
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
-                        Logging.SocketLog?.Debug($"Socket {Id} received `Close` message");
-                        await CloseAsync().ConfigureAwait(false);
+                        Logging.SocketLog?.Debug($"Socket {Id} received `Close` message..");
+                        await InternalResetAsync().ConfigureAwait(false);
                         return;
                     }
 
@@ -444,7 +442,7 @@ namespace BinanceAPI.Clients
                         if (memoryStream == null)
                             memoryStream = new MemoryStream();
 #if DEBUG
-                        Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in partial message");
+                        Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in partial message..");
 #endif
                         await memoryStream.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
                     }
@@ -455,7 +453,7 @@ namespace BinanceAPI.Clients
                             // Received a complete message and it's not multi part
                             HandleMessage(buffer.Array, buffer.Offset, receiveResult.Count, receiveResult.MessageType);
 #if DEBUG
-                            Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in single message");
+                            Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in single message..");
 #endif
                         }
                         else
@@ -476,7 +474,7 @@ namespace BinanceAPI.Clients
 #if DEBUG
                 if (receiveResult == null)
                 {
-                    Logging.SocketLog?.Debug($"Socket {Id} received null result and returned to look for more work");
+                    Logging.SocketLog?.Debug($"Socket {Id} received null result and returned to look for more work..");
 
                     return;
                 }
@@ -484,8 +482,8 @@ namespace BinanceAPI.Clients
             }
             catch
             {
-                Logging.SocketLog?.Debug($"Socket {Id} caught an exception and is Closing");
-                await CloseAsync().ConfigureAwait(false);
+                Logging.SocketLog?.Debug($"Socket {Id} caught an exception and is Closing..");
+                await InternalResetAsync().ConfigureAwait(false);
             }
         }
 
@@ -573,7 +571,7 @@ namespace BinanceAPI.Clients
         public void Dispose()
         {
 #if DEBUG
-            Logging.SocketLog?.Debug($"Socket {Id} disposing");
+            Logging.SocketLog?.Debug($"Socket {Id} disposing..");
 #endif
             ClientSocket.Dispose();
             _ctsSource.Dispose();
@@ -584,7 +582,7 @@ namespace BinanceAPI.Clients
             closeHandlers.Clear();
             messageHandlers.Clear();
 #if DEBUG
-            Logging.SocketLog?.Trace($"Socket {Id} disposed");
+            Logging.SocketLog?.Trace($"Socket {Id} disposed..");
 #endif
         }
 

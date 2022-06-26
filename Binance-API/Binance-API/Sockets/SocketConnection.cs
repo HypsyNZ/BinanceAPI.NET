@@ -23,6 +23,7 @@
 */
 
 using BinanceAPI.Clients;
+using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -61,9 +62,14 @@ namespace BinanceAPI.Sockets
         public event Action<JToken>? UnhandledMessage;
 
         /// <summary>
-        /// If connection is made
+        /// Occurs when the status of the socket changes
         /// </summary>
-        public bool Connected { get; private set; }
+        public event Action<ConnectionStatus>? ConnectionStatusChanged;
+
+        /// <summary>
+        /// The Current Status of the Socket Connection
+        /// </summary>
+        public ConnectionStatus SocketConnectionStatus { get; set; }
 
         /// <summary>
         /// The underlying socket
@@ -84,7 +90,7 @@ namespace BinanceAPI.Sockets
 
         private readonly object subscriptionLock = new();
 
-        private readonly SocketClient socketClient;
+        private readonly SocketClientHost socketClient;
 
         private readonly List<PendingRequest> pendingRequests;
 
@@ -93,16 +99,23 @@ namespace BinanceAPI.Sockets
         /// </summary>
         /// <param name="client">The socket client</param>
         /// <param name="socket">The socket</param>
-        public SocketConnection(SocketClient client, BaseSocketClient socket)
+        public SocketConnection(SocketClientHost client, BaseSocketClient socket)
         {
             socketClient = client;
 
             pendingRequests = new List<PendingRequest>();
 
             BinanceSocket = socket;
+            BinanceSocket.StatusChanged += SocketOnStatusChanged;
             BinanceSocket.OnMessage += ProcessMessage;
             BinanceSocket.OnClose += SocketOnClose;
             BinanceSocket.OnOpen += SocketOnOpen;
+        }
+
+        private void SocketOnStatusChanged(ConnectionStatus obj)
+        {
+            SocketConnectionStatus = obj;
+            ConnectionStatusChanged?.Invoke(obj);
         }
 
         /// <summary>
@@ -113,7 +126,7 @@ namespace BinanceAPI.Sockets
         {
             var timestamp = DateTime.UtcNow;
 #if DEBUG
-            SocketLog?.Trace($"Socket {Socket.Id} received data: " + data);
+            SocketLog?.Trace($"Socket {BinanceSocket.Id} received data: " + data);
 #endif
             if (string.IsNullOrEmpty(data)) return;
 
@@ -256,7 +269,7 @@ namespace BinanceAPI.Sockets
         public virtual void Send(string data)
         {
 #if DEBUG
-            SocketLog?.Debug($"Socket {Socket.Id} sending data: {data}");
+            SocketLog?.Debug($"Socket {BinanceSocket.Id} sending data: {data}");
 #endif
             BinanceSocket.Send(data);
         }
@@ -266,7 +279,8 @@ namespace BinanceAPI.Sockets
         /// </summary>
         protected virtual void SocketOnOpen()
         {
-            Connected = true;
+            SocketOnStatusChanged(ConnectionStatus.Connected);
+            SocketLog?.Debug($"Socket {BinanceSocket.Id} connected to {BinanceSocket.Url}");
         }
 
         /// <summary>
@@ -285,12 +299,10 @@ namespace BinanceAPI.Sockets
 
             if (ShouldReconnect)
             {
-                if (BinanceSocket.Connecting)
+                if (SocketConnectionStatus == ConnectionStatus.Connecting)
                 {
                     return; // Already reconnecting
                 }
-
-                BinanceSocket.Connecting = true;
 
                 _ = Task.Run(() =>
                 {
@@ -312,7 +324,7 @@ namespace BinanceAPI.Sockets
                         // Should reconnect changed
                         if (!ShouldReconnect)
                         {
-                            BinanceSocket.Connecting = false;
+                            SocketOnStatusChanged(ConnectionStatus.Disconnected);
                             return;
                         }
 
@@ -370,7 +382,7 @@ namespace BinanceAPI.Sockets
 
                             if (BinanceSocket.IsOpen)
                             {
-                                await CloseAsync().ConfigureAwait(false);
+                                await CloseAndDisposeAsync().ConfigureAwait(false);
                             }
                         }
                         else
@@ -378,14 +390,11 @@ namespace BinanceAPI.Sockets
                             ReconnectTry = 0;
                             ResubscribeTry = 0;
                             SocketLog?.Debug($"Socket {BinanceSocket.Id} data connection restored.");
-
                             _ = Task.Run(() => ConnectionRestored?.Invoke(DisconnectTime.HasValue ? DateTime.UtcNow - DisconnectTime.Value : TimeSpan.FromSeconds(0))).ConfigureAwait(false);
 
                             break;
                         }
                     }
-
-                    BinanceSocket.Connecting = false;
                 }).ConfigureAwait(false);
             }
             else
@@ -397,8 +406,7 @@ namespace BinanceAPI.Sockets
                     socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
                 }
 
-                BinanceSocket.Connecting = false;
-                Connected = false;
+                SocketOnStatusChanged(ConnectionStatus.Disconnected);
 
                 _ = Task.Run(() =>
                 {
@@ -441,19 +449,18 @@ namespace BinanceAPI.Sockets
         }
 
         /// <summary>
-        /// Close the connection
+        /// Close the connection and releases the managed resources it is consuming.
         /// </summary>
         /// <returns></returns>
-        public async Task CloseAsync()
+        public async Task CloseAndDisposeAsync()
         {
-            Connected = false;
             ShouldReconnect = false;
             if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
             {
                 socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
             }
 
-            await BinanceSocket.CloseAsync().ConfigureAwait(false);
+            await BinanceSocket.InternalResetAsync().ConfigureAwait(false);
             DisconnectTime = DateTime.UtcNow;
             BinanceSocket.Dispose();
         }
@@ -464,7 +471,7 @@ namespace BinanceAPI.Sockets
         /// </summary>
         /// <param name="subscription">Subscription to close</param>
         /// <returns></returns>
-        public async Task CloseAsync(SocketSubscription subscription)
+        public async Task CloseAndDisposeSubscriptionAsync(SocketSubscription subscription)
         {
             if (!BinanceSocket.IsOpen)
             {
@@ -477,7 +484,7 @@ namespace BinanceAPI.Sockets
                 if (result)
                 {
                     SocketLog?.Debug($"Socket {BinanceSocket.Id} subscription successfully unsubscribed, Closing connection");
-                    await CloseAsync().ConfigureAwait(false);
+                    await CloseAndDisposeAsync().ConfigureAwait(false);
                 }
             }
         }

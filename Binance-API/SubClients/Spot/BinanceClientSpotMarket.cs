@@ -60,9 +60,9 @@ namespace BinanceAPI.SubClients.Spot
         private const string api = "api";
         private const string publicVersion = "3";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientSpotMarket(BinanceClient baseClient)
+        internal BinanceClientSpotMarket(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

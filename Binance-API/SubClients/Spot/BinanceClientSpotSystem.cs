@@ -53,9 +53,9 @@ namespace BinanceAPI.SubClients.Spot
         private const string exchangeInfoEndpoint = "exchangeInfo";
         private const string systemStatusEndpoint = "system/status";
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientSpotSystem(BinanceClient baseClient)
+        internal BinanceClientSpotSystem(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
         }

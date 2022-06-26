@@ -22,29 +22,31 @@
 *SOFTWARE.
 */
 
-namespace BinanceAPI.Options
+namespace BinanceAPI.Enums
 {
     /// <summary>
-    /// Base for socket client options
+    /// The current Sockets connection status
     /// </summary>
-    public class SocketClientOptions : ClientOptions
+    public enum ConnectionStatus
     {
         /// <summary>
-        /// The maximum number of times to try to reconnect
+        /// Disconnected
         /// </summary>
-        public int? MaxReconnectTries { get; set; } = 50;
+        Disconnected = 1,
 
         /// <summary>
-        /// Max number of concurrent resubscription tasks per socket after reconnecting a socket
+        /// Currently Connecting
         /// </summary>
-        public int MaxConcurrentResubscriptionsPerSocket { get; set; } = 5;
+        Connecting = 2,
 
         /// <summary>
-        /// ctor
+        /// Currently Connected
         /// </summary>
-        /// <param name="baseAddress">The base address to use</param>
-        public SocketClientOptions(string baseAddress) : base(baseAddress)
-        {
-        }
+        Connected = 3,
+
+        /// <summary>
+        /// Connection Error
+        /// </summary>
+        Error = 4
     }
 }

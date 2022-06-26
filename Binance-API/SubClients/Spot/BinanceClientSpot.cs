@@ -62,9 +62,9 @@ namespace BinanceAPI.SubClients.Spot
         /// </summary>
         public IBinanceClientUserStream UserStream { get; }
 
-        private readonly BinanceClient _baseClient;
+        private readonly BinanceClientHost _baseClient;
 
-        internal BinanceClientSpot(BinanceClient baseClient)
+        internal BinanceClientSpot(BinanceClientHost baseClient)
         {
             _baseClient = baseClient;
 
