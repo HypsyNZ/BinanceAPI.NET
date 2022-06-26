@@ -1,8 +1,20 @@
-### Version 6.0.4.1
-- [x] Improve `Connected` indicator for `Sockets`
+### Version 6.0.4.2
+- [x] This release has multiple breaking changes that you should be able to fix in about 10 seconds.
+- [x] Improve `Connected` indicator for `UserSubscriptions`
 - [x] Rename `Reconnecting` to `Connecting`
-- [x] Improve `Connecting` indicator for `Sockets`
+- [x] Improve `Connecting` indicator for `UserSubscriptions`
+- [x] Improve `Disconnected` indicator for `UserSubscriptions`
+- [x] Rename `BinanceClient` to `BinanceClientHost`
+- [x] Rename `BinanceSocketClient` to `SocketClientHost`
+- [x] Rename `Options` to their respective new names
 - [x] Rename `Sockets` for clarity
+- [x] Expose Event `StatusChanged` for `UserSubscriptions`
+- [x] Expose Event `StatusChanged` for `BaseSocketClient`
+- [x] Merge some `Options`
+- [x] Improve `Socket` connection flow
+- [x] Add Enum `Connection Status`
+- [x] Renames multiple things to clarify intended usage
+- [x] Fixes misc bugs
 
 ### Version 6.0.4.0
 - [x] Another refactor of `WebSocket` for some small gains
