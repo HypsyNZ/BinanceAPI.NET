@@ -111,11 +111,6 @@ namespace BinanceAPI.SymbolOrderBooks
         }
 
         /// <inheritdoc />
-        protected override void DoReset()
-        {
-        }
-
-        /// <inheritdoc />
         protected override async Task<CallResult<bool>> DoResyncAsync()
         {
             if (Levels != null)

@@ -37,11 +37,6 @@ namespace BinanceAPI.Sockets
         public int Id { get; }
 
         /// <summary>
-        /// Exception event
-        /// </summary>
-        public event Action<Exception>? Exception;
-
-        /// <summary>
         /// Message handler for this subscription.
         /// </summary>
         public Action<MessageEvent> MessageHandler { get; set; }
@@ -81,15 +76,6 @@ namespace BinanceAPI.Sockets
             Action<MessageEvent> dataHandler)
         {
             return new SocketSubscription(id, request, userSubscription, dataHandler);
-        }
-
-        /// <summary>
-        /// Invoke the exception event
-        /// </summary>
-        /// <param name="e"></param>
-        public void InvokeExceptionHandler(Exception e)
-        {
-            Exception?.Invoke(e);
         }
     }
 }

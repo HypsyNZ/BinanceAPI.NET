@@ -34,7 +34,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.4.3 Test - Connection Status - https://i.imgur.com/AVwQ1o5.png
+// 6.0.4.4 Test - More Connection Status - https://pastebin.com/ef3kH2fF
 
 namespace API_Test
 {
@@ -164,11 +164,11 @@ namespace API_Test
                             Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
                         }).Result.Data;
 
-                        // Subscribe to Update Subscription Status Changed Events
+                        // Subscribe to Update Subscription Status Changed Events before it connects
                         sub.StatusChanged += BinanceSocket_StatusChanged;
 
-                        // Connect Update Subscription
-                        _ = sub.ConnectAsync().ConfigureAwait(false);
+                        // Current Status
+                        Console.WriteLine(Enum.GetName(typeof(ConnectionStatus), sub.Connection.SocketConnectionStatus));
 
                         // work work
                         await Task.Delay(5000).ConfigureAwait(false);

@@ -30,7 +30,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using static BinanceAPI.Logging;
 
@@ -42,29 +41,19 @@ namespace BinanceAPI.Sockets
     public class SocketConnection
     {
         /// <summary>
-        /// Connection lost event
-        /// </summary>
-        public event Action? ConnectionLost;
-
-        /// <summary>
-        /// Connection closed and no reconnect is happening
-        /// </summary>
-        public event Action? ConnectionClosed;
-
-        /// <summary>
         /// Connecting restored event
         /// </summary>
         public event Action<TimeSpan>? ConnectionRestored;
 
         /// <summary>
-        /// Unhandled message event
-        /// </summary>
-        public event Action<JToken>? UnhandledMessage;
-
-        /// <summary>
         /// Occurs when the status of the socket changes
         /// </summary>
         public event Action<ConnectionStatus>? ConnectionStatusChanged;
+
+        /// <summary>
+        /// Unhandled message event
+        /// </summary>
+        public event Action<JToken>? UnhandledMessage;
 
         /// <summary>
         /// The Current Status of the Socket Connection
@@ -87,11 +76,8 @@ namespace BinanceAPI.Sockets
         public DateTime? DisconnectTime { get; set; }
 
         private SocketSubscription? Subscription;
-
         private readonly object subscriptionLock = new();
-
         private readonly SocketClientHost socketClient;
-
         private readonly List<PendingRequest> pendingRequests;
 
         /// <summary>
@@ -113,16 +99,135 @@ namespace BinanceAPI.Sockets
             BinanceSocket.OnOpen += SocketOnOpen;
         }
 
-        internal void SocketOnStatusChanged(ConnectionStatus obj)
+        /// <summary>
+        /// Add subscription to this connection
+        /// </summary>
+        public void AddSubscription(SocketSubscription subscription)
+        {
+            lock (subscriptionLock)
+            {
+                Subscription = subscription;
+            }
+        }
+
+        /// <summary>
+        /// Get the subscription on this connection
+        /// </summary>
+        public SocketSubscription? GetSubscription()
+        {
+            lock (subscriptionLock)
+            {
+                return Subscription;
+            }
+        }
+
+        /// <summary>
+        /// Send data and wait for an answer
+        /// </summary>
+        /// <typeparam name="T">The data type expected in response</typeparam>
+        /// <param name="obj">The object to send</param>
+        /// <param name="timeout">The timeout for response</param>
+        /// <param name="handler">The response handler</param>
+        /// <returns></returns>
+        public Task SendAndWaitAsync<T>(T obj, TimeSpan timeout, Func<JToken, bool> handler)
+        {
+            var pending = new PendingRequest(handler, timeout);
+            lock (pendingRequests)
+            {
+                pendingRequests.Add(pending);
+            }
+
+            Send(obj);
+            return pending.Event.WaitAsync(timeout);
+        }
+
+        /// <summary>
+        /// Send data over the websocket connection
+        /// </summary>
+        /// <typeparam name="T">The type of the object to send</typeparam>
+        /// <param name="obj">The object to send</param>
+        /// <param name="nullValueHandling">How null values should be serialized</param>
+        public void Send<T>(T obj, NullValueHandling nullValueHandling = NullValueHandling.Ignore)
+        {
+            if (obj is string str)
+            {
+                Send(str);
+            }
+            else
+            {
+                Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
+            }
+        }
+
+        /// <summary>
+        /// Send string data over the websocket connection
+        /// </summary>
+        /// <param name="data">The data to send</param>
+        public void Send(string data)
+        {
+#if DEBUG
+            SocketLog?.Debug($"Socket {BinanceSocket.Id} sending data: {data}");
+#endif
+            BinanceSocket.Send(data);
+        }
+
+        /// <summary>
+        /// Handler for a socket opening
+        /// </summary>
+        private void SocketOnOpen()
+        {
+            SocketOnStatusChanged(ConnectionStatus.Connected);
+            SocketLog?.Debug($"Socket {BinanceSocket.Id} connected to {BinanceSocket.Url}");
+        }
+
+        private void SocketOnConnect()
+        {
+            _ = Task.Run(async () =>
+            {
+                await ReconnectAttempt().ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+
+        private void SocketOnClose()
+        {
+            lock (pendingRequests)
+            {
+                foreach (var pendingRequest in pendingRequests.ToList())
+                {
+                    pendingRequest.Fail();
+                    pendingRequests.Remove(pendingRequest);
+                }
+            }
+
+            if (ShouldReconnect)
+            {
+                if (SocketConnectionStatus == ConnectionStatus.Connecting)
+                {
+                    return; // Already reconnecting
+                }
+
+                DisconnectTime = DateTime.UtcNow;
+                SocketOnStatusChanged(ConnectionStatus.Lost);
+                SocketLog?.Info($"Socket {BinanceSocket.Id} Connection lost, will try to reconnect after 2000ms");
+
+                _ = Task.Run(async () =>
+                {
+                    await ReconnectAttempt().ConfigureAwait(false);
+                }).ConfigureAwait(false);
+            }
+            else
+            {
+                SocketOnStatusChanged(ConnectionStatus.Closed);
+                CloseAndDisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        private void SocketOnStatusChanged(ConnectionStatus obj)
         {
             SocketConnectionStatus = obj;
             ConnectionStatusChanged?.Invoke(obj);
         }
 
-        /// <summary>
-        /// Process a message received by the socket
-        /// </summary>
-        /// <param name="data"></param>
         private void ProcessMessage(string data)
         {
             var timestamp = DateTime.UtcNow;
@@ -181,118 +286,7 @@ namespace BinanceAPI.Sockets
             }
         }
 
-        /// <summary>
-        /// Add subscription to this connection
-        /// </summary>
-        public void AddSubscription(SocketSubscription subscription)
-        {
-            lock (subscriptionLock)
-            {
-                Subscription = subscription;
-            }
-        }
-
-        /// <summary>
-        /// Get the subscription on this connection
-        /// </summary>
-        public SocketSubscription? GetSubscription()
-        {
-            lock (subscriptionLock)
-            {
-                return Subscription;
-            }
-        }
-
-        private bool HandleData(MessageEvent messageEvent)
-        {
-            try
-            {
-                lock (subscriptionLock)
-                {
-                    if (socketClient.MessageMatchesHandler(messageEvent.JsonData, Subscription!.Request))
-                    {
-                        messageEvent.JsonData = (JToken)messageEvent.JsonData;
-                        Subscription.MessageHandler(messageEvent);
-                        return true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SocketLog?.Error($"Socket {BinanceSocket.Id} Exception during message processing Data: {messageEvent.JsonData}", ex);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Send data and wait for an answer
-        /// </summary>
-        /// <typeparam name="T">The data type expected in response</typeparam>
-        /// <param name="obj">The object to send</param>
-        /// <param name="timeout">The timeout for response</param>
-        /// <param name="handler">The response handler</param>
-        /// <returns></returns>
-        public virtual Task SendAndWaitAsync<T>(T obj, TimeSpan timeout, Func<JToken, bool> handler)
-        {
-            var pending = new PendingRequest(handler, timeout);
-            lock (pendingRequests)
-            {
-                pendingRequests.Add(pending);
-            }
-
-            Send(obj);
-            return pending.Event.WaitAsync(timeout);
-        }
-
-        /// <summary>
-        /// Send data over the websocket connection
-        /// </summary>
-        /// <typeparam name="T">The type of the object to send</typeparam>
-        /// <param name="obj">The object to send</param>
-        /// <param name="nullValueHandling">How null values should be serialized</param>
-        public virtual void Send<T>(T obj, NullValueHandling nullValueHandling = NullValueHandling.Ignore)
-        {
-            if (obj is string str)
-            {
-                Send(str);
-            }
-            else
-            {
-                Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
-            }
-        }
-
-        /// <summary>
-        /// Send string data over the websocket connection
-        /// </summary>
-        /// <param name="data">The data to send</param>
-        public virtual void Send(string data)
-        {
-#if DEBUG
-            SocketLog?.Debug($"Socket {BinanceSocket.Id} sending data: {data}");
-#endif
-            BinanceSocket.Send(data);
-        }
-
-        /// <summary>
-        /// Handler for a socket opening
-        /// </summary>
-        protected virtual void SocketOnOpen()
-        {
-            SocketOnStatusChanged(ConnectionStatus.Connected);
-            SocketLog?.Debug($"Socket {BinanceSocket.Id} connected to {BinanceSocket.Url}");
-        }
-
-        private void SocketOnConnect()
-        {
-            _ = Task.Run(async () =>
-            {
-                await ReconnectAttempt().ConfigureAwait(false);
-            }).ConfigureAwait(false);
-        }
-
-        internal async Task ReconnectAttempt()
+        private async Task ReconnectAttempt()
         {
             if (SocketConnectionStatus == ConnectionStatus.Connecting)
             {
@@ -359,7 +353,7 @@ namespace BinanceAPI.Sockets
                         }
                         SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to resubscribe after {ResubscribeTry} tries, closing");
 
-                        _ = Task.Run(() => ConnectionClosed?.Invoke());
+                        SocketOnStatusChanged(ConnectionStatus.Closed);
                     }
                     else
                     {
@@ -383,48 +377,26 @@ namespace BinanceAPI.Sockets
             }
         }
 
-        /// <summary>
-        /// Handler for a socket closing. Reconnects the socket if needed, or removes it from the active socket list if not
-        /// </summary>
-        protected virtual void SocketOnClose()
+        private bool HandleData(MessageEvent messageEvent)
         {
-            lock (pendingRequests)
+            try
             {
-                foreach (var pendingRequest in pendingRequests.ToList())
+                lock (subscriptionLock)
                 {
-                    pendingRequest.Fail();
-                    pendingRequests.Remove(pendingRequest);
+                    if (socketClient.MessageMatchesHandler(messageEvent.JsonData, Subscription!.Request))
+                    {
+                        messageEvent.JsonData = (JToken)messageEvent.JsonData;
+                        Subscription.MessageHandler(messageEvent);
+                        return true;
+                    }
                 }
             }
-
-            if (ShouldReconnect)
+            catch (Exception ex)
             {
-                if (SocketConnectionStatus == ConnectionStatus.Connecting)
-                {
-                    return; // Already reconnecting
-                }
-
-                _ = Task.Run(() =>
-                {
-                    DisconnectTime = DateTime.UtcNow;
-                    ConnectionLost?.Invoke();
-                    SocketLog?.Info($"Socket {BinanceSocket.Id} Connection lost, will try to reconnect after 2000ms");
-                }).ConfigureAwait(false);
-
-                _ = Task.Run(async () =>
-                {
-                    await ReconnectAttempt().ConfigureAwait(false);
-                }).ConfigureAwait(false);
+                SocketLog?.Error($"Socket {BinanceSocket.Id} Exception during message processing Data: {messageEvent.JsonData}", ex);
             }
-            else
-            {
-                CloseAndDisposeAsync().ConfigureAwait(false);
 
-                _ = Task.Run(() =>
-                {
-                    ConnectionClosed?.Invoke();
-                }).ConfigureAwait(false);
-            }
+            return false;
         }
 
         private async Task<bool> ProcessResubscriptionAsync()
@@ -506,46 +478,6 @@ namespace BinanceAPI.Sockets
 
                 await CloseAndDisposeAsync().ConfigureAwait(false);
             }
-        }
-    }
-
-    internal class PendingRequest
-    {
-        private readonly CancellationTokenSource cts;
-
-        public Func<JToken, bool> Handler { get; }
-        public JToken? Result { get; private set; }
-        public bool Completed { get; private set; }
-        public AsyncResetEvent Event { get; }
-        public TimeSpan Timeout { get; }
-
-        public PendingRequest(Func<JToken, bool> handler, TimeSpan timeout)
-        {
-            Handler = handler;
-            Event = new AsyncResetEvent(false, false);
-            Timeout = timeout;
-
-            cts = new CancellationTokenSource(timeout);
-            cts.Token.Register(Fail, false);
-        }
-
-        public bool CheckData(JToken data)
-        {
-            if (Handler(data))
-            {
-                Result = data;
-                Completed = true;
-                Event.Set();
-                return true;
-            }
-
-            return false;
-        }
-
-        public void Fail()
-        {
-            Completed = true;
-            Event.Set();
         }
     }
 }

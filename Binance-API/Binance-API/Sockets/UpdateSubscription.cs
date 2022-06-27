@@ -44,24 +44,6 @@ namespace BinanceAPI.Sockets
         private readonly SocketSubscription subscription;
 
         /// <summary>
-        /// Event when the connection is lost. The socket will automatically reconnect when possible.
-        /// </summary>
-        public event Action ConnectionLost
-        {
-            add => Connection.ConnectionLost += value;
-            remove => Connection.ConnectionLost -= value;
-        }
-
-        /// <summary>
-        /// Event when the connection is closed and won't be reconnecting
-        /// </summary>
-        public event Action ConnectionClosed
-        {
-            add => Connection.ConnectionClosed += value;
-            remove => Connection.ConnectionClosed -= value;
-        }
-
-        /// <summary>
         /// Event when the connection is restored. Timespan parameter indicates the time the socket has been offline for before reconnecting.
         /// Note that when the executing code is suspended and resumed at a later period (for example laptop going to sleep) the disconnect time will be incorrect as the diconnect
         /// will only be detected after resuming. This will lead to an incorrect disconnected timespan.
@@ -126,24 +108,6 @@ namespace BinanceAPI.Sockets
             else
             {
                 Logging.SocketLog?.Info("Attempted to connect Socket [" + Connection.BinanceSocket.Id + "] when it is likely already connecting..");
-            }
-        }
-
-        /// <summary>
-        /// Close the socket to cause a reconnect
-        /// You can only attempt this once every 5 Seconds
-        /// </summary>
-        /// <returns></returns>
-        public async Task ConnectAsync()
-        {
-            if (DateTime.UtcNow > (_lastConnectAttempt + TimeSpan.FromSeconds(5)))
-            {
-                _lastConnectAttempt = DateTime.UtcNow;
-                await Connection.BinanceSocket.InternalResetAsync(true).ConfigureAwait(false);
-            }
-            else
-            {
-                Logging.SocketLog?.Info("Attempted to reconnect Socket [" + Connection.BinanceSocket.Id + "] when it is likely already reconnecting..");
             }
         }
 

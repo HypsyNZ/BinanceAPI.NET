@@ -973,9 +973,19 @@
             Currently Connected
             </summary>
         </member>
+        <member name="F:BinanceAPI.Enums.ConnectionStatus.Lost">
+            <summary>
+            Connection was Lost
+            </summary>
+        </member>
+        <member name="F:BinanceAPI.Enums.ConnectionStatus.Closed">
+            <summary>
+            Connection was Closed
+            </summary>
+        </member>
         <member name="F:BinanceAPI.Enums.ConnectionStatus.Error">
             <summary>
-            Connection Error
+            Connection encountered an Error
             </summary>
         </member>
         <member name="T:BinanceAPI.Enums.DepositStatus">
@@ -7730,29 +7740,19 @@
             Socket connecting
             </summary>
         </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionLost">
-            <summary>
-            Connection lost event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionClosed">
-            <summary>
-            Connection closed and no reconnect is happening
-            </summary>
-        </member>
         <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionRestored">
             <summary>
             Connecting restored event
             </summary>
         </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.UnhandledMessage">
-            <summary>
-            Unhandled message event
-            </summary>
-        </member>
         <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionStatusChanged">
             <summary>
             Occurs when the status of the socket changes
+            </summary>
+        </member>
+        <member name="E:BinanceAPI.Sockets.SocketConnection.UnhandledMessage">
+            <summary>
+            Unhandled message event
             </summary>
         </member>
         <member name="P:BinanceAPI.Sockets.SocketConnection.SocketConnectionStatus">
@@ -7781,12 +7781,6 @@
             </summary>
             <param name="client">The socket client</param>
             <param name="socket">The socket</param>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.ProcessMessage(System.String)">
-            <summary>
-            Process a message received by the socket
-            </summary>
-            <param name="data"></param>
         </member>
         <member name="M:BinanceAPI.Sockets.SocketConnection.AddSubscription(BinanceAPI.Sockets.SocketSubscription)">
             <summary>
@@ -7827,11 +7821,6 @@
             Handler for a socket opening
             </summary>
         </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.SocketOnClose">
-            <summary>
-            Handler for a socket closing. Reconnects the socket if needed, or removes it from the active socket list if not
-            </summary>
-        </member>
         <member name="M:BinanceAPI.Sockets.SocketConnection.CloseAndDisposeAsync">
             <summary>
             Close the connection and releases the managed resources it is consuming.
@@ -7854,11 +7843,6 @@
         <member name="P:BinanceAPI.Sockets.SocketSubscription.Id">
             <summary>
             Subscription id
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.SocketSubscription.Exception">
-            <summary>
-            Exception event
             </summary>
         </member>
         <member name="P:BinanceAPI.Sockets.SocketSubscription.MessageHandler">
@@ -7891,12 +7875,6 @@
             <param name="dataHandler"></param>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Sockets.SocketSubscription.InvokeExceptionHandler(System.Exception)">
-            <summary>
-            Invoke the exception event
-            </summary>
-            <param name="e"></param>
-        </member>
         <member name="T:BinanceAPI.Sockets.UpdateSubscription">
             <summary>
             Subscription to a data stream
@@ -7905,16 +7883,6 @@
         <member name="F:BinanceAPI.Sockets.UpdateSubscription.Connection">
             <summary>
             The Connection
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.UpdateSubscription.ConnectionLost">
-            <summary>
-            Event when the connection is lost. The socket will automatically reconnect when possible.
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.UpdateSubscription.ConnectionClosed">
-            <summary>
-            Event when the connection is closed and won't be reconnecting
             </summary>
         </member>
         <member name="E:BinanceAPI.Sockets.UpdateSubscription.ConnectionRestored">
@@ -7953,13 +7921,6 @@
             <returns></returns>
         </member>
         <member name="M:BinanceAPI.Sockets.UpdateSubscription.ReconnectAsync">
-            <summary>
-            Close the socket to cause a reconnect
-            You can only attempt this once every 5 Seconds
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Sockets.UpdateSubscription.ConnectAsync">
             <summary>
             Close the socket to cause a reconnect
             You can only attempt this once every 5 Seconds
@@ -8147,11 +8108,6 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.OrderBook.SymbolOrderBook.DoReset">
-            <summary>
-            Reset the order book
-            </summary>
-        </member>
         <member name="M:BinanceAPI.OrderBook.SymbolOrderBook.DoResyncAsync">
             <summary>
             Resync the order book
@@ -8248,9 +8204,6 @@
             <param name="options">The options for the order book</param>
         </member>
         <member name="M:BinanceAPI.SymbolOrderBooks.BinanceSpotSymbolOrderBook.DoStartAsync">
-            <inheritdoc />
-        </member>
-        <member name="M:BinanceAPI.SymbolOrderBooks.BinanceSpotSymbolOrderBook.DoReset">
             <inheritdoc />
         </member>
         <member name="M:BinanceAPI.SymbolOrderBooks.BinanceSpotSymbolOrderBook.DoResyncAsync">

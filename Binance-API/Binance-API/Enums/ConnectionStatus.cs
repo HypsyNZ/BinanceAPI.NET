@@ -32,21 +32,31 @@ namespace BinanceAPI.Enums
         /// <summary>
         /// Disconnected
         /// </summary>
-        Disconnected = 1,
+        Disconnected = 0,
 
         /// <summary>
         /// Currently Connecting
         /// </summary>
-        Connecting = 2,
+        Connecting = 1,
 
         /// <summary>
         /// Currently Connected
         /// </summary>
-        Connected = 3,
+        Connected = 2,
 
         /// <summary>
-        /// Connection Error
+        /// Connection was Lost
         /// </summary>
-        Error = 4
+        Lost = 3,
+
+        /// <summary>
+        /// Connection was Closed
+        /// </summary>
+        Closed = 4,
+
+        /// <summary>
+        /// Connection encountered an Error
+        /// </summary>
+        Error = 5
     }
 }

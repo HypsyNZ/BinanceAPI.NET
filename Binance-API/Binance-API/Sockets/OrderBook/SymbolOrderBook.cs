@@ -281,24 +281,34 @@ namespace BinanceAPI.OrderBook
             }
 
             subscription = startResult.Data;
-            subscription.ConnectionLost += () =>
+            subscription.StatusChanged += (ConnectionStatus obj) =>
             {
+                if (obj == ConnectionStatus.Lost)
+                {
 #if DEBUG
-                OrderBookLog?.Warning($"{Id} order book {Symbol} connection lost");
+                    OrderBookLog?.Warning($"{Id} order book {Symbol} connection lost");
 #endif
-                Status = OrderBookStatus.Reconnecting;
-                Reset();
+                    Status = OrderBookStatus.Reconnecting;
+                    Reset();
+                }
             };
-            subscription.ConnectionClosed += () =>
+            subscription.StatusChanged += (ConnectionStatus obj) =>
             {
+                if (obj == ConnectionStatus.Closed)
+                {
+                    _ = Task.Run(async () =>
+                    {
 #if DEBUG
-                OrderBookLog?.Warning($"{Id} order book {Symbol} disconnected");
+                        OrderBookLog?.Warning($"{Id} order book {Symbol} disconnected");
 #endif
-                Status = OrderBookStatus.Disconnected;
-                _ = StopAsync();
+                        Status = OrderBookStatus.Disconnected;
+                        await StopAsync().ConfigureAwait(false);
+                    }).ConfigureAwait(false);
+                }
             };
 
             subscription.ConnectionRestored += async time => await ResyncAsync().ConfigureAwait(false);
+
             Status = OrderBookStatus.Synced;
             return new CallResult<bool>(true, null);
         }
@@ -347,7 +357,6 @@ namespace BinanceAPI.OrderBook
             while (_processQueue.TryDequeue(out _)) { }
             processBuffer.Clear();
             bookSet = false;
-            DoReset();
         }
 
         private async Task ResyncAsync()
@@ -394,12 +403,6 @@ namespace BinanceAPI.OrderBook
         /// </summary>
         /// <returns></returns>
         protected abstract Task<CallResult<UpdateSubscription>> DoStartAsync();
-
-        /// <summary>
-        /// Reset the order book
-        /// </summary>
-        protected virtual void DoReset()
-        { }
 
         /// <summary>
         /// Resync the order book

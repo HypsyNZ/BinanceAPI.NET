@@ -491,7 +491,13 @@ namespace BinanceAPI.SocketSubClients
 
         private async Task<CallResult<UpdateSubscription>> Subscribe<T>(IEnumerable<string> topics, Action<DataEvent<T>> onData)
         {
-            return await _baseClient.SubscribeInternal(_baseAddress + "stream", topics, onData).ConfigureAwait(false);
+            var connectSubscription = await _baseClient.SubscribeInternal(_baseAddress + "stream", topics, onData).ConfigureAwait(false);
+            if (connectSubscription.Success)
+            {
+                await connectSubscription.Data.Connection.BinanceSocket.InternalResetAsync(true).ConfigureAwait(false);
+            }
+
+            return connectSubscription;
         }
     }
 }
