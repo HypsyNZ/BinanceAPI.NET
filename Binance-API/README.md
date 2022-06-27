@@ -2,6 +2,10 @@
 - [x] Socket Changes - Please [see the example](<https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Simple-Socket-Example>) for more information
 - [x] This update makes ALL `Subscriptions` connect automatically again.
 - [x] You can subscribe to the `StatusChanged` event before they connect automatically.
+- [x] Add `Lost` to `Connection Status`
+- [x] Add `Closed` to `Connection Status`
+- [x] Remove `ConnectionLost` event
+- [x] Remove `ConnectionClosed` event
 
 ### Version 6.0.4.3
 - [x] ~`UpdateSubscriptions` are now manually connected using [`sub.ConnectAsync()`](<https://github.com/HypsyNZ/BinanceAPI.NET/blob/c02c8c712abbca2e528daf316e65ca0b95067b90/API-Test/API-Test.cs#L171>)~
