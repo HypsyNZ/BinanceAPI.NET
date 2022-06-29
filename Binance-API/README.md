@@ -1,3 +1,6 @@
+### Version 6.0.4.5
+- [x] Fix a small inconsistency in `Order Update`
+
 ### Version 6.0.4.4
 - [x] Socket Changes - Please [see the example](<https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Simple-Socket-Example>) for more information
 - [x] This update makes ALL `Subscriptions` connect automatically again.
