@@ -96,6 +96,12 @@ namespace BinanceAPI.Objects.Spot.UserStream
         public decimal IcebergQuantity { get; set; }
 
         /// <summary>
+        /// This id of the corresponding order list. (-1 if not part of an order list)
+        /// </summary>
+        [JsonProperty("g")]
+        public int OrderListID { get; set; }
+
+        /// <summary>
         /// The original client order id
         /// </summary>
         [JsonProperty("C")]
@@ -132,6 +138,7 @@ namespace BinanceAPI.Objects.Spot.UserStream
         public decimal LastQuantityFilled { get; set; }
 
         /// <summary>
+        /// <para>Cumulative filled quantity</para>
         /// The quantity of all trades that were filled for this order
         /// </summary>
         [JsonProperty("z")]
@@ -168,6 +175,12 @@ namespace BinanceAPI.Objects.Spot.UserStream
         public long TradeId { get; set; }
 
         /// <summary>
+        /// Ignore
+        /// </summary>
+        [JsonProperty("I")]
+        public long I { get; set; }
+
+        /// <summary>
         /// Is working
         /// </summary>
         [JsonProperty("w")]
@@ -180,22 +193,23 @@ namespace BinanceAPI.Objects.Spot.UserStream
         public bool BuyerIsMaker { get; set; }
 
         /// <summary>
+        /// Ignore
+        /// </summary>
+        [JsonProperty("M")]
+        public bool M { get; set; }
+
+        /// <summary>
         /// Time the order was created
         /// </summary>
         [JsonProperty("O"), JsonConverter(typeof(TimestampConverter))]
         public DateTime CreateTime { get; set; }
 
         /// <summary>
-        /// Cummulative amount
+        /// <para>Average price can be found by doing <see href="QuoteQuantityFilled"/> divided by <see href="QuantityFilled"/>.</para>
+        /// Cumulative quote asset transacted quantity
         /// </summary>
         [JsonProperty("Z")]
         public decimal QuoteQuantityFilled { get; set; }
-
-        /// <summary>
-        /// Quote order quantity
-        /// </summary>
-        [JsonProperty("Q")]
-        public decimal QuoteQuantity { get; set; }
 
         /// <summary>
         /// Last quote asset transacted quantity (i.e. LastPrice * LastQuantity)
@@ -204,16 +218,9 @@ namespace BinanceAPI.Objects.Spot.UserStream
         public decimal LastQuoteQuantity { get; set; }
 
         /// <summary>
-        /// This id of the corresponding order list. (-1 if not part of an order list)
+        /// Quote order quantity
         /// </summary>
-        [JsonProperty("g")]
-        public long OrderListId { get; set; }
-
-        // These are unused properties, but are mapped to prevent mapping error of lower/upper case
-        /// <summary>
-        /// Unused
-        /// </summary>
-        [JsonProperty("I")]
-        public long I { get; set; }
+        [JsonProperty("Q")]
+        public decimal QuoteQuantity { get; set; }
     }
 }

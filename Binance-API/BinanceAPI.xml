@@ -6407,6 +6407,11 @@
             The iceberg quantity of the order
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.OrderListID">
+            <summary>
+            This id of the corresponding order list. (-1 if not part of an order list)
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.OriginalClientOrderId">
             <summary>
             The original client order id
@@ -6439,6 +6444,7 @@
         </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.QuantityFilled">
             <summary>
+            <para>Cumulative filled quantity</para>
             The quantity of all trades that were filled for this order
             </summary>
         </member>
@@ -6467,6 +6473,11 @@
             The trade id
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.I">
+            <summary>
+            Ignore
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.IsWorking">
             <summary>
             Is working
@@ -6477,6 +6488,11 @@
             Whether the buyer is the maker
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.M">
+            <summary>
+            Ignore
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.CreateTime">
             <summary>
             Time the order was created
@@ -6484,12 +6500,8 @@
         </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.QuoteQuantityFilled">
             <summary>
-            Cummulative amount
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.QuoteQuantity">
-            <summary>
-            Quote order quantity
+            <para>Average price can be found by doing <see href="QuoteQuantityFilled"/> divided by <see href="QuantityFilled"/>.</para>
+            Cumulative quote asset transacted quantity
             </summary>
         </member>
         <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.LastQuoteQuantity">
@@ -6497,14 +6509,9 @@
             Last quote asset transacted quantity (i.e. LastPrice * LastQuantity)
             </summary>
         </member>
-        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.OrderListId">
+        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.QuoteQuantity">
             <summary>
-            This id of the corresponding order list. (-1 if not part of an order list)
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Objects.Spot.UserStream.BinanceStreamOrderUpdate.I">
-            <summary>
-            Unused
+            Quote order quantity
             </summary>
         </member>
         <member name="T:BinanceAPI.Objects.Spot.UserStream.BinanceStreamPositionsUpdate">
