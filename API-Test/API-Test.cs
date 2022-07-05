@@ -197,7 +197,7 @@ namespace API_Test
                         //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
                         //}
 
-                        //_ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
+                        _ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
                     }).ConfigureAwait(false);
                 });
 

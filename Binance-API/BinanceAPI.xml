@@ -458,37 +458,9 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.HandleMessage(System.Byte[],System.Int32,System.Int32)">
-            <summary>
-            Handles the message
-            </summary>
-            <param name="data"></param>
-            <param name="offset"></param>
-            <param name="count"></param>
-        </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.Handle(System.Collections.Generic.List{System.Action})">
-            <summary>
-            Helper to invoke handlers
-            </summary>
-            <param name="handlers"></param>
-        </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.Handle``1(System.Collections.Generic.List{System.Action{``0}},``0)">
-            <summary>
-            Helper to invoke handlers
-            </summary>
-            <typeparam name="T"></typeparam>
-            <param name="handlers"></param>
-            <param name="data"></param>
-        </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.NextStreamId">
-            <summary>
-            Get the next identifier
-            </summary>
-            <returns></returns>
-        </member>
         <member name="M:BinanceAPI.Clients.BaseSocketClient.Dispose">
             <summary>
-            Dispose the socket
+            Dispose the Socket and all Message Handlers
             </summary>
         </member>
         <member name="P:BinanceAPI.Clients.BaseSocketClient.SSLProtocols">
@@ -568,11 +540,6 @@
         <member name="F:BinanceAPI.Clients.SocketClientHost.disposing">
             <summary>
             If client is disposing
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Clients.SocketClientHost.IncomingKbps">
-            <summary>
-            The current kilobytes per second of data being received by all connection from this client, averaged over the last 3 seconds
             </summary>
         </member>
         <member name="M:BinanceAPI.Clients.SocketClientHost.#ctor(BinanceAPI.Objects.SocketClientHostOptions)">

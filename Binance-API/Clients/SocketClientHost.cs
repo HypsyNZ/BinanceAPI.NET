@@ -140,20 +140,6 @@ namespace BinanceAPI.Clients
         /// </summary>
         protected bool disposing;
 
-        /// <summary>
-        /// The current kilobytes per second of data being received by all connection from this client, averaged over the last 3 seconds
-        /// </summary>
-        public double IncomingKbps
-        {
-            get
-            {
-                if (!sockets.Any())
-                    return 0;
-
-                return sockets.Sum(s => s.Value.BinanceSocket.IncomingKbps);
-            }
-        }
-
         #endregion fields
 
         /// <summary>
