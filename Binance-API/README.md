@@ -1,3 +1,6 @@
+### Version 6.0.4.6
+- [x] `WebSocket` Speed Improvements
+
 ### Version 6.0.4.5
 - [x] Fix a small inconsistency in `Order Update`
 
