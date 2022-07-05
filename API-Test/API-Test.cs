@@ -34,7 +34,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.4.6 Test - More Connection Status - https://pastebin.com/ef3kH2fF
+// 6.0.4.9 Test - More Connection Status - https://pastebin.com/ef3kH2fF
 
 namespace API_Test
 {
@@ -94,7 +94,7 @@ namespace API_Test
             BinanceClientHost client = new BinanceClientHost(serverTimeStartWaitToken.Token);
             SocketClientHost socketClient = new SocketClientHost();
 
-            // [Version 6.0.4.6] Start Test
+            // [Version 6.0.4.9] Start Test
             Trace.WriteLine("Starting Test..");
             Task.Run(async () =>
             {

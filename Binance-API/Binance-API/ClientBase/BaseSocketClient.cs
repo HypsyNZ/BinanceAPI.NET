@@ -313,12 +313,9 @@ namespace BinanceAPI.Clients
             {
                 if (ClientSocket.State == WebSocketState.Open)
                 {
-                    // Websocket is in the process of being aborted here because the digest loop is always cancelled
-                    // Which tells the server at the other end its okay to hang up without responding
-                    // Trying to "Close" the socket here will always result in some Exception or another
-
-                    Logging.SocketLog?.Debug($"Socket {Id} is closing..");
+                    await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, default).ConfigureAwait(false);
                     StatusChanged?.Invoke(ConnectionStatus.Disconnected);
+                    Logging.SocketLog?.Debug($"Socket {Id} has closed..");
                 }
                 else
                 {
