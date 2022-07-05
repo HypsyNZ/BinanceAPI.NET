@@ -438,8 +438,6 @@ namespace BinanceAPI.Clients
             if (apiProxy != null)
                 socket.SetProxy(apiProxy);
 
-            socket.DataInterpreterBytes = dataInterpreterBytes;
-            socket.DataInterpreterString = dataInterpreterString;
             socket.OnError += e =>
             {
 #if DEBUG

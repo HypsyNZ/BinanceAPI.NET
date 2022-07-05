@@ -109,11 +109,9 @@ namespace BinanceAPI.Clients
         private CancellationTokenSource _ctsDigest;
 
         private Encoding _encoding = Encoding.UTF8;
-        private SemaphoreLight semaphoreLight = new SemaphoreLight();
 
         private AsyncResetEvent _sendEvent;
         private ConcurrentQueue<byte[]> _sendBuffer;
-        private List<DateTime> _outgoingMessages;
 
         private volatile bool _resetting;
         private volatile bool _startedSent;
@@ -153,16 +151,6 @@ namespace BinanceAPI.Clients
         /// The timestamp this socket has been active for the last time
         /// </summary>
         public DateTime LastActionTime { get; internal set; }
-
-        /// <summary>
-        /// Delegate used for processing byte data received from socket connections before it is processed by handlers
-        /// </summary>
-        public Func<byte[], string>? DataInterpreterBytes { get; internal set; }
-
-        /// <summary>
-        /// Delegate used for processing string data received from socket connections before it is processed by handlers
-        /// </summary>
-        public Func<string, string>? DataInterpreterString { get; internal set; }
 
         /// <summary>
         /// Url this socket connects to
@@ -221,7 +209,6 @@ namespace BinanceAPI.Clients
             _startedReceive = false;
             _startedSent = false;
 
-            _outgoingMessages = new List<DateTime>();
             _sendEvent = new AsyncResetEvent();
             _sendBuffer = new ConcurrentQueue<byte[]>();
 
@@ -229,7 +216,7 @@ namespace BinanceAPI.Clients
 
             ClientSocket = new ClientWebSocket();
             ClientSocket.Options.KeepAliveInterval = TimeSpan.FromMinutes(1);
-            ClientSocket.Options.SetBuffer(65536, 65536);
+            ClientSocket.Options.SetBuffer(8192, 8192);
 
             _resetting = false;
         }
@@ -376,17 +363,16 @@ namespace BinanceAPI.Clients
             _startedSent = true;
             try
             {
-                // Send Loop
-                while (!_resetting)
+                while (!_ctsDigest.Token.IsCancellationRequested)
                 {
                     await _sendEvent.WaitAsync().ConfigureAwait(false);
+
                     while (!_resetting)
                     {
                         bool s = _sendBuffer.TryDequeue(out var data);
                         if (s)
                         {
-                            await ClientSocket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, default).ConfigureAwait(false);
-                            _outgoingMessages.Add(DateTime.UtcNow);
+                            await ClientSocket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, _ctsDigest.Token).ConfigureAwait(false);
 #if DEBUG
                             Logging.SocketLog?.Trace($"Socket {Id} sent {data.Length} bytes..");
 #endif
@@ -397,9 +383,12 @@ namespace BinanceAPI.Clients
                         }
                     }
                 }
-                // Send Loop
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Logging.SocketLog?.Error(ex);
+            }
+            finally
             {
                 await InternalResetAsync().ConfigureAwait(false);
             }
@@ -410,18 +399,12 @@ namespace BinanceAPI.Clients
             _startedReceive = true;
             try
             {
-                while (!_resetting)
+                while (!_ctsDigest.Token.IsCancellationRequested)
                 {
-                    var taken = await semaphoreLight.IsTakenAsync(ReceiveLoopAsync, false).ConfigureAwait(false);
-                    if (taken)
-                    {
-                        await ReceiveLoopAsync().ConfigureAwait(false);
-
-                        semaphoreLight.Release();
-                    }
+                    await ReceiveLoopAsync().ConfigureAwait(false);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Logging.SocketLog?.Error(ex);
             }
@@ -435,78 +418,61 @@ namespace BinanceAPI.Clients
         /// Loop for receiving and reassembling data
         /// </summary>
         /// <returns></returns>
-        private async Task ReceiveLoopAsync()
+        private async Task<bool> ReceiveLoopAsync()
         {
-            var buffer = new ArraySegment<byte>(new byte[65536]);
+            var buffer = new ArraySegment<byte>(new byte[8192]);
             var received = 0;
-            try
+
+            bool multiPartMessage = false;
+            MemoryStream? memoryStream = null;
+            WebSocketReceiveResult? receiveResult = null;
+
+            while (!_resetting)
             {
-                bool multiPartMessage = false;
-                MemoryStream? memoryStream = null;
-                WebSocketReceiveResult? receiveResult = null;
+                receiveResult = await ClientSocket.ReceiveAsync(buffer, _ctsDigest.Token).ConfigureAwait(false);
+                received += receiveResult.Count;
 
-                while (!_resetting)
+                if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {
-                    receiveResult = await ClientSocket.ReceiveAsync(buffer, _ctsDigest.Token).ConfigureAwait(false);
-                    received += receiveResult.Count;
+                    Logging.SocketLog?.Debug($"Socket {Id} received `Close` message..");
+                    await InternalResetAsync().ConfigureAwait(false);
+                    return false;
+                }
 
-                    if (receiveResult == null)
-                    {
-#if DEBUG
-                        Logging.SocketLog?.Debug($"Socket {Id} received null result and returned to look for more work..");
-#endif
-                        return;
-                    }
+                if (receiveResult.EndOfMessage && !multiPartMessage)
+                {
+                    HandleMessage(buffer.Array, buffer.Offset, receiveResult.Count);
+                    return true;
+                }
 
-                    if (receiveResult.MessageType == WebSocketMessageType.Close)
-                    {
-                        Logging.SocketLog?.Debug($"Socket {Id} received `Close` message..");
-                        await InternalResetAsync().ConfigureAwait(false);
-                        return;
-                    }
+                if (!receiveResult.EndOfMessage)
+                {
+                    memoryStream ??= new MemoryStream();
 
-                    if (!receiveResult.EndOfMessage)
-                    {
-                        // We received data, but it is not complete, write it to a memory stream for reassembling
-                        multiPartMessage = true;
-                        if (memoryStream == null)
-                            memoryStream = new MemoryStream();
-#if DEBUG
-                        Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in partial message..");
-#endif
-                        await memoryStream.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        if (!multiPartMessage)
-                        {
-                            // Received a complete message and it's not multi part
-                            HandleMessage(buffer.Array, buffer.Offset, receiveResult.Count, receiveResult.MessageType);
-#if DEBUG
-                            Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in single message..");
-#endif
-                        }
-                        else
-                        {
-                            // Received the end of a multipart message, write to memory stream for reassembling
-                            await memoryStream!.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
+                    await memoryStream.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
 
-                            // Reassemble complete message from memory stream
-                            HandleMessage(memoryStream!.ToArray(), 0, (int)memoryStream.Length, receiveResult.MessageType);
+                    multiPartMessage = true;
 #if DEBUG
-                            Logging.SocketLog?.Trace($"Socket {Id} reassembled message of {memoryStream!.Length} bytes | partial message count: {receiveResult.Count}");
+                    Logging.SocketLog?.Trace($"Socket {Id} received {receiveResult.Count} bytes in partial message..");
 #endif
-                            memoryStream.Dispose();
-                        }
-                        return;
-                    }
+                }
+                else
+                {
+                    // Received the end of a multipart message, write to memory stream for reassembling
+                    await memoryStream!.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
+
+                    // Reassemble complete message from memory stream
+                    HandleMessage(memoryStream!.ToArray(), 0, (int)memoryStream.Length);
+
+#if DEBUG
+                    Logging.SocketLog?.Trace($"Socket {Id} reassembled message of {memoryStream!.Length} bytes | partial message count: {receiveResult.Count}");
+#endif
+                    memoryStream.Dispose();
+                    return true;
                 }
             }
-            catch
-            {
-                Logging.SocketLog?.Debug($"Socket {Id} caught an exception and is Closing..");
-                await InternalResetAsync().ConfigureAwait(false);
-            }
+
+            return false;
         }
 
         /// <summary>
@@ -515,34 +481,11 @@ namespace BinanceAPI.Clients
         /// <param name="data"></param>
         /// <param name="offset"></param>
         /// <param name="count"></param>
-        /// <param name="messageType"></param>
-        private void HandleMessage(byte[] data, int offset, int count, WebSocketMessageType messageType)
+        private void HandleMessage(byte[] data, int offset, int count)
         {
             try
             {
-                string strData;
-
-                if (messageType == WebSocketMessageType.Binary)
-                {
-                    if (DataInterpreterBytes == null)
-                    {
-                        return;
-                    }
-
-                    var relevantData = new byte[count];
-                    Array.Copy(data, offset, relevantData, 0, count);
-                    strData = DataInterpreterBytes(relevantData);
-                }
-                else
-                {
-                    strData = Encoding.GetString(data, offset, count);
-                }
-                if (DataInterpreterString != null)
-                {
-                    strData = DataInterpreterString(strData);
-                }
-
-                Handle(messageHandlers, strData);
+                Handle(messageHandlers, Encoding.GetString(data, offset, count));
             }
             catch (Exception ex)
             {

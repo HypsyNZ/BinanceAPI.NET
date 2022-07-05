@@ -386,16 +386,6 @@
             The timestamp this socket has been active for the last time
             </summary>
         </member>
-        <member name="P:BinanceAPI.Clients.BaseSocketClient.DataInterpreterBytes">
-            <summary>
-            Delegate used for processing byte data received from socket connections before it is processed by handlers
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Clients.BaseSocketClient.DataInterpreterString">
-            <summary>
-            Delegate used for processing string data received from socket connections before it is processed by handlers
-            </summary>
-        </member>
         <member name="P:BinanceAPI.Clients.BaseSocketClient.Url">
             <summary>
             Url this socket connects to
@@ -468,14 +458,13 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Clients.BaseSocketClient.HandleMessage(System.Byte[],System.Int32,System.Int32,System.Net.WebSockets.WebSocketMessageType)">
+        <member name="M:BinanceAPI.Clients.BaseSocketClient.HandleMessage(System.Byte[],System.Int32,System.Int32)">
             <summary>
             Handles the message
             </summary>
             <param name="data"></param>
             <param name="offset"></param>
             <param name="count"></param>
-            <param name="messageType"></param>
         </member>
         <member name="M:BinanceAPI.Clients.BaseSocketClient.Handle(System.Collections.Generic.List{System.Action})">
             <summary>

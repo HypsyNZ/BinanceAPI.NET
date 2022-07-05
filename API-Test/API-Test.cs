@@ -34,7 +34,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.4.4 Test - More Connection Status - https://pastebin.com/ef3kH2fF
+// 6.0.4.6 Test - More Connection Status - https://pastebin.com/ef3kH2fF
 
 namespace API_Test
 {
@@ -94,7 +94,7 @@ namespace API_Test
             BinanceClientHost client = new BinanceClientHost(serverTimeStartWaitToken.Token);
             SocketClientHost socketClient = new SocketClientHost();
 
-            // [Version 6.0.4.3] Start Test
+            // [Version 6.0.4.6] Start Test
             Trace.WriteLine("Starting Test..");
             Task.Run(async () =>
             {
@@ -161,7 +161,7 @@ namespace API_Test
                         UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
                         {
                             // Uncomment to see output from the Socket
-                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00000") + "| BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00000"));
+                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00") + "| Ask Quan: " + data.Data.BestAskQuantity.Normalize().ToString("000.00000#####") + " | BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00") + "| BidQuantity :" + data.Data.BestBidQuantity.Normalize().ToString("000.00000#####"));
                         }).Result.Data;
 
                         // Subscribe to Update Subscription Status Changed Events before it connects
@@ -183,7 +183,7 @@ namespace API_Test
                         await sub.ReconnectAsync().ConfigureAwait(false);
 
                         // work work
-                        await Task.Delay(5000).ConfigureAwait(false);
+                        await Task.Delay(20000).ConfigureAwait(false);
 
                         // Destroy everything and unsubscribe, this should cause UnsubscribeAllAsync to do nothing
                         await sub.CloseAndDisposeAsync().ConfigureAwait(false);
@@ -197,7 +197,7 @@ namespace API_Test
                         //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
                         //}
 
-                        _ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
+                        //_ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
                     }).ConfigureAwait(false);
                 });
 
