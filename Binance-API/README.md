@@ -1,3 +1,6 @@
+### Version 6.0.4.9
+- [x] Close `WebSocket` properly
+
 ### Version 6.0.4.8
 - [x] `WebSocket` Speed Improvements
 - [x] Remove `SemaphoreLite`
