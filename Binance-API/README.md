@@ -1,6 +1,7 @@
-### Version 6.0.4.7
+### Version 6.0.4.8
 - [x] `WebSocket` Speed Improvements
 - [x] Remove `SemaphoreLite`
+- [x] Remove `IncomingKbps`
 
 ### Version 6.0.4.5
 - [x] Fix a small inconsistency in `Order Update`
