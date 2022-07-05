@@ -25,7 +25,6 @@
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using Newtonsoft.Json;
-using SemaphoreLite;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
