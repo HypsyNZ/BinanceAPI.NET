@@ -22,13 +22,13 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.MarginData;
 using BinanceAPI.Objects.Spot.SpotData;
-using BinanceAPI.Requests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -44,27 +44,6 @@ namespace BinanceAPI.SubClients.Margin
     /// </summary>
     public class BinanceClientMarginOrders
     {
-        private const string marginApi = "sapi";
-        private const string marginVersion = "1";
-
-        // Margin
-        private const string newMarginOrderEndpoint = "margin/order";
-
-        private const string cancelMarginOrderEndpoint = "margin/order";
-        private const string myMarginTradesEndpoint = "margin/myTrades";
-        private const string allMarginOrdersEndpoint = "margin/allOrders";
-        private const string openMarginOrdersEndpoint = "margin/openOrders";
-        private const string cancelOpenMarginOrdersEndpoint = "margin/openOrders";
-        private const string queryMarginOrderEndpoint = "margin/order";
-
-        // OCO
-        private const string newMarginOCOOrderEndpoint = "margin/order/oco";
-
-        private const string cancelMarginOCOOrderEndpoint = "margin/orderList";
-        private const string getMarginOCOOrderEndpoint = "margin/orderList";
-        private const string allMarginOCOOrderEndpoint = "margin/allOrderList";
-        private const string openMarginOCOOrderEndpoint = "margin/openOrderList";
-
         private readonly BinanceClientHost _baseClient;
 
         internal BinanceClientMarginOrders(BinanceClientHost baseClient)
@@ -76,6 +55,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Margin account new order
+        /// <para>[POST] https://binance-docs.github.io/apidocs/spot/en/#margin-account-new-order-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
@@ -109,7 +89,7 @@ namespace BinanceAPI.SubClients.Margin
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
-            return await _baseClient.PlaceOrderInternal(GetUri.New(_baseClient.BaseAddress, newMarginOrderEndpoint, marginApi, marginVersion),
+            return await _baseClient.PlaceOrderInternal(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.POST_NEW_ORDER_NewOrder,
                 symbol,
                 side,
                 type,
@@ -134,6 +114,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Cancel an active order for margin account
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#margin-account-cancel-order-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="orderId">The order id of the order</param>
@@ -158,7 +139,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("newClientOrderId", newClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceCanceledOrder>(GetUri.New(_baseClient.BaseAddress, cancelMarginOrderEndpoint, marginApi, marginVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceCanceledOrder>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.DELETE_CANCEL_ORDER_CancelOrder, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Margin Account Cancel Order
@@ -167,6 +148,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Cancel all active orders for a symbol
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#margin-account-cancel-all-open-orders-on-a-symbol-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the to cancel orders for</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -182,7 +164,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("isIsolated", isIsolated);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceCanceledOrder>>(GetUri.New(_baseClient.BaseAddress, cancelOpenMarginOrdersEndpoint, marginApi, marginVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceCanceledOrder>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.DELETE_CANCEL_ALL_ORDERS_CancelAllOpenOrders, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Margin Account Cancel All Open Orders
@@ -191,6 +173,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Retrieves data for a specific margin account order. Either orderId or origClientOrderId should be provided.
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-order-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -213,7 +196,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderBase>(GetUri.New(_baseClient.BaseAddress, queryMarginOrderEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderBase>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_SINGLE_ORDER_GetSingleOrder, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Margin Account's Order
@@ -222,6 +205,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Gets a list of open margin account orders
+        /// <para>https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-open-orders-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol to get open orders for</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -240,7 +224,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("symbol", symbol);
             parameters.AddOptionalParameter("isIsolated", isIsolated);
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(GetUri.New(_baseClient.BaseAddress, openMarginOrdersEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_OPEN_ORDERS_GetAllOpenOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Margin Account's Open Order
@@ -249,6 +233,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Gets all margin account orders for the provided symbol
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-all-orders-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol to get orders for</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -274,49 +259,16 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(GetUri.New(_baseClient.BaseAddress, allMarginOrdersEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_ALL_ORDERS_GetAllOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Margin Account's All Order
-
-        #region Query Margin Account's Trade List
-
-        /// <summary>
-        /// Gets all user margin account trades for provided symbol
-        /// </summary>
-        /// <param name="symbol">Symbol to get trades for</param>
-        /// <param name="limit">The max number of results</param>
-        /// <param name="isIsolated">For isolated margin or not</param>
-        /// <param name="startTime">Orders newer than this date will be retrieved</param>
-        /// <param name="endTime">Orders older than this date will be retrieved</param>
-        /// <param name="fromId">TradeId to fetch from. Default gets most recent trades</param>
-        /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>List of margin account trades</returns>
-        public async Task<WebCallResult<IEnumerable<BinanceTrade>>> GetMarginAccountUserTradesAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, int? limit = null, long? fromId = null, bool? isIsolated = null, long? receiveWindow = null, CancellationToken ct = default)
-        {
-            limit?.ValidateIntBetween(nameof(limit), 1, 1000);
-
-            var parameters = new Dictionary<string, object>
-            {
-                { "symbol", symbol },
-            };
-            parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("isIsolated", isIsolated);
-            parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
-            parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
-
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceTrade>>(GetUri.New(_baseClient.BaseAddress, myMarginTradesEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
-        }
-
-        #endregion Query Margin Account's Trade List
 
         #region Margin Account New OCO Order
 
         /// <summary>
         /// Places a new margin OCO(One cancels other) order
+        /// <para>[POST] https://binance-docs.github.io/apidocs/spot/en/#margin-account-new-oco-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
@@ -374,7 +326,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("stopLimitTimeInForce", stopLimitTimeInForce == null ? null : JsonConvert.SerializeObject(stopLimitTimeInForce, new TimeInForceConverter(false)));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(GetUri.New(_baseClient.BaseAddress, newMarginOCOOrderEndpoint, marginApi, marginVersion), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.POST_NEW_ORDER_OCO_NewOcoOrder, HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Margin Account New OCO Order
@@ -383,6 +335,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Cancels a pending margin oco order
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#margin-account-cancel-oco-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -407,7 +360,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("newClientOrderId", newClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(GetUri.New(_baseClient.BaseAddress, cancelMarginOCOOrderEndpoint, marginApi, marginVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.DELETE_CANCEL_ORDER_OCO_CancelOcoOrder, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Cancel OCO
@@ -416,6 +369,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Retrieves data for a specific margin oco order. Either orderListId or listClientOrderId should be provided.
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-oco-user_data</para>
         /// </summary>
         /// <param name="symbol">Mandatory for isolated margin, not supported for cross margin</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -438,7 +392,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(GetUri.New(_baseClient.BaseAddress, getMarginOCOOrderEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_ORDER_OCO_GetOcoOrder, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query OCO
@@ -447,6 +401,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Retrieves a list of margin oco orders matching the parameters
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-all-oco-user_data</para>
         /// </summary>
         /// <param name="symbol">Mandatory for isolated margin, not supported for cross margin</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -475,7 +430,7 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginOrderOcoList>>(GetUri.New(_baseClient.BaseAddress, allMarginOCOOrderEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginOrderOcoList>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_ALL_OPEN_OCO_ORDERS_GetAllOpenOcoOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query all OCO
@@ -484,6 +439,7 @@ namespace BinanceAPI.SubClients.Margin
 
         /// <summary>
         /// Retrieves a list of open margin oco orders
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-open-oco-user_data</para>
         /// </summary>
         /// <param name="symbol">Mandatory for isolated margin, not supported for cross margin</param>
         /// <param name="isIsolated">For isolated margin or not</param>
@@ -499,9 +455,44 @@ namespace BinanceAPI.SubClients.Margin
             parameters.AddOptionalParameter("isIsolated", isIsolated?.ToString());
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginOrderOcoList>>(GetUri.New(_baseClient.BaseAddress, openMarginOCOOrderEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginOrderOcoList>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_ALL_ORDER_OCO_GetAllOcoOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Open OCO
+
+        #region Query Margin Account's Trade List
+
+        /// <summary>
+        /// Gets all user margin account trades for provided symbol
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-margin-account-39-s-trade-list-user_data</para>
+        /// </summary>
+        /// <param name="symbol">Symbol to get trades for</param>
+        /// <param name="limit">The max number of results</param>
+        /// <param name="isIsolated">For isolated margin or not</param>
+        /// <param name="startTime">Orders newer than this date will be retrieved</param>
+        /// <param name="endTime">Orders older than this date will be retrieved</param>
+        /// <param name="fromId">TradeId to fetch from. Default gets most recent trades</param>
+        /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>List of margin account trades</returns>
+        public async Task<WebCallResult<IEnumerable<BinanceTrade>>> GetMarginAccountUserTradesAsync(string symbol, DateTime? startTime = null, DateTime? endTime = null, int? limit = null, long? fromId = null, bool? isIsolated = null, long? receiveWindow = null, CancellationToken ct = default)
+        {
+            limit?.ValidateIntBetween(nameof(limit), 1, 1000);
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "symbol", symbol },
+            };
+            parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
+            parameters.AddOptionalParameter("isIsolated", isIsolated);
+            parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
+            parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
+            parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceTrade>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Margin.GET_ALL_TRADES_GetAllTrades, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+        }
+
+        #endregion Query Margin Account's Trade List
     }
 }

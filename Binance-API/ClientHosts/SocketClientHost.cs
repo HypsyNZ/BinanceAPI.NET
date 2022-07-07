@@ -22,13 +22,12 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientBase;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Other;
-using BinanceAPI.Options;
 using BinanceAPI.Sockets;
 using BinanceAPI.SocketSubClients;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -38,7 +37,7 @@ using System.Net.WebSockets;
 using System.Threading.Tasks;
 using static BinanceAPI.Logging;
 
-namespace BinanceAPI.Clients
+namespace BinanceAPI.ClientHosts
 {
     /// <summary>
     /// Base for socket client implementations
@@ -46,17 +45,15 @@ namespace BinanceAPI.Clients
     public class SocketClientHost : BaseClient
     {
         /// <summary>
+        /// Spot Stream Endpoints
+        /// </summary>
+        public BinanceSocketClientSpot Spot { get; set; }
+
+        /// <summary>
         /// The Default Options or the Options that you Set
         /// <para>new BinanceSocketClientOptions() creates the standard defaults regardless of what you set this to</para>
         /// </summary>
         public static SocketClientHostOptions DefaultOptions = new();
-
-        /// <summary>
-        /// Spot streams
-        /// </summary>
-        public BinanceSocketClientSpot Spot { get; set; }
-
-        #region constructor/destructor
 
         /// <summary>
         /// Create a new instance of BinanceSocketClient with default options
@@ -65,9 +62,22 @@ namespace BinanceAPI.Clients
         {
         }
 
-        #endregion constructor/destructor
+        /// <summary>
+        /// Create a new instance of BinanceSocketClient using provided options
+        /// </summary>
+        /// <param name="options">The options to use for this client</param>
+        public SocketClientHost(SocketClientHostOptions options) : base(options)
+        {
+            Spot = new BinanceSocketClientSpot(this, options);
 
-        #region methods
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            MaxReconnectTries = options.MaxReconnectTries;
+            MaxConcurrentResubscriptionsPerSocket = options.MaxConcurrentResubscriptionsPerSocket;
+
+            StartSocketLog(options.LogPath, options.LogLevel, options.LogToConsole);
+        }
 
         /// <summary>
         /// Set the default options to be used when creating new socket clients
@@ -90,14 +100,10 @@ namespace BinanceAPI.Clients
             return SubscribeAsync(url, request, false, onData);
         }
 
-        #endregion methods
-
-        #region fields
-
         /// <summary>
         /// List of socket connections currently connecting/connected
         /// </summary>
-        protected internal ConcurrentDictionary<int, SocketConnection> sockets = new();
+        protected internal ConcurrentDictionary<int, SocketConnection> AllSockets = new();
 
         /// <summary>
         /// The max amount of concurrent socket connections
@@ -139,38 +145,6 @@ namespace BinanceAPI.Clients
         /// If client is disposing
         /// </summary>
         protected bool disposing;
-
-        #endregion fields
-
-        /// <summary>
-        /// Create a new instance of BinanceSocketClient using provided options
-        /// </summary>
-        /// <param name="options">The options to use for this client</param>
-        public SocketClientHost(SocketClientHostOptions options) : base(options)
-        {
-            Spot = new BinanceSocketClientSpot(this, options);
-
-            SetDataInterpreter((data) => { return string.Empty; }, null);
-
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
-
-            MaxReconnectTries = options.MaxReconnectTries;
-            MaxConcurrentResubscriptionsPerSocket = options.MaxConcurrentResubscriptionsPerSocket;
-
-            StartSocketLog(options.LogPath, options.LogLevel, options.LogToConsole);
-        }
-
-        /// <summary>
-        /// Set a delegate to be used for processing data received from socket connections before it is processed by handlers
-        /// </summary>
-        /// <param name="byteHandler">Handler for byte data</param>
-        /// <param name="stringHandler">Handler for string data</param>
-        protected void SetDataInterpreter(Func<byte[], string>? byteHandler, Func<string, string>? stringHandler)
-        {
-            dataInterpreterBytes = byteHandler;
-            dataInterpreterString = stringHandler;
-        }
 
         /// <summary>
         /// Connect to an url and listen for data
@@ -402,7 +376,7 @@ namespace BinanceAPI.Clients
         {
             if (await socketConnection.BinanceSocket.ConnectAsync().ConfigureAwait(false))
             {
-                sockets.TryAdd(socketConnection.BinanceSocket.Id, socketConnection);
+                AllSockets.TryAdd(socketConnection.BinanceSocket.Id, socketConnection);
                 return new CallResult<bool>(true, null);
             }
 
@@ -421,8 +395,8 @@ namespace BinanceAPI.Clients
 #if DEBUG
             SocketLog?.Debug($"Socket {socket.Id} new socket created for " + address);
 #endif
-            if (apiProxy != null)
-                socket.SetProxy(apiProxy);
+            if (ApiProxy != null)
+                socket.SetProxy(ApiProxy);
 
             socket.OnError += e =>
             {
@@ -459,13 +433,13 @@ namespace BinanceAPI.Clients
         public async Task UnsubscribeAllAsync()
         {
 #if DEBUG
-            SocketLog?.Debug($"Closing all {sockets.Count} subscriptions");
+            SocketLog?.Debug($"Closing all {AllSockets.Count} subscriptions");
 #endif
             await Task.Run(async () =>
             {
                 var tasks = new List<Task>();
                 {
-                    var socketList = sockets.Values;
+                    var socketList = AllSockets.Values;
                     foreach (var sub in socketList)
                     {
                         tasks.Add(sub.CloseAndDisposeAsync());

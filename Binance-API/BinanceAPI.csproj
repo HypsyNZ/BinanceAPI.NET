@@ -12,10 +12,10 @@
 
 	<PropertyGroup>
 		<Authors>S Christison</Authors>
-		<PackageVersion>6.0.4.9</PackageVersion>
-		<AssemblyVersion>6.0.4.9</AssemblyVersion>
-		<FileVersion>6.0.4.9</FileVersion>
-		<Version>6.0.4.9</Version>
+		<PackageVersion>6.0.5.0</PackageVersion>
+		<AssemblyVersion>6.0.5.0</AssemblyVersion>
+		<FileVersion>6.0.5.0</FileVersion>
+		<Version>6.0.5.0</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>

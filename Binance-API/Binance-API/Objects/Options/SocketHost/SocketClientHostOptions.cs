@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Authentication;
 using BinanceAPI.Options;
 
 namespace BinanceAPI.Objects
@@ -41,28 +40,5 @@ namespace BinanceAPI.Objects
         /// Max number of concurrent resubscription tasks per socket after reconnecting a socket
         /// </summary>
         public int MaxConcurrentResubscriptionsPerSocket { get; set; } = 5;
-
-        /// <summary>
-        /// ctor
-        /// </summary>
-        public SocketClientHostOptions() : this(BinanceApiAddresses.Default)
-        {
-        }
-
-        /// <summary>
-        /// ctor
-        /// </summary>
-        /// <param name="addresses">The base addresses to use</param>
-        public SocketClientHostOptions(BinanceApiAddresses addresses) : this(addresses.SocketClientAddress)
-        {
-        }
-
-        /// <summary>
-        /// ctor
-        /// </summary>
-        /// <param name="address">Custom address for spot API</param>
-        public SocketClientHostOptions(string address) : base(address)
-        {
-        }
     }
 }

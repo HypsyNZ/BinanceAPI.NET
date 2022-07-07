@@ -25,9 +25,10 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("API-Test")]
-[assembly: AssemblyProduct("API-Test")]
+[assembly: AssemblyTitle("BinanceAPI.NET-Test")]
+[assembly: AssemblyProduct("BinanceAPI.NET-Test")]
+[assembly: AssemblyVersion("6.0.5.0")]
+[assembly: AssemblyFileVersion("6.0.5.0")]
+
 [assembly: ComVisible(false)]
 [assembly: Guid("828a9c7c-7ede-4f79-933c-d0e8470ea138")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]

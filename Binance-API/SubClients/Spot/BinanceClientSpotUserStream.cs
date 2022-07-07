@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.UserData;
@@ -61,7 +62,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <returns>Listen key</returns>
         public async Task<WebCallResult<string>> StartUserStreamAsync(CancellationToken ct = default)
         {
-            var result = await _baseClient.SendRequestInternal<BinanceListenKey>(GetUri.New(_baseClient.BaseAddress, getListenKeyEndpoint, api, userDataStreamVersion), HttpMethod.Post, ct, new Dictionary<string, object>()).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceListenKey>(UriClient.GetBaseAddress() + GetUriString.Combine(getListenKeyEndpoint, api, userDataStreamVersion), HttpMethod.Post, ct, new Dictionary<string, object>()).ConfigureAwait(false);
             return result.As(result.Data?.ListenKey!);
         }
 
@@ -84,7 +85,7 @@ namespace BinanceAPI.SubClients.Spot
                 { "listenKey", listenKey }
             };
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, keepListenKeyAliveEndpoint, api, userDataStreamVersion), HttpMethod.Put, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(keepListenKeyAliveEndpoint, api, userDataStreamVersion), HttpMethod.Put, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Ping/Keep-alive a ListenKey
@@ -106,7 +107,7 @@ namespace BinanceAPI.SubClients.Spot
                 { "listenKey", listenKey }
             };
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, closeListenKeyEndpoint, api, userDataStreamVersion), HttpMethod.Delete, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(closeListenKeyEndpoint, api, userDataStreamVersion), HttpMethod.Delete, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Invalidate a ListenKey

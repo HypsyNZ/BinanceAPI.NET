@@ -22,11 +22,11 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.WalletData;
 using BinanceAPI.Requests;
-using BinanceAPI.SubClients.Margin;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
@@ -88,7 +88,7 @@ namespace BinanceAPI.SubClients.Spot
 
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceResult<BinanceTradingStatus>>(GetUri.New(_baseClient.BaseAddress, tradingStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceResult<BinanceTradingStatus>>(UriClient.GetBaseAddress() + GetUriString.Combine(tradingStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
             if (!result)
                 return new WebCallResult<BinanceTradingStatus>(result.ResponseStatusCode, result.ResponseHeaders, null, result.Error);
 

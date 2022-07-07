@@ -22,8 +22,7 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Clients;
-using BinanceAPI.Interfaces;
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.MarketData;
 using BinanceAPI.OrderBook;

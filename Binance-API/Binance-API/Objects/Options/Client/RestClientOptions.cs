@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Authentication;
 using System;
 using System.Net.Http;
 
@@ -42,24 +41,6 @@ namespace BinanceAPI.Options
         /// Http client to use. If a HttpClient is provided in this property the RequestTimeout and Proxy options will be ignored in requests and should be set on the provided HttpClient instance
         /// </summary>
         public HttpClient? HttpClient { get; set; }
-
-        /// <summary>
-        /// ctor
-        /// </summary>
-        /// <param name="baseAddress">The base address of the API</param>
-        public RestClientOptions(string baseAddress) : base(baseAddress)
-        {
-        }
-
-        /// <summary>
-        /// ctor
-        /// </summary>
-        /// <param name="baseAddress">The base address of the API</param>
-        /// <param name="httpClient">Shared http client instance</param>
-        public RestClientOptions(HttpClient httpClient, string baseAddress) : base(baseAddress)
-        {
-            HttpClient = httpClient;
-        }
 
         /// <inheritdoc />
         public override string ToString()

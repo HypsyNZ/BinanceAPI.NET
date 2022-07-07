@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Interfaces;
 using Newtonsoft.Json;
 
 namespace BinanceAPI.Objects.Spot.MarketStream

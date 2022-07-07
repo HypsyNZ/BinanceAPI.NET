@@ -8,23 +8,6 @@ namespace BinanceAPI.Options
     /// </summary>
     public class ClientOptions : BaseOptions
     {
-        private string _baseAddress = "";
-
-        /// <summary>
-        /// The base address of the client
-        /// </summary>
-        public string BaseAddress
-        {
-            get => _baseAddress;
-            set
-            {
-                var newValue = value;
-                if (!newValue.EndsWith("/"))
-                    newValue += "/";
-                _baseAddress = newValue;
-            }
-        }
-
         /// <summary>
         /// The api credentials
         /// </summary>
@@ -40,19 +23,10 @@ namespace BinanceAPI.Options
         /// </summary>
         public ApiProxy? Proxy { get; set; }
 
-        /// <summary>
-        /// ctor
-        /// </summary>
-        /// <param name="baseAddress">The base address to use</param>
-        public ClientOptions(string baseAddress)
-        {
-            BaseAddress = baseAddress;
-        }
-
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{base.ToString()}, Credentials: {(ApiCredentials == null ? "-" : "Set")}, BaseAddress: {BaseAddress}, Proxy: {(Proxy == null ? "-" : Proxy.Host)}";
+            return $"{base.ToString()}, Credentials: {(ApiCredentials == null ? "-" : "Set")}, BaseAddress: {UriClient.GetBaseAddress()}, Proxy: {(Proxy == null ? "-" : Proxy.Host)}";
         }
     }
 }

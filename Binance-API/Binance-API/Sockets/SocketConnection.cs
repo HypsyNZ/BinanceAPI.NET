@@ -22,7 +22,8 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Clients;
+using BinanceAPI.ClientBase;
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using Newtonsoft.Json;
@@ -316,9 +317,9 @@ namespace BinanceAPI.Sockets
                 {
                     if (ReconnectTry >= socketClient.MaxReconnectTries)
                     {
-                        if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
+                        if (socketClient.AllSockets.ContainsKey(BinanceSocket.Id))
                         {
-                            socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
+                            socketClient.AllSockets.TryRemove(BinanceSocket.Id, out _);
                         }
 
                         ShouldReconnect = false;
@@ -346,9 +347,9 @@ namespace BinanceAPI.Sockets
                     if (ResubscribeTry >= socketClient.MaxReconnectTries)
                     {
                         ShouldReconnect = false;
-                        if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
+                        if (socketClient.AllSockets.ContainsKey(BinanceSocket.Id))
                         {
-                            socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
+                            socketClient.AllSockets.TryRemove(BinanceSocket.Id, out _);
                         }
                         SocketLog?.Debug($"Socket {BinanceSocket.Id} failed to {(connecting ? "subscribe" : "resubscribe")} after {ResubscribeTry} tries, closing");
 
@@ -441,9 +442,9 @@ namespace BinanceAPI.Sockets
             ShouldReconnect = false;
             await BinanceSocket.InternalResetAsync().ConfigureAwait(false);
 
-            if (socketClient.sockets.ContainsKey(BinanceSocket.Id))
+            if (socketClient.AllSockets.ContainsKey(BinanceSocket.Id))
             {
-                socketClient.sockets.TryRemove(BinanceSocket.Id, out _);
+                socketClient.AllSockets.TryRemove(BinanceSocket.Id, out _);
             }
 
             DisconnectTime = DateTime.UtcNow;

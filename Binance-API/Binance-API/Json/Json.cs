@@ -45,32 +45,53 @@ namespace BinanceAPI
     /// </summary>
     public class Json
     {
-        internal JsonSerializer DefaultSerializer { get; set; }
-
-#if DEBUG
-
         /// <summary>
-        /// (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
+        /// The Serializer
         /// </summary>
-        public static bool OutputOriginalData { get; set; }
+        public static JsonSerializer DefaultSerializer { get; set; }
 
-        /// <summary>
-        /// (Global) Should check objects for missing properties based on the model and the received JSON
-        /// </summary>
-        public static bool ShouldCheckObjects { get; set; }
-
-#endif
-
-        /// <summary>
-        /// Create a Json Serializer/Deserializer
-        /// </summary>
-        public Json()
+        static Json()
         {
             DefaultSerializer = JsonSerializer.Create(new JsonSerializerSettings
             {
                 DateTimeZoneHandling = DateTimeZoneHandling.Utc,
                 Culture = CultureInfo.InvariantCulture
             });
+        }
+
+        internal static CallResult<JToken> ValidateJson(string data)
+        {
+            if (string.IsNullOrEmpty(data))
+            {
+                var info = "Empty data object received";
+                ClientLog?.Error(info);
+                return new CallResult<JToken>(null, new DeserializeError(info, data));
+            }
+
+            try
+            {
+                return new CallResult<JToken>(JToken.Parse(data), null);
+            }
+#if DEBUG
+            catch (JsonReaderException jre)
+            {
+                var info = $"Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}";
+                return new CallResult<JToken>(null, new DeserializeError(info, data));
+            }
+            catch (JsonSerializationException jse)
+            {
+                var info = $"Deserialize JsonSerializationException: {jse.Message}";
+                return new CallResult<JToken>(null, new DeserializeError(info, data));
+            }
+            catch (Exception ex)
+            {
+                var exceptionInfo = ex.ToLogString();
+                var info = $"Deserialize Unknown Exception: {exceptionInfo}";
+                return new CallResult<JToken>(null, new DeserializeError(info, data));
+            }
+#else
+            catch (JsonReaderException) { return new CallResult<JToken>(null, null); }
+#endif
         }
 
         /// <summary>
@@ -81,7 +102,7 @@ namespace BinanceAPI
         /// <param name="checkObject">Whether or not the parsing should be checked for missing properties (will output data to the logging if log verbosity is Debug)</param>
         /// <param name="requestId">Id of the request the data is returned from (used for grouping logging by request)</param>
         /// <returns></returns>
-        public CallResult<T> Deserialize<T>(JToken obj, bool? checkObject = null, int? requestId = null)
+        public static CallResult<T> Deserialize<T>(JToken obj, bool? checkObject = null, int? requestId = null)
         {
             try
             {
@@ -128,44 +149,122 @@ namespace BinanceAPI
 #endif
         }
 
-        internal CallResult<JToken> ValidateJson(string data)
+        /// <summary>
+        /// Deserialize a string into an object
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize into</typeparam>
+        /// <param name="data">The data to deserialize</param>
+        /// <param name="checkObject">Whether or not the parsing should be checked for missing properties (will output data to the logging if log verbosity is Debug)</param>
+        /// <param name="requestId">Id of the request the data is returned from (used for grouping logging by request)</param>
+        /// <returns></returns>
+        public static CallResult<T> Deserialize<T>(string data, bool? checkObject = null, int? requestId = null)
         {
-            if (string.IsNullOrEmpty(data))
+            var tokenResult = ValidateJson(data);
+            if (!tokenResult)
             {
-                var info = "Empty data object received";
-                ClientLog?.Error(info);
-                return new CallResult<JToken>(null, new DeserializeError(info, data));
+                ClientLog?.Error(tokenResult.Error!.Message);
+                return new CallResult<T>(default, tokenResult.Error);
             }
 
+            return Deserialize<T>(tokenResult.Data, checkObject, requestId);
+        }
+
+        /// <summary>
+        /// Deserialize a stream into an object
+        /// </summary>
+        /// <typeparam name="T">The type to deserialize into</typeparam>
+        /// <param name="stream">The stream to deserialize</param>
+        /// <param name="requestId">Id of the request the data is returned from (used for grouping logging by request)</param>
+        /// <returns></returns>
+        public static async Task<CallResult<T>> DeserializeAsync<T>(Stream stream, int? requestId = null)
+        {
+#if DEBUG
+            string? data = null;
+#endif
             try
             {
-                return new CallResult<JToken>(JToken.Parse(data), null);
+                // Let the reader keep the stream open so we're able to seek if needed. The calling method will close the stream.
+                using var reader = new StreamReader(stream, Encoding.UTF8, false, 512, true);
+
+#if DEBUG
+                if (Json.OutputOriginalData || ClientLog?.LogLevel <= LogLevel.Debug)
+                {
+                    data = await reader.ReadToEndAsync().ConfigureAwait(false);
+                    var result = Deserialize<T>(data, null, requestId);
+                    if (Json.OutputOriginalData)
+                        result.OriginalData = data;
+                    return result;
+                }
+#endif
+
+                using var jsonReader = new JsonTextReader(reader);
+                return new CallResult<T>(DefaultSerializer.Deserialize<T>(jsonReader), null);
             }
 #if DEBUG
             catch (JsonReaderException jre)
             {
-                var info = $"Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}";
-                return new CallResult<JToken>(null, new DeserializeError(info, data));
+                if (data == null && stream.CanSeek)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    data = await ReadStreamAsync(stream).ConfigureAwait(false);
+                }
+                else
+                {
+                    data = "[Data only available in Debug Mode with Debug LogLevel]";
+                }
+
+                ClientLog?.Error($"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}, data: {data}");
+                return new CallResult<T>(default, new DeserializeError($"Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}", data));
             }
             catch (JsonSerializationException jse)
             {
-                var info = $"Deserialize JsonSerializationException: {jse.Message}";
-                return new CallResult<JToken>(null, new DeserializeError(info, data));
+                if (data == null && stream.CanSeek)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    data = await ReadStreamAsync(stream).ConfigureAwait(false);
+                }
+                else
+                {
+                    data = "[Data only available in Debug Mode with Debug LogLevel]";
+                }
+
+                ClientLog?.Error($"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonSerializationException: {jse.Message}, data: {data}");
+                return new CallResult<T>(default, new DeserializeError($"Deserialize JsonSerializationException: {jse.Message}", data));
             }
             catch (Exception ex)
             {
+                if (data == null && stream.CanSeek)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    data = await ReadStreamAsync(stream).ConfigureAwait(false);
+                }
+                else
+                {
+                    data = "[Data only available in Debug Mode with Debug LogLevel]";
+                }
+
                 var exceptionInfo = ex.ToLogString();
-                var info = $"Deserialize Unknown Exception: {exceptionInfo}";
-                return new CallResult<JToken>(null, new DeserializeError(info, data));
+                ClientLog?.Error($"{(requestId != null ? $"[{requestId}] " : "")}Deserialize Unknown Exception: {exceptionInfo}, data: {data}");
+                return new CallResult<T>(default, new DeserializeError($"Deserialize Unknown Exception: {exceptionInfo}", data));
             }
 #else
-            catch (JsonReaderException) { return new CallResult<JToken>(null, null); }
+            catch (JsonReaderException) { return new CallResult<T>(default, null); }
 #endif
         }
 
 #if DEBUG
 
-        private PropertyInfo? GetProperty(string name, IEnumerable<PropertyInfo> props)
+        /// <summary>
+        /// (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
+        /// </summary>
+        public static bool OutputOriginalData { get; set; }
+
+        /// <summary>
+        /// (Global) Should check objects for missing properties based on the model and the received JSON
+        /// </summary>
+        public static bool ShouldCheckObjects { get; set; }
+
+        private static PropertyInfo? GetProperty(string name, IEnumerable<PropertyInfo> props)
         {
             foreach (var prop in props)
             {
@@ -184,7 +283,7 @@ namespace BinanceAPI
             return null;
         }
 
-        private void CheckObject(Type type, JObject obj, int? requestId = null)
+        private static void CheckObject(Type type, JObject obj, int? requestId = null)
         {
             if (type == null)
                 return;
@@ -265,7 +364,7 @@ namespace BinanceAPI
                 ClientLog?.Info($"{(requestId != null ? $"[{requestId}] " : "")}Returned data: " + obj);
         }
 
-        private bool IsSimple(Type type)
+        private static bool IsSimple(Type type)
         {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
@@ -278,12 +377,11 @@ namespace BinanceAPI
                    || type == typeof(decimal);
         }
 
-        internal async Task<string> ReadStreamAsync(Stream stream)
+        internal static async Task<string> ReadStreamAsync(Stream stream)
         {
             using var reader = new StreamReader(stream, Encoding.UTF8, false, 512, true);
             return await reader.ReadToEndAsync().ConfigureAwait(false);
         }
-
 #endif
     }
 }

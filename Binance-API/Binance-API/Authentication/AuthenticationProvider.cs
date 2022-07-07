@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Clients;
 using BinanceAPI.Enums;
 using System;
 using System.Collections.Generic;

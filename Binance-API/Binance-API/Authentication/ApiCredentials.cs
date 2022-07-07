@@ -22,11 +22,8 @@
 *SOFTWARE.
 */
 
-using Newtonsoft.Json.Linq;
 using System;
-using System.IO;
 using System.Security;
-using System.Text;
 
 namespace BinanceAPI.Authentication
 {
@@ -61,7 +58,8 @@ namespace BinanceAPI.Authentication
 
         /// <summary>
         /// Create Api credentials providing an api key and secret for authentication
-        /// WILL AUTOMATICALLY BE CONVERTED INTO A SECURE STRING
+        /// <para>You should use <see href="ApiCredentials(SecureString key, SecureString secret)"/> instead</para>
+        /// <para>BOTH KEYS WILL BE AUTOMATICALLY CONVERTED INTO A SECURE STRING</para>
         /// </summary>
         /// <param name="key">The api key used for identification</param>
         /// <param name="secret">The api secret used for signing</param>
@@ -75,29 +73,8 @@ namespace BinanceAPI.Authentication
         }
 
         /// <summary>
-        /// Copy the credentials
-        /// </summary>
-        /// <returns></returns>
-        public ApiCredentials Copy()
-        {
-            return new ApiCredentials(Key!.GetString(), Secret!.GetString());
-        }
-
-        /// <summary>
-        /// Try get the value of a key from a JToken
-        /// </summary>
-        /// <param name="data"></param>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        protected string? TryGetValue(JToken data, string key)
-        {
-            if (data[key] == null)
-                return null;
-            return (string)data[key]!;
-        }
-
-        /// <summary>
-        /// Dispose
+        /// Dispose is really Destroy
+        /// <para>You shouldn't do this unless you really mean it, it would be better to create new credentials instead</para>
         /// </summary>
         public void Dispose()
         {

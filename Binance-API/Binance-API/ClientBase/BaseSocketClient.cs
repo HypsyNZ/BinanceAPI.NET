@@ -24,7 +24,6 @@
 
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -34,10 +33,9 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Security.Authentication;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace BinanceAPI.Clients
+namespace BinanceAPI.ClientBase
 {
     /// <summary>
     /// A wrapper around System.Net.WebSockets.ClientWebSocket
@@ -248,7 +246,8 @@ namespace BinanceAPI.Clients
             StatusChanged?.Invoke(ConnectionStatus.Connecting);
             try
             {
-                await ClientSocket.ConnectAsync(new Uri(Url), default).ConfigureAwait(false);
+                var s = UriClient.GetStream();
+                await ClientSocket.ConnectAsync(s, default).ConfigureAwait(false);
                 Handle(openHandlers);
 #if DEBUG
                 Logging.SocketLog?.Trace($"Socket {Id} connection succeeded, starting communication..");

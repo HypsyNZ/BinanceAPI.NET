@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.MarketData;
@@ -70,7 +71,7 @@ namespace BinanceAPI.SubClients.Spot
         {
             var parameters = new Dictionary<string, object>();
             Pong.Restart();
-            var result = await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, pingEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(pingEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
             return new WebCallResult<long>(result.ResponseStatusCode, result.ResponseHeaders, Pong.ElapsedTicks, result.Error);
         }
 
@@ -109,7 +110,7 @@ namespace BinanceAPI.SubClients.Spot
             else if (symbols.Any())
                 parameters.Add("symbol", symbols.First());
 
-            return await _baseClient.SendRequestInternal<BinanceExchangeInfo>(GetUri.New(_baseClient.BaseAddress, exchangeInfoEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters: parameters, arraySerialization: ArrayParametersSerialization.Array).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceExchangeInfo>(UriClient.GetBaseAddress() + GetUriString.Combine(exchangeInfoEndpoint, api, publicVersion), HttpMethod.Get, ct, parameters: parameters, arraySerialization: ArrayParametersSerialization.Array).ConfigureAwait(false);
         }
 
         #endregion Exchange Information
@@ -123,7 +124,7 @@ namespace BinanceAPI.SubClients.Spot
         /// <returns>The system status</returns>
         public async Task<WebCallResult<BinanceSystemStatus>> GetSystemStatusAsync(CancellationToken ct = default)
         {
-            return await _baseClient.SendRequestInternal<BinanceSystemStatus>(GetUri.New(_baseClient.BaseAddress, systemStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, new Dictionary<string, object>(), false).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceSystemStatus>(UriClient.GetBaseAddress() + GetUriString.Combine(systemStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, new Dictionary<string, object>(), false).ConfigureAwait(false);
         }
 
         #endregion System status

@@ -22,12 +22,12 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.SpotData;
-using BinanceAPI.Requests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -43,28 +43,6 @@ namespace BinanceAPI.SubClients.Spot
     /// </summary>
     public class BinanceClientSpotOrder
     {
-        private const string api = "api";
-        private const string signedVersion = "3";
-
-        // Orders
-        private const string openOrdersEndpoint = "openOrders";
-
-        private const string allOrdersEndpoint = "allOrders";
-        private const string newOrderEndpoint = "order";
-        private const string newTestOrderEndpoint = "order/test";
-        private const string queryOrderEndpoint = "order";
-        private const string cancelOrderEndpoint = "order";
-        private const string cancelAllOpenOrderEndpoint = "openOrders";
-        private const string myTradesEndpoint = "myTrades";
-
-        // OCO orders
-        private const string newOcoOrderEndpoint = "order/oco";
-
-        private const string cancelOcoOrderEndpoint = "orderList";
-        private const string getOcoOrderEndpoint = "orderList";
-        private const string getAllOcoOrderEndpoint = "allOrderList";
-        private const string getOpenOcoOrderEndpoint = "openOrderList";
-
         private readonly BinanceClientHost _baseClient;
 
         internal BinanceClientSpotOrder(BinanceClientHost baseClient)
@@ -76,6 +54,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Places a new test order. Test orders are not actually being executed and just test the functionality.
+        /// <para>[POST] https://binance-docs.github.io/apidocs/spot/en/#test-new-order-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
@@ -107,7 +86,7 @@ namespace BinanceAPI.SubClients.Spot
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
-            return await _baseClient.PlaceOrderInternal(GetUri.New(_baseClient.BaseAddress, newTestOrderEndpoint, api, signedVersion),
+            return await _baseClient.PlaceOrderInternal(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.POST_NEW_ORDER_TEST_NewOrderTest,
                 symbol,
                 side,
                 type,
@@ -132,6 +111,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Places a new order
+        /// <para>[POST] https://binance-docs.github.io/apidocs/spot/en/#new-order-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
@@ -163,7 +143,7 @@ namespace BinanceAPI.SubClients.Spot
             int? receiveWindow = null,
             CancellationToken ct = default)
         {
-            var result = await _baseClient.PlaceOrderInternal(GetUri.New(_baseClient.BaseAddress, newOrderEndpoint, api, signedVersion),
+            var result = await _baseClient.PlaceOrderInternal(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.POST_NEW_ORDER_NewOrder,
                 symbol,
                 side,
                 type,
@@ -191,6 +171,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Cancels a pending order
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#cancel-order-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="orderId">The order id of the order</param>
@@ -213,7 +194,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("newClientOrderId", newClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceCanceledOrder>(GetUri.New(_baseClient.BaseAddress, cancelOrderEndpoint, api, signedVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceCanceledOrder>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.DELETE_CANCEL_ORDER_CancelOrder, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
             if (result)
                 BinanceClientHost.OnOrderCanceled?.Invoke(null, result.Data);
             return result;
@@ -225,6 +206,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Cancels all open orders on a symbol
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#cancel-all-open-orders-on-a-symbol-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
@@ -238,7 +220,7 @@ namespace BinanceAPI.SubClients.Spot
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceCancelledId>>(GetUri.New(_baseClient.BaseAddress, cancelAllOpenOrderEndpoint, api, signedVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceCancelledId>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.DELETE_CANCEL_ALL_ORDERS_CancelAllOpenOrders, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Cancel all Open Orders on a Symbol
@@ -247,6 +229,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Retrieves data for a specific order. Either orderId or origClientOrderId should be provided.
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-order-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="orderId">The order id of the order</param>
@@ -267,7 +250,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderBase>(UriManager.API_ONE.Order.API_V3_GET_ORDERS_GetOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderBase>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_SINGLE_ORDER_GetSingleOrder, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Order
@@ -276,6 +259,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Gets a list of open orders
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#current-open-orders-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol to get open orders for</param>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
@@ -289,7 +273,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("symbol", symbol);
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(GetUri.New(_baseClient.BaseAddress, openOrdersEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_OPEN_ORDERS_GetAllOpenOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Current Open Orders
@@ -298,6 +282,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Gets all orders for the provided symbol
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#all-orders-user_data</para>
         /// </summary>
         /// <param name="symbol">The symbol to get orders for</param>
         /// <param name="orderId">If set, only orders with an order id higher than the provided will be returned</param>
@@ -321,7 +306,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(GetUri.New(_baseClient.BaseAddress, allOrdersEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderBase>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_ALL_ORDERS_GetAllOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion All Orders
@@ -330,6 +315,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Places a new OCO(One cancels other) order
+        /// [POST] https://binance-docs.github.io/apidocs/spot/en/#new-oco-trade
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="side">The order side (buy/sell)</param>
@@ -381,7 +367,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("trailingDelta", trailingDelta);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(GetUri.New(_baseClient.BaseAddress, newOcoOrderEndpoint, api, signedVersion), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.POST_NEW_ORDER_OCO_NewOcoOrder, HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion New OCO
@@ -390,6 +376,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Cancels a pending oco order
+        /// <para>[DELETE] https://binance-docs.github.io/apidocs/spot/en/#cancel-oco-trade</para>
         /// </summary>
         /// <param name="symbol">The symbol the order is for</param>
         /// <param name="orderListId">The id of the order list to cancel</param>
@@ -412,7 +399,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("newClientOrderId", newClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(GetUri.New(_baseClient.BaseAddress, cancelOcoOrderEndpoint, api, signedVersion), HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.DELETE_CANCEL_ORDER_OCO_CancelOcoOrder, HttpMethod.Delete, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Cancel OCO
@@ -421,6 +408,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Retrieves data for a specific oco order. Either orderListId or listClientOrderId should be provided.
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-oco-user_data</para>
         /// </summary>
         /// <param name="orderListId">The list order id of the order</param>
         /// <param name="origClientOrderId">Either orderListId or listClientOrderId must be provided</param>
@@ -439,7 +427,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("origClientOrderId", origClientOrderId);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(GetUri.New(_baseClient.BaseAddress, getOcoOrderEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceOrderOcoList>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_ORDER_OCO_GetOcoOrder, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query OCO
@@ -448,6 +436,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Retrieves a list of oco orders matching the parameters
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-all-oco-user_data</para>
         /// </summary>
         /// <param name="fromId">Only return oco orders with id higher than this</param>
         /// <param name="startTime">Only return oco orders placed later than this. Only valid if fromId isn't provided</param>
@@ -472,7 +461,7 @@ namespace BinanceAPI.SubClients.Spot
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderOcoList>>(GetUri.New(_baseClient.BaseAddress, getAllOcoOrderEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderOcoList>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_ALL_ORDER_OCO_GetAllOcoOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query all OCO
@@ -481,6 +470,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Retrieves a list of open oco orders
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#query-open-oco-user_data</para>
         /// </summary>
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
         /// <param name="ct">Cancellation token</param>
@@ -492,7 +482,7 @@ namespace BinanceAPI.SubClients.Spot
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderOcoList>>(GetUri.New(_baseClient.BaseAddress, getOpenOcoOrderEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceOrderOcoList>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_ALL_OPEN_OCO_ORDERS_GetAllOpenOcoOrders, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query Open OCO
@@ -501,6 +491,7 @@ namespace BinanceAPI.SubClients.Spot
 
         /// <summary>
         /// Gets all user trades for provided symbol
+        /// <para>[GET] https://binance-docs.github.io/apidocs/spot/en/#account-trade-list-user_data</para>
         /// </summary>
         /// <param name="symbol">Symbol to get trades for</param>
         /// <param name="orderId">Get trades for this order id</param>
@@ -511,22 +502,22 @@ namespace BinanceAPI.SubClients.Spot
         /// <param name="receiveWindow">The receive window for which this request is active. When the request takes longer than this to complete the server will reject the request</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of trades</returns>
-        public async Task<WebCallResult<IEnumerable<BinanceTrade>>> GetUserTradesAsync(string symbol, long? orderId = null, DateTime? startTime = null, DateTime? endTime = null, int? limit = null, long? fromId = null, long? receiveWindow = null, CancellationToken ct = default)
+        public async Task<WebCallResult<IEnumerable<BinanceTrade>>> GetUserTradesAsync(string symbol, long? orderId = null, DateTime? startTime = null, DateTime? endTime = null, int limit = 500, long? fromId = null, long? receiveWindow = null, CancellationToken ct = default)
         {
-            limit?.ValidateIntBetween(nameof(limit), 1, 1000);
+            limit.ValidateIntBetween(nameof(limit), 1, 1000);
 
             var parameters = new Dictionary<string, object>
             {
                 { "symbol", symbol },
             };
             parameters.AddOptionalParameter("orderId", orderId?.ToString(CultureInfo.InvariantCulture));
-            parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
+            parameters.AddOptionalParameter("limit", limit.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("fromId", fromId?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceTrade>>(GetUri.New(_baseClient.BaseAddress, myTradesEndpoint, api, signedVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceTrade>>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.Order.Spot.GET_ALL_TRADES_GetAllTrades, HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Get user trades

@@ -24,7 +24,6 @@
 
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces;
 using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.MarketData;
 

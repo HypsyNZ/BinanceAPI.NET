@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
@@ -80,7 +81,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceResult<IEnumerable<BinanceFiatPayment>>>(GetUri.New(_baseClient.BaseAddress, fiatPaymentHistoryEndpoint, api, apiVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceResult<IEnumerable<BinanceFiatPayment>>>(UriClient.GetBaseAddress() + GetUriString.Combine(fiatPaymentHistoryEndpoint, api, apiVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
 
             return result.As(result.Data?.Data!);
         }
@@ -112,7 +113,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceResult<IEnumerable<BinanceFiatWithdrawDeposit>>>(GetUri.New(_baseClient.BaseAddress, fiatDepositWithdrawHistoryEndpoint, api, apiVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceResult<IEnumerable<BinanceFiatWithdrawDeposit>>>(UriClient.GetBaseAddress() + GetUriString.Combine(fiatDepositWithdrawHistoryEndpoint, api, apiVersion), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
 
             return result.As(result.Data?.Data!);
         }

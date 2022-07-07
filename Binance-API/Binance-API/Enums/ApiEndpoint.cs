@@ -22,48 +22,36 @@
 *SOFTWARE.
 */
 
-namespace BinanceAPI.Authentication
+namespace BinanceAPI
 {
     /// <summary>
-    /// Api addresses
+    /// The Binance API End Points
     /// </summary>
-    public class BinanceApiAddresses
+    public enum ApiEndpoint
     {
         /// <summary>
-        /// The address used by the BinanceClient for the Spot API
+        /// API.Binance.com
         /// </summary>
-        public string RestClientAddress { get; set; } = "";
+        DEFAULT,
 
         /// <summary>
-        /// The address used by the BinanceSocketClient for the Spot API
+        /// API1.Binance.com
         /// </summary>
-        public string SocketClientAddress { get; set; } = "";
+        ONE,
 
         /// <summary>
-        /// The default addresses to connect to the binance.com API
+        /// API2.Binance.com
         /// </summary>
-        public static BinanceApiAddresses Default = new()
-        {
-            RestClientAddress = "https://api.binance.com",
-            SocketClientAddress = "wss://stream.binance.com:9443/",
-        };
+        TWO,
 
         /// <summary>
-        /// The addresses to connect to the binance testnet
+        /// API3.Binance.com
         /// </summary>
-        public static BinanceApiAddresses TestNet = new()
-        {
-            RestClientAddress = "https://testnet.binance.vision",
-            SocketClientAddress = "wss://testnet.binance.vision",
-        };
+        THREE,
 
         /// <summary>
-        /// The addresses to connect to binance.us.
+        /// TESTNET.Binance.com
         /// </summary>
-        public static BinanceApiAddresses Us = new()
-        {
-            RestClientAddress = "https://api.binance.us",
-            SocketClientAddress = "wss://stream.binance.us:9443",
-        };
+        TEST,
     }
 }

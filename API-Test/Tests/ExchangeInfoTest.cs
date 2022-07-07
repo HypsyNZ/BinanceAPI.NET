@@ -22,31 +22,27 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Options;
+using BinanceAPI.ClientHosts;
 using System;
-using System.Net.Http;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace BinanceAPI.Objects
+namespace API_Test
 {
-    /// <summary>
-    /// Options for the binance client
-    /// </summary>
-    public class BinanceClientHostOptions : RestClientOptions
+    // EXCHANGE INFO
+    internal class ExchangeInfoTest
     {
-        /// <summary>
-        /// Path to the Time Log
-        /// </summary>
-        public string TimeLogPath { get; set; } = "";
+        public static void Run(BinanceClientHost client)
+        {
+            _ = Task.Run(async () =>
+            {
+                var result = await client.Spot.System.GetExchangeInfoAsync().ConfigureAwait(false);
 
-        /// <summary>
-        /// The default receive window for requests
-        /// </summary>
-        public TimeSpan ReceiveWindow { get; set; } = TimeSpan.FromSeconds(5);
-
-        /// <summary>
-        /// The rate at which the Server Time Should be Synced in Minutes
-        /// <para><see cref="ServerTimeClient.LoopToken"/> can be cancelled to stop syncing</para>
-        /// </summary>
-        public int SyncUpdateTime { get; set; } = 15;
+                if (result.Success)
+                {
+                    Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
+                }
+            }).ConfigureAwait(false);
+        }
     }
 }

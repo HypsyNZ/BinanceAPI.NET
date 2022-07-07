@@ -22,14 +22,12 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Clients;
+using BinanceAPI.ClientBase;
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Shared;
 using BinanceAPI.Objects.Spot.SpotData;
-using BinanceAPI.Options;
 using BinanceAPI.Requests;
 using BinanceAPI.SubClients;
 using BinanceAPI.SubClients.Margin;
@@ -51,7 +49,7 @@ using System.Threading.Tasks;
 using System.Web;
 using static BinanceAPI.Logging;
 
-namespace BinanceAPI
+namespace BinanceAPI.ClientHosts
 {
     /// <summary>
     /// Base Rest Client
@@ -106,8 +104,8 @@ namespace BinanceAPI
                 throw new ArgumentNullException(nameof(options));
 
             ServerTimeClient.Start(options, waitToken).ConfigureAwait(false);
-            Logging.StartClientLog(options.LogPath, options.LogLevel, options.LogToConsole);
-            Logging.ClientLog?.Info("Started Binance Client");
+            StartClientLog(options.LogPath, options.LogLevel, options.LogToConsole);
+            ClientLog?.Info("Started Binance Client");
 
             DefaultReceiveWindow = options.ReceiveWindow;
 
@@ -164,7 +162,7 @@ namespace BinanceAPI
 
         #region [Private]
 
-        internal async Task<WebCallResult<BinancePlacedOrder>> PlaceOrderInternal(Uri uri,
+        internal async Task<WebCallResult<BinancePlacedOrder>> PlaceOrderInternal(string uri,
             string symbol,
             OrderSide side,
             OrderType type,
@@ -185,7 +183,7 @@ namespace BinanceAPI
             if (quoteOrderQuantity != null && type != OrderType.Market)
                 throw new ArgumentException("quoteOrderQuantity is only valid for market orders");
 
-            if ((quantity == null && quoteOrderQuantity == null) || (quantity != null && quoteOrderQuantity != null))
+            if (quantity == null && quoteOrderQuantity == null || quantity != null && quoteOrderQuantity != null)
                 throw new ArgumentException("1 of either should be specified, quantity or quoteOrderQuantity");
 
             var parameters = new Dictionary<string, object>
@@ -213,7 +211,7 @@ namespace BinanceAPI
 
         internal Error ParseErrorResponseInternal(JToken error) => ParseErrorResponse(error);
 
-        internal Task<WebCallResult<T>> SendRequestInternal<T>(Uri uri, HttpMethod method, CancellationToken cancellationToken,
+        internal Task<WebCallResult<T>> SendRequestInternal<T>(string uri, HttpMethod method, CancellationToken cancellationToken,
             Dictionary<string, object> parameters, bool signed = false, bool checkResult = true, HttpMethodParameterPosition? postPosition = null, ArrayParametersSerialization? arraySerialization = null) where T : class
         {
             //  parameters?.AddParameter("timestamp", ServerTimeClient.GetTimestamp());
@@ -294,13 +292,12 @@ namespace BinanceAPI
         public async Task<CallResult<long>> PingAsync(CancellationToken ct = default)
         {
             var ping = new Ping();
-            var uri = new Uri(BaseAddress);
             PingReply reply;
 
             var ctRegistration = ct.Register(() => ping.SendAsyncCancel());
             try
             {
-                reply = await ping.SendPingAsync(uri.Host).ConfigureAwait(false);
+                reply = await ping.SendPingAsync(new Uri(UriClient.GetBaseAddress()).Host).ConfigureAwait(false);
             }
             catch (PingException e)
             {
@@ -341,7 +338,7 @@ namespace BinanceAPI
         /// <returns></returns>
         [return: NotNull]
         protected async Task<WebCallResult<T>> SendRequestAsync<T>(
-            Uri uri,
+            string uri,
             HttpMethod method,
             CancellationToken cancellationToken,
             Dictionary<string, object> parameters,
@@ -360,7 +357,7 @@ namespace BinanceAPI
             if (signed && authProvider == null)
             {
 #if DEBUG
-                ClientLog?.Warning($"[{requestId}] Request {uri.AbsolutePath} failed because no ApiCredentials were provided");
+                ClientLog?.Warning($"[{requestId}] Request {uri} failed because no ApiCredentials were provided");
 #endif
                 return new WebCallResult<T>(null, null, null, new NoApiCredentialsError());
             }
@@ -379,7 +376,7 @@ namespace BinanceAPI
                     paramString += " with headers " + string.Join(", ", headers.Select(h => h.Key + $"=[{string.Join(",", h.Value)}]"));
             }
 
-            ClientLog?.Debug($"[{requestId}] Sending {method}{(signed ? " signed" : "")} request to {request.Uri}{paramString ?? " "}{(apiProxy == null ? "" : $" via proxy {apiProxy.Host}")}");
+            ClientLog?.Debug($"[{requestId}] Sending {method}{(signed ? " signed" : "")} request to {request.Uri}{paramString ?? " "}{(ApiProxy == null ? "" : $" via proxy {ApiProxy.Host}")}");
 #endif
             return await GetResponseAsync<T>(request, deserializer, cancellationToken).ConfigureAwait(false);
         }
@@ -432,7 +429,7 @@ namespace BinanceAPI
                     else
                     {
                         // Success status code, and we don't have to check for errors. Continue deserializing directly from the stream
-                        var desResult = await DeserializeAsync<T>(responseStream, request.RequestId).ConfigureAwait(false);
+                        var desResult = await Json.DeserializeAsync<T>(responseStream, request.RequestId).ConfigureAwait(false);
                         responseStream.Close();
                         response.Close();
 #if DEBUG
@@ -521,7 +518,7 @@ namespace BinanceAPI
         /// <param name="additionalHeaders">Additional headers to send with the request</param>
         /// <returns></returns>
         protected Request ConstructRequest(
-            Uri uri,
+            string uri,
             HttpMethod method,
             Dictionary<string, object> parameters,
             bool signed,
@@ -530,20 +527,19 @@ namespace BinanceAPI
             int requestId,
             Dictionary<string, string>? additionalHeaders)
         {
-            var uriString = uri.ToString();
             if (authProvider != null)
-                parameters = authProvider.AddAuthenticationToParameters(uriString, method, parameters, signed, parameterPosition, arraySerialization);
+                parameters = authProvider.AddAuthenticationToParameters(uri, method, parameters, signed, parameterPosition, arraySerialization);
 
             if (parameterPosition == HttpMethodParameterPosition.InUri && parameters.Any() == true)
-                uriString += "?" + parameters.CreateParamString(true, arraySerialization);
+                uri += "?" + parameters.CreateParamString(true, arraySerialization);
 
             var contentType = requestBodyFormat == RequestBodyFormat.Json ? Constants.JsonContentHeader : Constants.FormContentHeader;
-            var request = RequestFactory.Create(method, uriString, requestId);
+            var request = RequestFactory.Create(method, uri, requestId);
             request.Accept = Constants.JsonContentHeader;
 
             var headers = new Dictionary<string, string>();
             if (authProvider != null)
-                headers = authProvider.AddAuthenticationToHeaders(uriString, method, parameters, signed, parameterPosition, arraySerialization);
+                headers = authProvider.AddAuthenticationToHeaders(uri, method, parameters, signed, parameterPosition, arraySerialization);
 
             foreach (var header in headers)
                 request.AddHeader(header.Key, header.Value);
@@ -626,7 +622,7 @@ namespace BinanceAPI
             var err = new ServerError((int)error["code"]!, (string)error["msg"]!);
             if (err.Code == -1021)
             {
-                Logging.ClientLog?.Info("Time Is Out Of Sync, Attempting to Correct it");
+                ClientLog?.Info("Time Is Out Of Sync, Attempting to Correct it");
                 _ = ServerTimeClient.Guesser().ConfigureAwait(false);
                 ServerTimeClient.CorrectionCount++;
             }

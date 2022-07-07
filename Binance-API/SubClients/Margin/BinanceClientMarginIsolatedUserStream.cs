@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.UserData;
 using BinanceAPI.Requests;
@@ -67,7 +68,7 @@ namespace BinanceAPI.SubClients.Margin
                 {"symbol", symbol}
             };
 
-            var result = await _baseClient.SendRequestInternal<BinanceListenKey>(GetUri.New(_baseClient.BaseAddress, getListenKeyEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceListenKey>(UriClient.GetBaseAddress() + GetUriString.Combine(getListenKeyEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters).ConfigureAwait(false);
             return result.As(result.Data?.ListenKey!);
         }
 
@@ -93,7 +94,7 @@ namespace BinanceAPI.SubClients.Margin
                 {"symbol", symbol}
             };
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, keepListenKeyAliveEndpoint, "sapi", "1"), HttpMethod.Put, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(keepListenKeyAliveEndpoint, "sapi", "1"), HttpMethod.Put, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Ping/Keep-alive a ListenKey
@@ -117,7 +118,7 @@ namespace BinanceAPI.SubClients.Margin
                 {"symbol", symbol}
             };
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, closeListenKeyEndpoint, "sapi", "1"), HttpMethod.Delete, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(closeListenKeyEndpoint, "sapi", "1"), HttpMethod.Delete, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Invalidate a ListenKey

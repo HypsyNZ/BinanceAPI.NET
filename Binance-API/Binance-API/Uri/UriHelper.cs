@@ -22,31 +22,21 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Options;
-using System;
-using System.Net.Http;
 
-namespace BinanceAPI.Objects
+#pragma warning disable CS1591 // WIP
+
+namespace BinanceAPI.UriBase
 {
-    /// <summary>
-    /// Options for the binance client
-    /// </summary>
-    public class BinanceClientHostOptions : RestClientOptions
+
+    public class UriHelper
     {
-        /// <summary>
-        /// Path to the Time Log
-        /// </summary>
-        public string TimeLogPath { get; set; } = "";
+        public UriHelper()
+        {
+            General = new CommonEndpoints();
+            Order = new OrderEndpoints();
+        }
 
-        /// <summary>
-        /// The default receive window for requests
-        /// </summary>
-        public TimeSpan ReceiveWindow { get; set; } = TimeSpan.FromSeconds(5);
-
-        /// <summary>
-        /// The rate at which the Server Time Should be Synced in Minutes
-        /// <para><see cref="ServerTimeClient.LoopToken"/> can be cancelled to stop syncing</para>
-        /// </summary>
-        public int SyncUpdateTime { get; set; } = 15;
+        public CommonEndpoints General { get; }
+        public OrderEndpoints Order { get; }
     }
 }

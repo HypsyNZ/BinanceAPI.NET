@@ -24,7 +24,6 @@
 
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.MarketData;
 using BinanceAPI.Time;
@@ -33,7 +34,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BinanceAPI.Clients
+namespace BinanceAPI
 {
     /// <summary>
     /// The <see href="ServerTimeClient"/>
@@ -246,7 +247,7 @@ namespace BinanceAPI.Clients
         {
             var parameters = new Dictionary<string, object>();
 
-            var result = await Client!.SendRequestInternal<BinanceCheckTime>(UriManager.API_ONE.General.API_V3_TIME_SyncTime, HttpMethod.Get, ct, parameters);
+            var result = await Client!.SendRequestInternal<BinanceCheckTime>(UriClient.GetBaseAddress() + UriClient.GetEndpoint.General.API_V3_TIME_SyncTime, HttpMethod.Get, ct, parameters);
             if (!result)
             {
                 return 0;

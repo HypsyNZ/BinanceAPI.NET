@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

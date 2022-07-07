@@ -23,18 +23,19 @@
 */
 
 using BinanceAPI;
-using BinanceAPI.Clients;
-using BinanceAPI.Enums;
+using BinanceAPI.ClientBase;
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Objects;
-using BinanceAPI.Sockets;
 using SimpleLog4.NET;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.4.9 Test - More Connection Status - https://pastebin.com/ef3kH2fF
+// 6.0.5.0 Test
+// Uri Client WIP
+// Add Change API Endpoint to Base Client
+// Remove "BaseAddress" see "BaseClient.ChangeEndpoint"
 
 namespace API_Test
 {
@@ -55,7 +56,6 @@ namespace API_Test
             // Default Client Options
             var options = new BinanceClientHostOptions()
             {
-                BaseAddress = "http://api3.binance.com",
                 LogLevel = LogLevel.Trace,
                 // LogPath = clientLogs,
                 //TimeLogPath = timeLogs,
@@ -90,11 +90,15 @@ namespace API_Test
             // They don't have to be valid they just have to be set
             BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
 
+            // Select the API Endpoint Controller to use
+            //BaseClient.ChangeEndpoint = ApiEndpoint.DEFAULT;
+            //BaseClient.ChangeEndpoint = ApiEndpoint.TEST;
+            BaseClient.ChangeEndpoint = ApiEndpoint.ONE;
+
             // Create a Binance Client, It will start the Server Time Client for you
             BinanceClientHost client = new BinanceClientHost(serverTimeStartWaitToken.Token);
             SocketClientHost socketClient = new SocketClientHost();
 
-            // [Version 6.0.4.9] Start Test
             Trace.WriteLine("Starting Test..");
             Task.Run(async () =>
             {
@@ -102,7 +106,8 @@ namespace API_Test
                 if (!ServerTimeClient.IsReady())
                 {
                     // ServerTimeClient.WaitForStart()
-                    Console.WriteLine("Server Time Client Started in " + await ServerTimeClient.WaitForStart(serverTimeStartWaitToken.Token).ConfigureAwait(false) + "ms");
+                    Console.WriteLine("Server Time Client Started in " + 
+                        await ServerTimeClient.WaitForStart(serverTimeStartWaitToken.Token).ConfigureAwait(false) + "ms");
                 }
 
                 // Stop the Time Client
@@ -114,144 +119,45 @@ namespace API_Test
                 Console.WriteLine("True: " + ServerTimeClient.Exists);
 
                 // Ping Server
-                var r = client.Spot.System.PingAsync().Result;
-                if (!r.Success)
+                WebCallResult<long> pingResult = client.Spot.System.PingAsync().Result;
+                if (!pingResult.Success)
                 {
                     Console.WriteLine("Error");
                     Console.ReadLine();
                 }
                 else
                 {
-                    Console.WriteLine("Server Ping Ticks: " + r.Data.ToString());
+                    Console.WriteLine("Server Ping Ticks: " + pingResult.Data.ToString());
                 }
 
                 // Get Account Status
                 var status = await client.General.GetAccountStatusAsync();
-                if (status.Success)
+                if (!status.Success)
                 {
-                    Console.WriteLine("Account Status: " + status.Data.Data.ToString());
+                    // Failed
+                    if (status.Error.Code == -2008)
+                    {
+                        Console.WriteLine("Error: You didn't enter your API Keys or they are incorrect");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Error: " + status.Error.ToString());
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Error: " + status.Error.ToString());
+                    // Run Tests
+                    Console.WriteLine("Account Status: " + status.Data.Data.ToString());
+                 
+                    ExchangeInfoTest.Run(client);
+
+                    SocketTest.Run(socketClient);
+
+                    OrderTest.Run(client);
                 }
-
-                // EXCHANGE INFO
-                _ = Task.Run(async () =>
-                {
-                    var result = await client.Spot.System.GetExchangeInfoAsync().ConfigureAwait(false);
-
-                    if (result.Success)
-                    {
-                        Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
-                    }
-                }).ConfigureAwait(false);
-
-                // SOCKET TEST
-                _ = Task.Run(() =>
-                {
-                    //var _breakpoint = socketClient;
-                    //_ = _breakpoint;
-
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(2000).ConfigureAwait(false);
-
-                        // Create Update Subscription
-                        UpdateSubscription sub = socketClient.Spot.SubscribeToBookTickerUpdatesAsync("BTCUSDT", data =>
-                        {
-                            // Uncomment to see output from the Socket
-                            Console.WriteLine("[" + data.Data.UpdateId + "] | BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00") + "| Ask Quan: " + data.Data.BestAskQuantity.Normalize().ToString("000.00000#####") + " | BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00") + "| BidQuantity :" + data.Data.BestBidQuantity.Normalize().ToString("000.00000#####"));
-                        }).Result.Data;
-
-                        // Subscribe to Update Subscription Status Changed Events before it connects
-                        sub.StatusChanged += BinanceSocket_StatusChanged;
-
-                        // Current Status
-                        Console.WriteLine(Enum.GetName(typeof(ConnectionStatus), sub.Connection.SocketConnectionStatus));
-
-                        // work work
-                        await Task.Delay(5000).ConfigureAwait(false);
-
-                        // Reconnect Update Subscription
-                        await sub.ReconnectAsync().ConfigureAwait(false);
-
-                        // work work
-                        await Task.Delay(5000).ConfigureAwait(false);
-
-                        // Reconnect Update Subscription
-                        await sub.ReconnectAsync().ConfigureAwait(false);
-
-                        // work work
-                        await Task.Delay(20000).ConfigureAwait(false);
-
-                        // Destroy everything and unsubscribe, this should cause UnsubscribeAllAsync to do nothing
-                        await sub.CloseAndDisposeAsync().ConfigureAwait(false);
-
-                        //// TEST BEGINS
-                        //for (int i = 0; i < 1000; i++)
-                        //{
-                        //    await Task.Delay(1).ConfigureAwait(false);
-
-                        //    // Last Subscription Socket Action Time In Ticks
-                        //    Console.WriteLine(sub.Connection.Socket.LastActionTime.Ticks);
-                        //}
-
-                        _ = socketClient.UnsubscribeAllAsync().ConfigureAwait(false);
-                    }).ConfigureAwait(false);
-                });
-
-                //// ORDER TEST
-                //_ = Task.Run(async () =>
-                //{
-                //    DateTime testStartTime = DateTime.UtcNow + TimeSpan.FromMinutes(10);
-                //    Stopwatch testTime = Stopwatch.StartNew();
-                //    while (true)
-                //    {
-                //        if (testStartTime < DateTime.UtcNow)
-                //        {
-                //            Console.WriteLine("Passed");
-                //            return;
-                //        }
-
-                //        await Task.Delay(200).ConfigureAwait(false);
-
-                //        // Guesser Test
-                //        var serverTime = ServerTimeClient.GetServerTimeTicksAsync().Result;
-                //        var guess = ServerTimeClient.GetRequestTimestampLong();
-                //        var guessAheadBy = (guess - serverTime) / 10000;
-                //        // Guesser Test
-
-                //        Console.WriteLine("Guess: " + guess.ToString() + " | ServerTime: " + serverTime.ToString() + "| GuessAheadBy: " + guessAheadBy);
-
-                //        if (guessAheadBy < 1000 && guessAheadBy > -1000)
-                //        {
-                //            var result = await client.Spot.Order.PlaceTestOrderAsync("TestOrder", BinanceAPI.Enums.OrderSide.Sell, BinanceAPI.Enums.OrderType.Market, quantity: 123).ConfigureAwait(false);
-                //            if (!r.Success)
-                //            {
-                //                Console.WriteLine("Order Failed: " + r.Error.ToString());
-                //                return;
-                //            }
-                //            else
-                //            {
-                //                Console.WriteLine(r.Success.ToString() + "| MissedPings: " + ServerTimeClient.MissedPingCount + "| CorrectionAttempts: " + ServerTimeClient.CorrectionCount + "| GuesserRanToCompletion: " + ServerTimeClient.GuesserAttemptCount);
-                //            }
-                //        }
-                //        else
-                //        {
-                //            Console.WriteLine("Ahead/Behind Server Time by 1000ms");
-                //            return;
-                //        }
-                //    }
-                //}).ConfigureAwait(false);
             });
 
             Console.ReadLine();
-        }
-
-        private static void BinanceSocket_StatusChanged(ConnectionStatus obj)
-        {
-            Console.WriteLine(obj.ToString());
         }
     }
 }

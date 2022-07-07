@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Spot.IsolatedMarginData;
 using BinanceAPI.Objects.Spot.MarginData;
@@ -77,7 +78,8 @@ namespace BinanceAPI.SubClients.Margin
                 {"asset", asset}
             };
 
-            return await _baseClient.SendRequestInternal<BinanceMarginAsset>(GetUri.New(_baseClient.BaseAddress, marginAssetEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginAsset>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(marginAssetEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Query Margin Asset
@@ -99,7 +101,8 @@ namespace BinanceAPI.SubClients.Margin
                 {"symbol", symbol}
             };
 
-            return await _baseClient.SendRequestInternal<BinanceMarginPair>(GetUri.New(_baseClient.BaseAddress, marginPairEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginPair>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(marginPairEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Query Margin Pair
@@ -113,7 +116,8 @@ namespace BinanceAPI.SubClients.Margin
         /// <returns>List of margin assets</returns>
         public async Task<WebCallResult<IEnumerable<BinanceMarginAsset>>> GetMarginAssetsAsync(CancellationToken ct = default)
         {
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginAsset>>(GetUri.New(_baseClient.BaseAddress, marginAssetsEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginAsset>>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(marginAssetsEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
         }
 
         #endregion Get All Margin Assets
@@ -127,7 +131,8 @@ namespace BinanceAPI.SubClients.Margin
         /// <returns>List of margin pairs</returns>
         public async Task<WebCallResult<IEnumerable<BinanceMarginPair>>> GetMarginPairsAsync(CancellationToken ct = default)
         {
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginPair>>(GetUri.New(_baseClient.BaseAddress, marginPairsEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceMarginPair>>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(marginPairsEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
         }
 
         #endregion Get All Margin Pairs
@@ -149,7 +154,8 @@ namespace BinanceAPI.SubClients.Margin
                 {"symbol", symbol}
             };
 
-            return await _baseClient.SendRequestInternal<BinanceMarginPriceIndex>(GetUri.New(_baseClient.BaseAddress, marginPriceIndexEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceMarginPriceIndex>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(marginPriceIndexEndpoint, marginApi, marginVersion), HttpMethod.Get, ct, parameters).ConfigureAwait(false);
         }
 
         #endregion Query Margin PriceIndex
@@ -175,10 +181,8 @@ namespace BinanceAPI.SubClients.Margin
                 receiveWindow?.ToString(CultureInfo.InvariantCulture) ??
                 _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient
-                .SendRequestInternal<BinanceIsolatedMarginSymbol>(
-                    GetUri.New(_baseClient.BaseAddress, isolatedMarginSymbolEndpoint, "sapi", "1"), HttpMethod.Get, ct,
-                    parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceIsolatedMarginSymbol>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(isolatedMarginSymbolEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -199,8 +203,8 @@ namespace BinanceAPI.SubClients.Margin
                                                           _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(
                                                               CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceIsolatedMarginSymbol>>(GetUri.New(_baseClient.BaseAddress, isolatedMarginAllSymbolEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true)
-                .ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceIsolatedMarginSymbol>>(
+                UriClient.GetBaseAddress() + GetUriString.Combine(isolatedMarginAllSymbolEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Query isolated margin symbol

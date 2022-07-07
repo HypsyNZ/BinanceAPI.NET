@@ -22,7 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Interfaces;
 using BinanceAPI.Objects;
 using System;
 using System.Net;

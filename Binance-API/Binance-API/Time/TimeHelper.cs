@@ -23,8 +23,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace BinanceAPI.Time
 {
@@ -47,34 +45,6 @@ namespace BinanceAPI.Time
         public static long ToUnixTimestamp(long timeAsTicks)
         {
             return (timeAsTicks - EpochTime) / TICKS_PER_MILLISECOND;
-        }
-
-        /// <summary>
-        /// Remove Outliers from a List of Longs
-        /// </summary>
-        /// <param name="pingValues">List of Longs</param>
-        /// <param name="trimCount">Number of items to trim, each Count will remove one .Max() Value and one .Min() Value</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">Occurs when all values would be removed</exception>
-        public static List<long> RemoveOutliers(List<long> pingValues, int trimCount)
-        {
-            if (pingValues.Count > trimCount * 2)
-            {
-                for (int i = 0; i < trimCount; i++)
-                {
-                    var max = pingValues.Max();
-                    var min = pingValues.Min();
-                    pingValues.Remove(max);
-                    pingValues.Remove(min);
-                }
-            }
-            else
-            {
-                Logging.ClientLog?.Error(TRIM_ERROR);
-                throw new ArgumentException(TRIM_ERROR);
-            }
-
-            return pingValues;
         }
     }
 }

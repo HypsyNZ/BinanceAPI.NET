@@ -22,9 +22,9 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientHosts;
 using BinanceAPI.Converters;
 using BinanceAPI.Enums;
-using BinanceAPI.Interfaces.SubClients;
 using BinanceAPI.Objects;
 using BinanceAPI.Objects.Other;
 using BinanceAPI.Objects.Spot.MarginData;
@@ -121,7 +121,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceSnapshotWrapper<T>>(GetUri.New(_baseClient.BaseAddress, accountSnapshotEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceSnapshotWrapper<T>>(UriClient.GetBaseAddress() + GetUriString.Combine(accountSnapshotEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
             if (!result.Success)
                 return WebCallResult<T>.CreateErrorResult(result.ResponseStatusCode, result.ResponseHeaders, result.Error!);
 
@@ -148,7 +148,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceAccountStatus>(GetUri.New(_baseClient.BaseAddress, accountStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceAccountStatus>(UriClient.GetBaseAddress() + GetUriString.Combine(accountStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
             return result;
         }
 
@@ -169,7 +169,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceAccountInfo>(GetUri.New(_baseClient.BaseAddress, accountInfoEndpoint, "api", "3"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceAccountInfo>(UriClient.GetBaseAddress() + GetUriString.Combine(accountInfoEndpoint, "api", "3"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Account info
@@ -188,7 +188,7 @@ namespace BinanceAPI.SubClients
 
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            var result = await _baseClient.SendRequestInternal<BinanceTradingStatusWrapper>(GetUri.New(_baseClient.BaseAddress, tradingStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceTradingStatusWrapper>(UriClient.GetBaseAddress() + GetUriString.Combine(tradingStatusEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
             if (!result)
                 return new WebCallResult<BinanceTradingStatus>(result.ResponseStatusCode, result.ResponseHeaders, null, result.Error);
 
@@ -215,7 +215,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("needBtcValuation", needBtcValuation?.ToString());
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceFundingAsset>>(GetUri.New(_baseClient.BaseAddress, fundingWalletEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceFundingAsset>>(UriClient.GetBaseAddress() + GetUriString.Combine(fundingWalletEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Funding Wallet
@@ -233,7 +233,7 @@ namespace BinanceAPI.SubClients
             var parameters = new Dictionary<string, object>();
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceAPIKeyPermissions>(GetUri.New(_baseClient.BaseAddress, apiRestrictionsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceAPIKeyPermissions>(UriClient.GetBaseAddress() + GetUriString.Combine(apiRestrictionsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion API Key Permission
@@ -253,7 +253,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<IEnumerable<BinanceUserCoin>>(GetUri.New(_baseClient.BaseAddress, userCoinsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<IEnumerable<BinanceUserCoin>>(UriClient.GetBaseAddress() + GetUriString.Combine(userCoinsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion User coins
@@ -281,7 +281,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("endTime", endTime != null ? TimeHelper.ToUnixTimestamp(endTime.Value.Ticks).ToString(CultureInfo.InvariantCulture) : null);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceDividendRecord>>(GetUri.New(_baseClient.BaseAddress, dividendRecordsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceDividendRecord>>(UriClient.GetBaseAddress() + GetUriString.Combine(dividendRecordsEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Asset Dividend Records
@@ -302,7 +302,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, disableFastWithdrawSwitchEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(disableFastWithdrawSwitchEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Disable Fast Withdraw Switch
@@ -326,7 +326,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<object>(GetUri.New(_baseClient.BaseAddress, enableFastWithdrawSwitchEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<object>(UriClient.GetBaseAddress() + GetUriString.Combine(enableFastWithdrawSwitchEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Enable Fast Withdraw Switch
@@ -349,7 +349,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);
             parameters.AddOptionalParameter("endTime", endTime.HasValue ? JsonConvert.SerializeObject(endTime.Value.Ticks, new TimestampConverter()) : null);
-            var result = await _baseClient.SendRequestInternal<BinanceDustLogList>(GetUri.New(_baseClient.BaseAddress, dustLogEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            var result = await _baseClient.SendRequestInternal<BinanceDustLogList>(UriClient.GetBaseAddress() + GetUriString.Combine(dustLogEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
             return result;
         }
 
@@ -378,7 +378,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceDustTransferResult>(GetUri.New(_baseClient.BaseAddress, dustTransferEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceDustTransferResult>(UriClient.GetBaseAddress() + GetUriString.Combine(dustTransferEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Dust Transfer
@@ -398,7 +398,7 @@ namespace BinanceAPI.SubClients
             };
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceBnbBurnStatus>(GetUri.New(_baseClient.BaseAddress, getBnbBurnEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceBnbBurnStatus>(UriClient.GetBaseAddress() + GetUriString.Combine(getBnbBurnEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Get BNB Burn Status
@@ -425,7 +425,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("interestBNBBurn", marginInterest);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceBnbBurnStatus>(GetUri.New(_baseClient.BaseAddress, toggleBnbBurnEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceBnbBurnStatus>(UriClient.GetBaseAddress() + GetUriString.Combine(toggleBnbBurnEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Set BNB Burn Status
@@ -456,7 +456,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("toSymbol", toSymbol);
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceTransaction>(GetUri.New(_baseClient.BaseAddress, universalTransferEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceTransaction>(UriClient.GetBaseAddress() + GetUriString.Combine(universalTransferEndpoint, "sapi", "1"), HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion User Universal Transfer
@@ -486,7 +486,7 @@ namespace BinanceAPI.SubClients
             parameters.AddOptionalParameter("size", pageSize?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("recvWindow", receiveWindow?.ToString(CultureInfo.InvariantCulture) ?? _baseClient.DefaultReceiveWindow.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-            return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceTransfer>>(GetUri.New(_baseClient.BaseAddress, universalTransferEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
+            return await _baseClient.SendRequestInternal<BinanceQueryRecords<BinanceTransfer>>(UriClient.GetBaseAddress() + GetUriString.Combine(universalTransferEndpoint, "sapi", "1"), HttpMethod.Get, ct, parameters, true).ConfigureAwait(false);
         }
 
         #endregion Get User Universal Transfers
@@ -501,9 +501,7 @@ namespace BinanceAPI.SubClients
         /// <returns></returns>
         public async Task<WebCallResult<IEnumerable<BinanceProduct>>> GetProductsAsync(CancellationToken ct = default)
         {
-            var url = _baseClient.BaseAddress.Replace("api.", "www.") + "exchange-api/v2/public/asset-service/product/get-products";
-
-            var data = await _baseClient.SendRequestInternal<BinanceBinanceAPIWrapper<IEnumerable<BinanceProduct>>>(new Uri(url), HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
+            var data = await _baseClient.SendRequestInternal<BinanceBinanceAPIWrapper<IEnumerable<BinanceProduct>>>("http://www.binance.com/exchange-api/v2/public/asset-service/product/get-products", HttpMethod.Get, ct, new Dictionary<string, object>()).ConfigureAwait(false);
             if (!data)
                 return data.As<IEnumerable<BinanceProduct>>(null);
 
