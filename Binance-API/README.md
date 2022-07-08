@@ -1,3 +1,6 @@
+### Version 6.0.5.1
+- [x] Fixed a bug that caused High CPU usage during network issues
+
 ### Version 6.0.5.0
 - [x] Add `UriClient` - A Static Client that manages Uris for Requests
 - [x] Add Feature [`ChangeEndpoint`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Base-Client-Settings#select-api-controller) to `BaseClient`
