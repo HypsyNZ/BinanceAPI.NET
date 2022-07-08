@@ -1,3 +1,12 @@
+### Version 6.0.5.0
+- [x] Add `UriClient` - A Static Client that manages Uris for Requests
+- [x] Add Feature [`ChangeEndpoint`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Base-Client-Settings#select-api-controller) to `BaseClient`
+- [x] Remove `BaseAddress` from `ClientOptions
+- [x] `WebSockets` will now use the other `Streams` based on selected [`Endpoint`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Base-Client-Settings#select-api-controller)
+- [x] Improve [`Tests`](https://github.com/HypsyNZ/BinanceAPI.NET/tree/main/API-Test/Tests)
+- [x] Update [`Examples`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki)
+- [x] Remove some legacy code
+
 ### Version 6.0.4.9
 - [x] Close `WebSocket` properly
 
