@@ -453,7 +453,7 @@ namespace BinanceAPI.ClientBase
             }
             catch
             {
-                // Okay buddy
+                await InternalResetAsync().ConfigureAwait(false);
             }
         }
 
