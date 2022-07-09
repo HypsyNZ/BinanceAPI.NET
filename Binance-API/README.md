@@ -1,10 +1,22 @@
+### Version 6.0.6.0
+- [x] Improve `Websocket` message processing speed
+- [x] Add Connection Status: `Waiting` to indicate when a socket is waiting to reconnect
+- [x] Merge `Socket Connection` into `BaseSocketClient`
+- [x] `SocketClientHost` hosts `BaseSocketClient`
+- [x] Remove `OnMessage Event` and handler
+- [x] Proxy won't be lost after reconnect
+- [x] Fix bug in `Dispose`
+- [x] Fix bug in log that showed `Credentials` were not set when they are
+- [x] Remove more legacy code
+- [x] Rename some internals for clarity
+
 ### Version 6.0.5.1
 - [x] Fixed a bug that caused High CPU usage during network issues
 
 ### Version 6.0.5.0
 - [x] Add `UriClient` - A Static Client that manages Uris for Requests
 - [x] Add Feature [`ChangeEndpoint`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Base-Client-Settings#select-api-controller) to `BaseClient`
-- [x] Remove `BaseAddress` from `ClientOptions
+- [x] Remove `BaseAddress` from `ClientOptions`
 - [x] `WebSockets` will now use the other `Streams` based on selected [`Endpoint`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki/Base-Client-Settings#select-api-controller)
 - [x] Improve [`Tests`](https://github.com/HypsyNZ/BinanceAPI.NET/tree/main/API-Test/Tests)
 - [x] Update [`Examples`](https://github.com/HypsyNZ/BinanceAPI.NET/wiki)
