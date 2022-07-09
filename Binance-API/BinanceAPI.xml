@@ -112,6 +112,11 @@
             <param name="buff"></param>
             <returns></returns>
         </member>
+        <member name="M:BinanceAPI.Authentication.AuthenticationProvider.Dispose">
+            <summary>
+            Dispose the Authentication Provider
+            </summary>
+        </member>
         <member name="T:BinanceAPI.BinanceHelpers">
             <summary>
             Helper methods for the Binance API
@@ -208,14 +213,6 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseClient.FillPathParameter(System.String,System.String[])">
-            <summary>
-            Fill parameters in a path. Parameters are specified by '{}' and should be specified in occuring sequence
-            </summary>
-            <param name="path">The total path string</param>
-            <param name="values">The values to fill</param>
-            <returns></returns>
-        </member>
         <member name="M:BinanceAPI.ClientBase.BaseClient.Dispose">
             <summary>
             Dispose
@@ -223,12 +220,9 @@
         </member>
         <member name="T:BinanceAPI.ClientBase.BaseSocketClient">
             <summary>
-            A wrapper around System.Net.WebSockets.ClientWebSocket
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.ClientSocket">
-            <summary>
-            The Real Underlying Socket
+            The Base Socket Client
+            <para>Created Automatically when you Subscribe to a SocketSubscription</para>
+            <para>Wraps the Underlying ClientWebSocket</para>
             </summary>
         </member>
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnClose">
@@ -241,11 +235,6 @@
             Socket connect event
             </summary>
         </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnMessage">
-            <summary>
-            Socket message received event
-            </summary>
-        </member>
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnError">
             <summary>
             Socket error event
@@ -254,11 +243,6 @@
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnOpen">
             <summary>
             Socket opened event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.StatusChanged">
-            <summary>
-            Occurs when the status of the socket changes
             </summary>
         </member>
         <member name="F:BinanceAPI.ClientBase.BaseSocketClient.errorHandlers">
@@ -281,9 +265,44 @@
             Handlers for when the the connecting is opening
             </summary>
         </member>
-        <member name="F:BinanceAPI.ClientBase.BaseSocketClient.messageHandlers">
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.ClientSocket">
             <summary>
-            Handlers for when a message is received
+            The Real Underlying Socket
+            </summary>
+        </member>
+        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.ConnectionRestored">
+            <summary>
+            Connecting restored event
+            </summary>
+        </member>
+        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.ConnectionStatusChanged">
+            <summary>
+            Occurs when the status of the socket changes
+            </summary>
+        </member>
+        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.UnhandledMessage">
+            <summary>
+            Unhandled message event
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.SocketConnectionStatus">
+            <summary>
+            The Current Status of the Socket Connection
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.ShouldAttemptConnection">
+            <summary>
+            If the socket should be reconnected upon closing
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.DisconnectTime">
+            <summary>
+            Time of disconnecting
+            </summary>
+        </member>
+        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.StatusChanged">
+            <summary>
+            Occurs when the status of the socket changes
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.Id">
@@ -321,11 +340,54 @@
             Encoding used for decoding the received bytes into a string
             </summary>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.#ctor(System.String)">
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.#ctor(System.String,BinanceAPI.ClientHosts.SocketClientHost,BinanceAPI.Objects.ApiProxy)">
             <summary>
-            The Client for this Socket
+            The Base Client for handling a SocketSubscription
             </summary>
             <param name="url">The url the socket should connect to</param>
+            <param name="client"></param>
+            <param name="proxy"></param>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.AddSubscription(BinanceAPI.Sockets.SocketSubscription)">
+            <summary>
+            Add subscription to this connection
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.GetSubscription">
+            <summary>
+            Get the subscription on this connection
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.SendAndWaitAsync``1(``0,System.TimeSpan,System.Func{Newtonsoft.Json.Linq.JToken,System.Boolean})">
+            <summary>
+            Send data and wait for an answer
+            </summary>
+            <typeparam name="T">The data type expected in response</typeparam>
+            <param name="obj">The object to send</param>
+            <param name="timeout">The timeout for response</param>
+            <param name="handler">The response handler</param>
+            <returns></returns>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.Send``1(``0,Newtonsoft.Json.NullValueHandling)">
+            <summary>
+            Send data over the websocket connection
+            </summary>
+            <typeparam name="T">The type of the object to send</typeparam>
+            <param name="obj">The object to send</param>
+            <param name="nullValueHandling">How null values should be serialized</param>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.SocketOnOpen">
+            <summary>
+            Handler for a socket opening
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.CloseAndDisposeSubscriptionAsync(BinanceAPI.Sockets.SocketSubscription)">
+            <summary>
+            Closes the subscription on this connection
+            <para>Closes the connection if the correct subscription is provided</para>
+            </summary>
+            <param name="subscription">Subscription to close</param>
+            <returns></returns>
         </member>
         <member name="M:BinanceAPI.ClientBase.BaseSocketClient.NewSocket(System.Boolean)">
             <summary>
@@ -344,12 +406,6 @@
             </summary>
             <returns>True if successfull</returns>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.InternalResetAsync(System.Boolean)">
-            <summary>
-            Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
-            </summary>
-            <returns></returns>
-        </member>
         <member name="M:BinanceAPI.ClientBase.BaseSocketClient.Send(System.String)">
             <summary>
             Send data over the websocket
@@ -358,7 +414,7 @@
         </member>
         <member name="M:BinanceAPI.ClientBase.BaseSocketClient.SendLoopAsync">
             <summary>
-            Loop for sending dataW
+            Loop for sending data
             </summary>
             <returns></returns>
         </member>
@@ -368,9 +424,15 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.Dispose">
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.InternalResetAsync(System.Boolean)">
             <summary>
-            Dispose the Socket and all Message Handlers
+            Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.DisposeAsync">
+            <summary>
+            Close and Dispose the Socket and all Message Handlers
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.SSLProtocols">
@@ -555,6 +617,11 @@
         <member name="F:BinanceAPI.Enums.ConnectionStatus.Error">
             <summary>
             Connection encountered an Error
+            </summary>
+        </member>
+        <member name="F:BinanceAPI.Enums.ConnectionStatus.Waiting">
+            <summary>
+            Waiting for reconnect attempt
             </summary>
         </member>
         <member name="T:BinanceAPI.Enums.DepositStatus">
@@ -7025,11 +7092,6 @@
             Base client options
             </summary>
         </member>
-        <member name="P:BinanceAPI.Options.ClientOptions.ApiCredentials">
-            <summary>
-            The api credentials
-            </summary>
-        </member>
         <member name="P:BinanceAPI.Options.ClientOptions.ShouldCheckObjects">
             <summary>
             Should check objects for missing properties based on the model and the received JSON
@@ -7252,11 +7314,6 @@
             Message received event
             </summary>
         </member>
-        <member name="P:BinanceAPI.Sockets.MessageEvent.Connection">
-            <summary>
-            The connection the message was received on
-            </summary>
-        </member>
         <member name="P:BinanceAPI.Sockets.MessageEvent.JsonData">
             <summary>
             The json object of the data
@@ -7272,114 +7329,13 @@
             The timestamp of when the data was received
             </summary>
         </member>
-        <member name="M:BinanceAPI.Sockets.MessageEvent.#ctor(BinanceAPI.Sockets.SocketConnection,Newtonsoft.Json.Linq.JToken,System.String,System.DateTime)">
-             <summary>
-            
-             </summary>
-             <param name="connection"></param>
-             <param name="jsonData"></param>
-             <param name="originalData"></param>
-             <param name="timestamp"></param>
-        </member>
-        <member name="T:BinanceAPI.Sockets.SocketConnection">
+        <member name="M:BinanceAPI.Sockets.MessageEvent.#ctor(Newtonsoft.Json.Linq.JToken,System.String,System.DateTime)">
             <summary>
-            Socket connecting
+            The Message
             </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionRestored">
-            <summary>
-            Connecting restored event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.ConnectionStatusChanged">
-            <summary>
-            Occurs when the status of the socket changes
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.Sockets.SocketConnection.UnhandledMessage">
-            <summary>
-            Unhandled message event
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Sockets.SocketConnection.SocketConnectionStatus">
-            <summary>
-            The Current Status of the Socket Connection
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Sockets.SocketConnection.BinanceSocket">
-            <summary>
-            The underlying socket
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Sockets.SocketConnection.ShouldReconnect">
-            <summary>
-            If the socket should be reconnected upon closing
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.Sockets.SocketConnection.DisconnectTime">
-            <summary>
-            Time of disconnecting
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.#ctor(BinanceAPI.ClientHosts.SocketClientHost,BinanceAPI.ClientBase.BaseSocketClient)">
-            <summary>
-            New socket connection
-            </summary>
-            <param name="client">The socket client</param>
-            <param name="socket">The socket</param>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.AddSubscription(BinanceAPI.Sockets.SocketSubscription)">
-            <summary>
-            Add subscription to this connection
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.GetSubscription">
-            <summary>
-            Get the subscription on this connection
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.SendAndWaitAsync``1(``0,System.TimeSpan,System.Func{Newtonsoft.Json.Linq.JToken,System.Boolean})">
-            <summary>
-            Send data and wait for an answer
-            </summary>
-            <typeparam name="T">The data type expected in response</typeparam>
-            <param name="obj">The object to send</param>
-            <param name="timeout">The timeout for response</param>
-            <param name="handler">The response handler</param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.Send``1(``0,Newtonsoft.Json.NullValueHandling)">
-            <summary>
-            Send data over the websocket connection
-            </summary>
-            <typeparam name="T">The type of the object to send</typeparam>
-            <param name="obj">The object to send</param>
-            <param name="nullValueHandling">How null values should be serialized</param>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.Send(System.String)">
-            <summary>
-            Send string data over the websocket connection
-            </summary>
-            <param name="data">The data to send</param>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.SocketOnOpen">
-            <summary>
-            Handler for a socket opening
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.CloseAndDisposeAsync">
-            <summary>
-            Close the connection and releases the managed resources it is consuming.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Sockets.SocketConnection.CloseAndDisposeSubscriptionAsync(BinanceAPI.Sockets.SocketSubscription)">
-            <summary>
-            Closes the subscription on this connection
-            <para>Closes the connection if the correct subscription is provided</para>
-            </summary>
-            <param name="subscription">Subscription to close</param>
-            <returns></returns>
+            <param name="jsonData"></param>
+            <param name="originalData"></param>
+            <param name="timestamp"></param>
         </member>
         <member name="T:BinanceAPI.Sockets.SocketSubscription">
             <summary>
@@ -7428,7 +7384,7 @@
         </member>
         <member name="F:BinanceAPI.Sockets.UpdateSubscription.Connection">
             <summary>
-            The Connection
+            The Socket Connection
             </summary>
         </member>
         <member name="E:BinanceAPI.Sockets.UpdateSubscription.ConnectionRestored">
@@ -7453,7 +7409,7 @@
             The id of the subscription
             </summary>
         </member>
-        <member name="M:BinanceAPI.Sockets.UpdateSubscription.#ctor(BinanceAPI.Sockets.SocketConnection,BinanceAPI.Sockets.SocketSubscription)">
+        <member name="M:BinanceAPI.Sockets.UpdateSubscription.#ctor(BinanceAPI.ClientBase.BaseSocketClient,BinanceAPI.Sockets.SocketSubscription)">
             <summary>
             ctor
             </summary>
@@ -7918,30 +7874,6 @@
             Event triggered when an order is cancelled via any client.
             </summary>
         </member>
-        <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.DefaultOptions">
-            <summary>
-            The Default Options or the Options that you Set
-            <para>new BinanceClientOptions() creates the standard defaults regardless of what you set this to</para>
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.SetDefaultOptions(BinanceAPI.Objects.BinanceClientHostOptions)">
-            <summary>
-            Set the default options to be used when creating new clients
-            </summary>
-            <param name="options"></param>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.#ctor(System.Threading.CancellationToken)">
-            <summary>
-            Create a new instance of BinanceClient using the default options
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.#ctor(BinanceAPI.Objects.BinanceClientHostOptions,System.Threading.CancellationToken)">
-            <summary>
-            Create a new instance of BinanceClient using provided options
-            </summary>
-            <param name="options">BinanceClientOptions</param>
-            <param name="waitToken">Wait token for Server Time Client</param>
-        </member>
         <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.General">
             <summary>
             General endpoints
@@ -7972,39 +7904,15 @@
             Fiat endpoints
             </summary>
         </member>
-        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.Dispose">
+        <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.DefaultOptions">
             <summary>
-            Dispose Resources for this Binance Client
+            The Default Options or the Options that you Set
+            <para>new BinanceClientOptions() creates the standard defaults regardless of what you set this to</para>
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.RequestFactory">
             <summary>
-            The factory for creating requests. Used for unit testing
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.ParameterPositions">
-            <summary>
-            Where to put the parameters for requests with different Http methods
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.BinanceClientHost.requestBodyFormat">
-            <summary>
-            Request body content type
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.BinanceClientHost.manualParseError">
-            <summary>
-            Whether or not we need to manually parse an error instead of relying on the http status code
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.BinanceClientHost.arraySerialization">
-            <summary>
-            How to serialize array parameters when making requests
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.BinanceClientHost.requestBodyEmptyContent">
-            <summary>
-            What request body should be set when no data is send (only used in combination with postParametersPosition.InBody)
+            The factory for creating requests.
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.RequestTimeout">
@@ -8017,10 +7925,28 @@
             Total requests made by this client
             </summary>
         </member>
-        <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.StandardRequestHeaders">
+        <member name="P:BinanceAPI.ClientHosts.BinanceClientHost.ParameterPositions">
             <summary>
-            Request headers to be sent with each request
+            Where to put the parameters for requests with different Http methods
             </summary>
+        </member>
+        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.#ctor(System.Threading.CancellationToken)">
+            <summary>
+            Create a new instance of BinanceClient using the default options
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.#ctor(BinanceAPI.Objects.BinanceClientHostOptions,System.Threading.CancellationToken)">
+            <summary>
+            Create a new instance of BinanceClient using provided options
+            </summary>
+            <param name="options">BinanceClientOptions</param>
+            <param name="waitToken">Wait token for Server Time Client</param>
+        </member>
+        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.SetDefaultOptions(BinanceAPI.Objects.BinanceClientHostOptions)">
+            <summary>
+            Set the default options to be used when creating new clients
+            </summary>
+            <param name="options"></param>
         </member>
         <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.Ping(System.Threading.CancellationToken)">
             <summary>
@@ -8060,15 +7986,6 @@
             <param name="deserializer">The JsonSerializer to use for deserialization</param>
             <param name="cancellationToken">Cancellation token</param>
             <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.TryParseErrorAsync(Newtonsoft.Json.Linq.JToken)">
-            <summary>
-            Can be used to parse an error even though response status indicates success. Some apis always return 200 OK, even though there is an error.
-            When setting manualParseError to true this method will be called for each response to be able to check if the response is an error or not.
-            If the response is an error this method should return the parsed error, else it should return null
-            </summary>
-            <param name="data">Received data</param>
-            <returns>Null if not an error, Error otherwise</returns>
         </member>
         <member name="M:BinanceAPI.ClientHosts.BinanceClientHost.ConstructRequest(System.String,System.Net.Http.HttpMethod,System.Collections.Generic.Dictionary{System.String,System.Object},System.Boolean,BinanceAPI.Enums.HttpMethodParameterPosition,BinanceAPI.Enums.ArrayParametersSerialization,System.Int32,System.Collections.Generic.Dictionary{System.String,System.String})">
             <summary>
@@ -8126,12 +8043,6 @@
             </summary>
             <param name="options">The options to use for this client</param>
         </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SetDefaultOptions(BinanceAPI.Objects.SocketClientHostOptions)">
-            <summary>
-            Set the default options to be used when creating new socket clients
-            </summary>
-            <param name="options"></param>
-        </member>
         <member name="F:BinanceAPI.ClientHosts.SocketClientHost.AllSockets">
             <summary>
             List of socket connections currently connecting/connected
@@ -8143,42 +8054,22 @@
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientHosts.SocketClientHost.MaxReconnectTries">
-            <inheritdoc cref="P:BinanceAPI.Objects.SocketClientHostOptions.MaxReconnectTries"/>
+            <summary>
+            The maximum number of times to try to reconnect
+            </summary>
         </member>
         <member name="P:BinanceAPI.ClientHosts.SocketClientHost.MaxConcurrentResubscriptionsPerSocket">
-            <inheritdoc cref="P:BinanceAPI.Objects.SocketClientHostOptions.MaxConcurrentResubscriptionsPerSocket"/>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.dataInterpreterBytes">
             <summary>
-            Delegate used for processing byte data received from socket connections before it is processed by handlers
+            Max number of concurrent resubscription tasks per socket after reconnecting a socket
             </summary>
         </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.dataInterpreterString">
+        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SetDefaultOptions(BinanceAPI.Objects.SocketClientHostOptions)">
             <summary>
-            Delegate used for processing string data received from socket connections before it is processed by handlers
+            Set the default options to be used when creating new socket clients
             </summary>
+            <param name="options"></param>
         </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.genericHandlers">
-            <summary>
-            Handlers for data from the socket which doesn't need to be forwarded to the caller. Ping or welcome messages for example.
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.periodicTask">
-            <summary>
-            The task that is sending periodic data on the websocket. Can be used for sending Ping messages every x seconds or similair. Not necesarry.
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.periodicEvent">
-            <summary>
-            Wait event for the periodicTask
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientHosts.SocketClientHost.disposing">
-            <summary>
-            If client is disposing
-            </summary>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SubscribeAsync``1(System.String,System.Object,System.Boolean,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
+        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SubscribeAsync``1(System.String,System.Object,System.Boolean,System.Action{BinanceAPI.Sockets.DataEvent{``0}},BinanceAPI.ClientHosts.SocketClientHost)">
             <summary>
             Connect to an url and listen for data
             </summary>
@@ -8187,23 +8078,16 @@
             <param name="request">The optional request object to send, will be serialized to json</param>
             <param name="authenticated">If the subscription is to an authenticated endpoint</param>
             <param name="dataHandler">The handler of update data</param>
+            <param name="host">Socket Host</param>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SubscribeAndWaitAsync(BinanceAPI.Sockets.SocketConnection,System.Object,BinanceAPI.Sockets.SocketSubscription)">
+        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.SubscribeAndWaitAsync(BinanceAPI.ClientBase.BaseSocketClient,System.Object,BinanceAPI.Sockets.SocketSubscription)">
             <summary>
             Sends the subscribe request and waits for a response to that request
             </summary>
-            <param name="socketConnection">The connection to send the request on</param>
+            <param name="baseSocketClient">The connection to send the request on</param>
             <param name="request">The request to send, will be serialized to json</param>
             <param name="subscription">The subscription the request is for</param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.ConnectIfNeededAsync(BinanceAPI.Sockets.SocketConnection,System.Boolean)">
-            <summary>
-            Checks if a socket needs to be connected and does so if needed. Also authenticates on the socket if needed
-            </summary>
-            <param name="socket">The connection to check</param>
-            <param name="authenticated">Whether the socket should authenticated</param>
             <returns></returns>
         </member>
         <member name="M:BinanceAPI.ClientHosts.SocketClientHost.HandleSubscriptionResponse(System.Object,Newtonsoft.Json.Linq.JToken,BinanceAPI.Objects.CallResult{System.Object}@)">
@@ -8228,15 +8112,15 @@
             <param name="request">The subscription request</param>
             <returns>True if the message is for the subscription which sent the request</returns>
         </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.UnsubscribeAsync(BinanceAPI.Sockets.SocketConnection,BinanceAPI.Sockets.SocketSubscription)">
+        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.UnsubscribeAsync(BinanceAPI.ClientBase.BaseSocketClient,BinanceAPI.Sockets.SocketSubscription)">
             <summary>
             Needs to unsubscribe a subscription, typically by sending an unsubscribe request.
             </summary>
-            <param name="connection">The connection on which to unsubscribe</param>
+            <param name="socketClient">The connection on which to unsubscribe</param>
             <param name="subscription">The subscription to unsubscribe</param>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.AddSubscription``1(System.Object,System.Boolean,BinanceAPI.Sockets.SocketConnection,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
+        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.AddSubscription``1(System.Object,System.Boolean,BinanceAPI.ClientBase.BaseSocketClient,System.Action{BinanceAPI.Sockets.DataEvent{``0}})">
             <summary>
             Add a subscription to a connection
             </summary>
@@ -8252,20 +8136,6 @@
             Process an unhandled message
             </summary>
             <param name="token">The token that wasn't processed</param>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.ConnectSocketAsync(BinanceAPI.Sockets.SocketConnection)">
-            <summary>
-            Connect a socket
-            </summary>
-            <param name="socketConnection">The socket to connect</param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.ClientHosts.SocketClientHost.CreateSocket(System.String)">
-            <summary>
-            Create a socket for an address
-            </summary>
-            <param name="address">The address the socket should connect to</param>
-            <returns></returns>
         </member>
         <member name="M:BinanceAPI.ClientHosts.SocketClientHost.UnsubscribeAsync(BinanceAPI.Sockets.UpdateSubscription)">
             <summary>

@@ -50,7 +50,7 @@ namespace API_Test
                     {
                         // Uncomment to see output from the Socket
                         Console.WriteLine("[" + data.Data.UpdateId +
-                            "]| BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00") + 
+                            "]| BestAsk: " + data.Data.BestAskPrice.Normalize().ToString("0.00") +
                             " | Ask Quan: " + data.Data.BestAskQuantity.Normalize().ToString("000.00000#####") +
                             " | BestBid :" + data.Data.BestBidPrice.Normalize().ToString("0.00") +
                             " | BidQuantity :" + data.Data.BestBidQuantity.Normalize().ToString("000.00000#####"));

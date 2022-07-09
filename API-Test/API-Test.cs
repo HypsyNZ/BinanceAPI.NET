@@ -56,10 +56,10 @@ namespace API_Test
             // Default Client Options
             var options = new BinanceClientHostOptions()
             {
-                LogLevel = LogLevel.Trace,
-                // LogPath = clientLogs,
-                //TimeLogPath = timeLogs,
-                LogToConsole = true,
+                LogLevel = LogLevel.Debug,
+                LogPath = clientLogs,
+                TimeLogPath = timeLogs,
+                LogToConsole = false,
                 SyncUpdateTime = 15,
                 ReceiveWindow = TimeSpan.FromMilliseconds(1000)
             };
@@ -106,7 +106,7 @@ namespace API_Test
                 if (!ServerTimeClient.IsReady())
                 {
                     // ServerTimeClient.WaitForStart()
-                    Console.WriteLine("Server Time Client Started in " + 
+                    Console.WriteLine("Server Time Client Started in " +
                         await ServerTimeClient.WaitForStart(serverTimeStartWaitToken.Token).ConfigureAwait(false) + "ms");
                 }
 
@@ -148,7 +148,7 @@ namespace API_Test
                 {
                     // Run Tests
                     Console.WriteLine("Account Status: " + status.Data.Data.ToString());
-                 
+
                     ExchangeInfoTest.Run(client);
 
                     SocketTest.Run(socketClient);

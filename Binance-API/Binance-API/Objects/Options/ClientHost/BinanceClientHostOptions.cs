@@ -24,7 +24,6 @@
 
 using BinanceAPI.Options;
 using System;
-using System.Net.Http;
 
 namespace BinanceAPI.Objects
 {

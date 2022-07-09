@@ -495,7 +495,7 @@ namespace BinanceAPI.SocketSubClients
             var connectSubscription = await _baseClient.SubscribeInternal(UriClient.GetBaseAddress() + "stream", topics, onData).ConfigureAwait(false);
             if (connectSubscription.Success)
             {
-                await connectSubscription.Data.Connection.BinanceSocket.InternalResetAsync(true).ConfigureAwait(false);
+                await connectSubscription.Data.Connection.InternalResetAsync(true).ConfigureAwait(false);
             }
 
             return connectSubscription;

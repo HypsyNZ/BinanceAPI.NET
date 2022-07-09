@@ -40,8 +40,8 @@ namespace BinanceAPI.ClientBase
         private static int lastId;
         private static object idLock = new();
 
-        protected private ApiProxy? ApiProxy;
         protected private static AuthenticationProvider? authProvider;
+        protected private ApiProxy? ApiProxy;
 
         /// <summary>
         /// Has the the Authentication Provider been set
@@ -66,8 +66,9 @@ namespace BinanceAPI.ClientBase
             }
 
             ApiProxy = options.Proxy;
+
+            ClientLog?.Info($"Client configuration: {options}, BinanceAPI.NET: v{GetType().Assembly.GetName().Version}");
 #if DEBUG
-            ClientLog?.Info($"Client configuration: {options}, BinanceAPI: v{typeof(BaseClient).Assembly.GetName().Version}, Binance.com: v{GetType().Assembly.GetName().Version}");
             Json.ShouldCheckObjects = options.ShouldCheckObjects;
             Json.OutputOriginalData = options.OutputOriginalData;
 #endif
@@ -116,31 +117,11 @@ namespace BinanceAPI.ClientBase
         }
 
         /// <summary>
-        /// Fill parameters in a path. Parameters are specified by '{}' and should be specified in occuring sequence
-        /// </summary>
-        /// <param name="path">The total path string</param>
-        /// <param name="values">The values to fill</param>
-        /// <returns></returns>
-        protected static string FillPathParameter(string path, params string[] values)
-        {
-            foreach (var value in values)
-            {
-                var index = path.IndexOf("{}", StringComparison.Ordinal);
-                if (index >= 0)
-                {
-                    path = path.Remove(index, 2);
-                    path = path.Insert(index, value);
-                }
-            }
-            return path;
-        }
-
-        /// <summary>
         /// Dispose
         /// </summary>
         public virtual void Dispose()
         {
-            AuthenticationProvider.Credentials?.Dispose();
+            authProvider?.Dispose();
 #if DEBUG
             ClientLog?.Info("Disposing exchange client");
 #endif

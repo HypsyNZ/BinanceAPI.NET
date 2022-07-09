@@ -33,11 +33,6 @@ namespace BinanceAPI.Sockets
     public class MessageEvent
     {
         /// <summary>
-        /// The connection the message was received on
-        /// </summary>
-        public SocketConnection Connection { get; set; }
-
-        /// <summary>
         /// The json object of the data
         /// </summary>
         public JToken JsonData { get; set; }
@@ -53,15 +48,13 @@ namespace BinanceAPI.Sockets
         public DateTime ReceivedTimestamp { get; set; }
 
         /// <summary>
-        ///
+        /// The Message
         /// </summary>
-        /// <param name="connection"></param>
         /// <param name="jsonData"></param>
         /// <param name="originalData"></param>
         /// <param name="timestamp"></param>
-        public MessageEvent(SocketConnection connection, JToken jsonData, string? originalData, DateTime timestamp)
+        public MessageEvent(JToken jsonData, string? originalData, DateTime timestamp)
         {
-            Connection = connection;
             JsonData = jsonData;
             OriginalData = originalData;
             ReceivedTimestamp = timestamp;

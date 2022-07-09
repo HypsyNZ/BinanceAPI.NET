@@ -22,6 +22,7 @@
 *SOFTWARE.
 */
 
+using BinanceAPI.ClientBase;
 using BinanceAPI.Enums;
 using BinanceAPI.Objects;
 using System;
@@ -37,9 +38,9 @@ namespace BinanceAPI.Sockets
         internal DateTime _lastConnectAttempt = DateTime.MinValue;
 
         /// <summary>
-        /// The Connection
+        /// The Socket Connection
         /// </summary>
-        public readonly SocketConnection Connection;
+        public readonly BaseSocketClient Connection;
 
         private readonly SocketSubscription subscription;
 
@@ -66,7 +67,7 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// The id of the socket
         /// </summary>
-        public int SocketId => Connection.BinanceSocket.Id;
+        public int SocketId => Connection.Id;
 
         /// <summary>
         /// The id of the subscription
@@ -78,7 +79,7 @@ namespace BinanceAPI.Sockets
         /// </summary>
         /// <param name="connection">The socket connection the subscription is on</param>
         /// <param name="subscription">The subscription</param>
-        public UpdateSubscription(SocketConnection connection, SocketSubscription subscription)
+        public UpdateSubscription(BaseSocketClient connection, SocketSubscription subscription)
         {
             this.Connection = connection;
             this.subscription = subscription;
@@ -103,11 +104,11 @@ namespace BinanceAPI.Sockets
             if (DateTime.UtcNow > (_lastConnectAttempt + TimeSpan.FromSeconds(5)))
             {
                 _lastConnectAttempt = DateTime.UtcNow;
-                await Connection.BinanceSocket.InternalResetAsync().ConfigureAwait(false);
+                await Connection.InternalResetAsync().ConfigureAwait(false);
             }
             else
             {
-                Logging.SocketLog?.Info("Attempted to connect Socket [" + Connection.BinanceSocket.Id + "] when it is likely already connecting..");
+                Logging.SocketLog?.Info("Attempted to connect Socket [" + Connection.Id + "] when it is likely already connecting..");
             }
         }
 

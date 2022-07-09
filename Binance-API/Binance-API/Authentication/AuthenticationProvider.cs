@@ -36,7 +36,7 @@ namespace BinanceAPI.Authentication
     /// <summary>
     /// Base class for authentication providers
     /// </summary>
-    public class AuthenticationProvider
+    public class AuthenticationProvider : IDisposable
     {
         private readonly object signLock = new();
         private readonly HMACSHA256 encryptor;
@@ -44,7 +44,7 @@ namespace BinanceAPI.Authentication
         /// <summary>
         /// The provided credentials
         /// </summary>
-        public static ApiCredentials? Credentials { get; private set; }
+        protected private static ApiCredentials? Credentials { get; set; }
 
         /// <summary>
         /// ctor
@@ -55,9 +55,8 @@ namespace BinanceAPI.Authentication
             if (credentials.Secret == null)
                 throw new ArgumentException("No valid API credentials provided. Key/Secret needed.");
 
-            encryptor = new HMACSHA256(Encoding.ASCII.GetBytes(credentials.Secret.GetString()));
-
             Credentials = credentials;
+            encryptor = new HMACSHA256(Encoding.ASCII.GetBytes(credentials.Secret.GetString()));
         }
 
         /// <summary>
@@ -153,6 +152,15 @@ namespace BinanceAPI.Authentication
             foreach (var t in buff)
                 result += t.ToString("X2"); /* hex format */
             return result;
+        }
+
+        /// <summary>
+        /// Dispose the Authentication Provider
+        /// </summary>
+        public void Dispose()
+        {
+            encryptor.Dispose();
+            Credentials?.Dispose();
         }
     }
 }

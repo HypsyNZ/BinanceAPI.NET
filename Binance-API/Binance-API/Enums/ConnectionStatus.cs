@@ -57,6 +57,11 @@ namespace BinanceAPI.Enums
         /// <summary>
         /// Connection encountered an Error
         /// </summary>
-        Error = 5
+        Error = 5,
+
+        /// <summary>
+        /// Waiting for reconnect attempt
+        /// </summary>
+        Waiting = 6
     }
 }

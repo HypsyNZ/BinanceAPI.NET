@@ -72,63 +72,6 @@ namespace BinanceAPI.ClientHosts
         public static EventHandler<BinanceOrderBase>? OnOrderCanceled;
 
         /// <summary>
-        /// The Default Options or the Options that you Set
-        /// <para>new BinanceClientOptions() creates the standard defaults regardless of what you set this to</para>
-        /// </summary>
-        public static BinanceClientHostOptions DefaultOptions { get; set; } = new();
-
-        /// <summary>
-        /// Set the default options to be used when creating new clients
-        /// </summary>
-        /// <param name="options"></param>
-        public static void SetDefaultOptions(BinanceClientHostOptions options)
-        {
-            DefaultOptions = options;
-        }
-
-        /// <summary>
-        /// Create a new instance of BinanceClient using the default options
-        /// </summary>
-        public BinanceClientHost(CancellationToken waitToken = default) : this(DefaultOptions, waitToken)
-        {
-        }
-
-        /// <summary>
-        /// Create a new instance of BinanceClient using provided options
-        /// </summary>
-        /// <param name="options">BinanceClientOptions</param>
-        /// <param name="waitToken">Wait token for Server Time Client</param>
-        public BinanceClientHost(BinanceClientHostOptions options, CancellationToken waitToken) : base(options)
-        {
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
-
-            ServerTimeClient.Start(options, waitToken).ConfigureAwait(false);
-            StartClientLog(options.LogPath, options.LogLevel, options.LogToConsole);
-            ClientLog?.Info("Started Binance Client");
-
-            DefaultReceiveWindow = options.ReceiveWindow;
-
-            arraySerialization = ArrayParametersSerialization.MultipleValues;
-            requestBodyFormat = RequestBodyFormat.FormData;
-            requestBodyEmptyContent = string.Empty;
-
-            Spot = new BinanceClientSpot(this);
-            Margin = new BinanceClientMargin(this);
-            Fiat = new BinanceClientFiat(this);
-
-            General = new BinanceClientGeneral(this);
-            Lending = new BinanceClientLending(this);
-
-            WithdrawDeposit = new BinanceClientWithdrawDeposit(this);
-
-            RequestTimeout = options.RequestTimeout;
-            RequestFactory.Configure(options.RequestTimeout, options.Proxy, options.HttpClient);
-        }
-
-        #region [ Sub Clients ]
-
-        /// <summary>
         /// General endpoints
         /// </summary>
         public BinanceClientGeneral General { get; }
@@ -158,9 +101,125 @@ namespace BinanceAPI.ClientHosts
         /// </summary>
         public BinanceClientFiat Fiat { get; set; }
 
-        #endregion [ Sub Clients ]
+        /// <summary>
+        /// The Default Options or the Options that you Set
+        /// <para>new BinanceClientOptions() creates the standard defaults regardless of what you set this to</para>
+        /// </summary>
+        public static BinanceClientHostOptions DefaultOptions { get; set; } = new();
 
-        #region [Private]
+        /// <summary>
+        /// The factory for creating requests.
+        /// </summary>
+        public RequestFactory RequestFactory { get; set; } = new RequestFactory();
+
+        /// <summary>
+        /// Timeout for requests. This setting is ignored when injecting a HttpClient in the options, requests timeouts should be set on the client then.
+        /// </summary>
+        public TimeSpan RequestTimeout { get; }
+
+        /// <summary>
+        /// Total requests made by this client
+        /// </summary>
+        public int TotalRequestsMade { get; private set; }
+
+        /// <summary>
+        /// Where to put the parameters for requests with different Http methods
+        /// </summary>
+        protected Dictionary<HttpMethod, HttpMethodParameterPosition> ParameterPositions { get; set; } = new Dictionary<HttpMethod, HttpMethodParameterPosition>
+        {
+            { HttpMethod.Get, HttpMethodParameterPosition.InUri },
+            { HttpMethod.Post, HttpMethodParameterPosition.InBody },
+            { HttpMethod.Delete, HttpMethodParameterPosition.InBody },
+            { HttpMethod.Put, HttpMethodParameterPosition.InBody }
+        };
+
+        /// <summary>
+        /// Create a new instance of BinanceClient using the default options
+        /// </summary>
+        public BinanceClientHost(CancellationToken waitToken = default) : this(DefaultOptions, waitToken)
+        {
+        }
+
+        /// <summary>
+        /// Create a new instance of BinanceClient using provided options
+        /// </summary>
+        /// <param name="options">BinanceClientOptions</param>
+        /// <param name="waitToken">Wait token for Server Time Client</param>
+        public BinanceClientHost(BinanceClientHostOptions options, CancellationToken waitToken) : base(options)
+        {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            ServerTimeClient.Start(options, waitToken).ConfigureAwait(false);
+
+            StartClientLog(options.LogPath, options.LogLevel, options.LogToConsole);
+
+            DefaultReceiveWindow = options.ReceiveWindow;
+
+            Spot = new BinanceClientSpot(this);
+            Margin = new BinanceClientMargin(this);
+            Fiat = new BinanceClientFiat(this);
+
+            General = new BinanceClientGeneral(this);
+            Lending = new BinanceClientLending(this);
+
+            WithdrawDeposit = new BinanceClientWithdrawDeposit(this);
+
+            RequestTimeout = options.RequestTimeout;
+            RequestFactory.Configure(options.RequestTimeout, options.Proxy, options.HttpClient);
+
+            ClientLog?.Info("Started Binance Client");
+        }
+
+        /// <summary>
+        /// Set the default options to be used when creating new clients
+        /// </summary>
+        /// <param name="options"></param>
+        public static void SetDefaultOptions(BinanceClientHostOptions options)
+        {
+            DefaultOptions = options;
+        }
+
+        /// <summary>
+        /// Ping to see if the server is reachable
+        /// </summary>
+        /// <returns>The roundtrip time of the ping request</returns>
+        public CallResult<long> Ping(CancellationToken ct = default) => PingAsync(ct).Result;
+
+        /// <summary>
+        /// Ping to see if the server is reachable
+        /// </summary>
+        /// <returns>The roundtrip time of the ping request</returns>
+        public async Task<CallResult<long>> PingAsync(CancellationToken ct = default)
+        {
+            var ping = new Ping();
+            PingReply reply;
+
+            var ctRegistration = ct.Register(() => ping.SendAsyncCancel());
+            try
+            {
+                reply = await ping.SendPingAsync(new Uri(UriClient.GetBaseAddress()).Host).ConfigureAwait(false);
+            }
+            catch (PingException e)
+            {
+                if (e.InnerException == null)
+                    return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + e.Message });
+
+                if (e.InnerException is SocketException exception)
+                    return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + exception.SocketErrorCode });
+                return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + e.InnerException.Message });
+            }
+            finally
+            {
+                ctRegistration.Dispose();
+                ping.Dispose();
+            }
+
+            if (ct.IsCancellationRequested)
+                return new CallResult<long>(0, new CancellationRequestedError());
+
+            return reply.Status == IPStatus.Success ? new CallResult<long>(reply.RoundtripTime, null) : new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + reply.Status });
+        }
 
         internal async Task<WebCallResult<BinancePlacedOrder>> PlaceOrderInternal(string uri,
             string symbol,
@@ -209,116 +268,16 @@ namespace BinanceAPI.ClientHosts
             return await SendRequestAsync<BinancePlacedOrder>(uri, HttpMethod.Post, ct, parameters, true).ConfigureAwait(false);
         }
 
-        internal Error ParseErrorResponseInternal(JToken error) => ParseErrorResponse(error);
+        internal Task<WebCallResult<T>> SendRequestInternal<T>(
+            string uri,
+            HttpMethod method,
+            CancellationToken cancellationToken,
+            Dictionary<string, object> parameters,
+            bool signed = false,
+            bool checkResult = true,
+            HttpMethodParameterPosition? postPosition = null,
+            ArrayParametersSerialization? arraySerialization = null) where T : class => SendRequestAsync<T>(uri, method, cancellationToken, parameters, signed, checkResult, postPosition, arraySerialization);
 
-        internal Task<WebCallResult<T>> SendRequestInternal<T>(string uri, HttpMethod method, CancellationToken cancellationToken,
-            Dictionary<string, object> parameters, bool signed = false, bool checkResult = true, HttpMethodParameterPosition? postPosition = null, ArrayParametersSerialization? arraySerialization = null) where T : class
-        {
-            //  parameters?.AddParameter("timestamp", ServerTimeClient.GetTimestamp());
-            return SendRequestAsync<T>(uri, method, cancellationToken, parameters, signed, checkResult, postPosition, arraySerialization);
-        }
-
-        #endregion [Private]
-
-        /// <summary>
-        /// Dispose Resources for this Binance Client
-        /// </summary>
-        public override void Dispose()
-        {
-            base.Dispose();
-        }
-
-        /// <summary>
-        /// The factory for creating requests. Used for unit testing
-        /// </summary>
-        public RequestFactory RequestFactory { get; set; } = new RequestFactory();
-
-        /// <summary>
-        /// Where to put the parameters for requests with different Http methods
-        /// </summary>
-        protected Dictionary<HttpMethod, HttpMethodParameterPosition> ParameterPositions { get; set; } = new Dictionary<HttpMethod, HttpMethodParameterPosition>
-        {
-            { HttpMethod.Get, HttpMethodParameterPosition.InUri },
-            { HttpMethod.Post, HttpMethodParameterPosition.InBody },
-            { HttpMethod.Delete, HttpMethodParameterPosition.InBody },
-            { HttpMethod.Put, HttpMethodParameterPosition.InBody }
-        };
-
-        /// <summary>
-        /// Request body content type
-        /// </summary>
-        protected RequestBodyFormat requestBodyFormat = RequestBodyFormat.Json;
-
-        /// <summary>
-        /// Whether or not we need to manually parse an error instead of relying on the http status code
-        /// </summary>
-        protected bool manualParseError = false;
-
-        /// <summary>
-        /// How to serialize array parameters when making requests
-        /// </summary>
-        protected ArrayParametersSerialization arraySerialization = ArrayParametersSerialization.Array;
-
-        /// <summary>
-        /// What request body should be set when no data is send (only used in combination with postParametersPosition.InBody)
-        /// </summary>
-        protected string requestBodyEmptyContent = "{}";
-
-        /// <summary>
-        /// Timeout for requests. This setting is ignored when injecting a HttpClient in the options, requests timeouts should be set on the client then.
-        /// </summary>
-        public TimeSpan RequestTimeout { get; }
-
-        /// <summary>
-        /// Total requests made by this client
-        /// </summary>
-        public int TotalRequestsMade { get; private set; }
-
-        /// <summary>
-        /// Request headers to be sent with each request
-        /// </summary>
-        protected Dictionary<string, string>? StandardRequestHeaders { get; set; }
-
-        /// <summary>
-        /// Ping to see if the server is reachable
-        /// </summary>
-        /// <returns>The roundtrip time of the ping request</returns>
-        public CallResult<long> Ping(CancellationToken ct = default) => PingAsync(ct).Result;
-
-        /// <summary>
-        /// Ping to see if the server is reachable
-        /// </summary>
-        /// <returns>The roundtrip time of the ping request</returns>
-        public async Task<CallResult<long>> PingAsync(CancellationToken ct = default)
-        {
-            var ping = new Ping();
-            PingReply reply;
-
-            var ctRegistration = ct.Register(() => ping.SendAsyncCancel());
-            try
-            {
-                reply = await ping.SendPingAsync(new Uri(UriClient.GetBaseAddress()).Host).ConfigureAwait(false);
-            }
-            catch (PingException e)
-            {
-                if (e.InnerException == null)
-                    return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + e.Message });
-
-                if (e.InnerException is SocketException exception)
-                    return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + exception.SocketErrorCode });
-                return new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + e.InnerException.Message });
-            }
-            finally
-            {
-                ctRegistration.Dispose();
-                ping.Dispose();
-            }
-
-            if (ct.IsCancellationRequested)
-                return new CallResult<long>(0, new CancellationRequestedError());
-
-            return reply.Status == IPStatus.Success ? new CallResult<long>(reply.RoundtripTime, null) : new CallResult<long>(0, new CantConnectError { Message = "Ping failed: " + reply.Status });
-        }
 
         /// <summary>
         /// Execute a request to the uri and deserialize the response into the provided type parameter
@@ -363,7 +322,7 @@ namespace BinanceAPI.ClientHosts
             }
 
             var paramsPosition = parameterPosition ?? ParameterPositions[method];
-            var request = ConstructRequest(uri, method, parameters, signed, paramsPosition, arraySerialization ?? this.arraySerialization, requestId, additionalHeaders);
+            var request = ConstructRequest(uri, method, parameters, signed, paramsPosition, arraySerialization ?? ArrayParametersSerialization.Array, requestId, additionalHeaders);
 #if DEBUG
             string? paramString = "";
             if (paramsPosition == HttpMethodParameterPosition.InBody)
@@ -399,45 +358,15 @@ namespace BinanceAPI.ClientHosts
                 var responseStream = await response.GetResponseStreamAsync().ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
-                    // If we have to manually parse error responses (can't rely on HttpStatusCode) we'll need to read the full
-                    // response before being able to deserialize it into the resulting type since we don't know if it an error response or data
-                    if (manualParseError)
-                    {
-                        using var reader = new StreamReader(responseStream);
-                        var data = await reader.ReadToEndAsync().ConfigureAwait(false);
-                        responseStream.Close();
-                        response.Close();
-
-                        // Validate if it is valid json. Sometimes other data will be returned, 502 error html pages for example
-                        var parseResult = Json.ValidateJson(data);
-                        if (!parseResult.Success)
-                            return WebCallResult<T>.CreateErrorResult(response.StatusCode, response.ResponseHeaders, parseResult.Error!);
-
-                        // Let the library implementation see if it is an error response, and if so parse the error
-                        var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
-                        if (error != null)
-                            return WebCallResult<T>.CreateErrorResult(response.StatusCode, response.ResponseHeaders, error);
-
-                        // Not an error, so continue deserializing
-                        var deserializeResult = Json.Deserialize<T>(parseResult.Data, null, request.RequestId);
-#if DEBUG
-                        return new WebCallResult<T>(response.StatusCode, response.ResponseHeaders, Json.OutputOriginalData ? data : null, deserializeResult.Data, deserializeResult.Error);
-#else
-                        return new WebCallResult<T>(response.StatusCode, response.ResponseHeaders, null, deserializeResult.Data, deserializeResult.Error);
-#endif
-                    }
-                    else
-                    {
-                        // Success status code, and we don't have to check for errors. Continue deserializing directly from the stream
-                        var desResult = await Json.DeserializeAsync<T>(responseStream, request.RequestId).ConfigureAwait(false);
-                        responseStream.Close();
-                        response.Close();
+                    // Success status code, and we don't have to check for errors. Continue deserializing directly from the stream
+                    var desResult = await Json.DeserializeAsync<T>(responseStream, request.RequestId).ConfigureAwait(false);
+                    responseStream.Close();
+                    response.Close();
 #if DEBUG
                         return new WebCallResult<T>(statusCode, headers, Json.OutputOriginalData ? desResult.OriginalData : null, desResult.Data, desResult.Error);
 #else
-                        return new WebCallResult<T>(statusCode, headers, null, desResult.Data, desResult.Error);
+                    return new WebCallResult<T>(statusCode, headers, null, desResult.Data, desResult.Error);
 #endif
-                    }
                 }
                 else
                 {
@@ -494,18 +423,6 @@ namespace BinanceAPI.ClientHosts
         }
 
         /// <summary>
-        /// Can be used to parse an error even though response status indicates success. Some apis always return 200 OK, even though there is an error.
-        /// When setting manualParseError to true this method will be called for each response to be able to check if the response is an error or not.
-        /// If the response is an error this method should return the parsed error, else it should return null
-        /// </summary>
-        /// <param name="data">Received data</param>
-        /// <returns>Null if not an error, Error otherwise</returns>
-        protected Task<ServerError?> TryParseErrorAsync(JToken data)
-        {
-            return Task.FromResult<ServerError?>(null);
-        }
-
-        /// <summary>
         /// Creates a request object
         /// </summary>
         /// <param name="uri">The uri to send the request to</param>
@@ -533,7 +450,6 @@ namespace BinanceAPI.ClientHosts
             if (parameterPosition == HttpMethodParameterPosition.InUri && parameters.Any() == true)
                 uri += "?" + parameters.CreateParamString(true, arraySerialization);
 
-            var contentType = requestBodyFormat == RequestBodyFormat.Json ? Constants.JsonContentHeader : Constants.FormContentHeader;
             var request = RequestFactory.Create(method, uri, requestId);
             request.Accept = Constants.JsonContentHeader;
 
@@ -550,20 +466,14 @@ namespace BinanceAPI.ClientHosts
                     request.AddHeader(header.Key, header.Value);
             }
 
-            if (StandardRequestHeaders != null)
-            {
-                foreach (var header in StandardRequestHeaders)
-                    // Only add it if it isn't overwritten
-                    if (additionalHeaders?.ContainsKey(header.Key) != true)
-                        request.AddHeader(header.Key, header.Value);
-            }
-
             if (parameterPosition == HttpMethodParameterPosition.InBody)
             {
+                var contentType = Constants.FormContentHeader;
+
                 if (parameters.Any() == true)
                     WriteParamBody(request, parameters, contentType);
                 else
-                    request.SetContent(requestBodyEmptyContent, contentType);
+                    request.SetContent(string.Empty, contentType);
             }
 
             return request;
@@ -577,30 +487,20 @@ namespace BinanceAPI.ClientHosts
         /// <param name="contentType">The content type of the data</param>
         protected void WriteParamBody(Request request, Dictionary<string, object> parameters, string contentType)
         {
-            if (requestBodyFormat == RequestBodyFormat.Json)
+            var formData = HttpUtility.ParseQueryString(string.Empty);
+            foreach (var kvp in parameters.OrderBy(p => p.Key))
             {
-                // Write the parameters as json in the body
-                var stringData = JsonConvert.SerializeObject(parameters.OrderBy(p => p.Key).ToDictionary(p => p.Key, p => p.Value));
-                request.SetContent(stringData, contentType);
-            }
-            else if (requestBodyFormat == RequestBodyFormat.FormData)
-            {
-                // Write the parameters as form data in the body
-                var formData = HttpUtility.ParseQueryString(string.Empty);
-                foreach (var kvp in parameters.OrderBy(p => p.Key))
+                if (kvp.Value.GetType().IsArray)
                 {
-                    if (kvp.Value.GetType().IsArray)
-                    {
-                        var array = (Array)kvp.Value;
-                        foreach (var value in array)
-                            formData.Add(kvp.Key, value.ToString());
-                    }
-                    else
-                        formData.Add(kvp.Key, kvp.Value.ToString());
+                    var array = (Array)kvp.Value;
+                    foreach (var value in array)
+                        formData.Add(kvp.Key, value.ToString());
                 }
-                var stringData = formData.ToString();
-                request.SetContent(stringData, contentType);
+                else
+                    formData.Add(kvp.Key, kvp.Value.ToString());
             }
+            var stringData = formData.ToString();
+            request.SetContent(stringData, contentType);
         }
 
         /// <summary>
