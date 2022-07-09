@@ -24,6 +24,7 @@
 
 using BinanceAPI.Objects;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 
@@ -37,7 +38,7 @@ namespace BinanceAPI.Requests
         private HttpClient httpClient = new();
 
         /// <inheritdoc />
-        public void Configure(TimeSpan requestTimeout, ApiProxy? proxy, HttpClient? client = null)
+        public void Configure(TimeSpan requestTimeout, [AllowNull] ApiProxy proxy = null, [AllowNull] HttpClient client = null)
         {
             if (client == null)
             {

@@ -32,10 +32,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.5.0 Test
-// Uri Client WIP
-// Add Change API Endpoint to Base Client
-// Remove "BaseAddress" see "BaseClient.ChangeEndpoint"
+// 6.0.6.1 Test - [AllowNull]
 
 namespace API_Test
 {
@@ -45,9 +42,9 @@ namespace API_Test
         private const string clientLogs = @"C:\logClient.txt";
         private const string timeLogs = @"C:\timeClient.txt";
 
-        private static CancellationTokenSource serverTimeStartWaitToken = new CancellationTokenSource();
+        private static readonly CancellationTokenSource serverTimeStartWaitToken = new CancellationTokenSource();
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             Console.CursorVisible = false;
             Console.WindowWidth = (int)(Console.LargestWindowWidth / 2.5);

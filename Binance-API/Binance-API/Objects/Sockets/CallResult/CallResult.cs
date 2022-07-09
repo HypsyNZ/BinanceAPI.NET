@@ -22,6 +22,8 @@
 *SOFTWARE.
 */
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace BinanceAPI.Objects
 {
     /// <summary>
@@ -32,7 +34,8 @@ namespace BinanceAPI.Objects
         /// <summary>
         /// An error if the call didn't succeed, will always be filled if Success = false
         /// </summary>
-        public Error? Error { get; internal set; }
+        [AllowNull]
+        public Error Error { get; internal set; }
 
         /// <summary>
         /// Whether the call was successful
@@ -43,28 +46,9 @@ namespace BinanceAPI.Objects
         /// ctor
         /// </summary>
         /// <param name="error"></param>
-        public CallResult(Error? error)
+        public CallResult([AllowNull] Error error)
         {
             Error = error;
-        }
-
-        /// <summary>
-        /// Overwrite bool check so we can use if(callResult) instead of if(callResult.Success)
-        /// </summary>
-        /// <param name="obj"></param>
-        public static implicit operator bool(CallResult obj)
-        {
-            return obj?.Success == true;
-        }
-
-        /// <summary>
-        /// Create an error result
-        /// </summary>
-        /// <param name="error"></param>
-        /// <returns></returns>
-        public static WebCallResult CreateErrorResult(Error error)
-        {
-            return new WebCallResult(null, null, error);
         }
     }
 }

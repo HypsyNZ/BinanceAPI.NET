@@ -55,19 +55,12 @@ namespace BinanceAPI.Requests
         }
 
         /// <inheritdoc />
-        public string? Content { get; private set; }
+        public string Content { get; private set; }
 
         /// <inheritdoc />
         public string Accept
         {
             set => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(value));
-        }
-
-        /// <inheritdoc />
-        public HttpMethod Method
-        {
-            get => request.Method;
-            set => request.Method = value;
         }
 
         /// <inheritdoc />
@@ -93,12 +86,6 @@ namespace BinanceAPI.Requests
         public Dictionary<string, IEnumerable<string>> GetHeaders()
         {
             return request.Headers.ToDictionary(h => h.Key, h => h.Value);
-        }
-
-        /// <inheritdoc />
-        public void SetContent(byte[] data)
-        {
-            request.Content = new ByteArrayContent(data);
         }
 
         /// <inheritdoc />

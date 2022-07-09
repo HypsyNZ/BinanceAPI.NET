@@ -91,20 +91,6 @@
             <param name="arraySerialization">How array parameters are serialized</param>
             <returns>Should return a dictionary containing any header key/value pairs needed for authenticating the request</returns>
         </member>
-        <member name="M:BinanceAPI.Authentication.AuthenticationProvider.Sign(System.String)">
-            <summary>
-            Sign a string
-            </summary>
-            <param name="toSign"></param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Authentication.AuthenticationProvider.Sign(System.Byte[])">
-            <summary>
-            Sign a byte array
-            </summary>
-            <param name="toSign"></param>
-            <returns></returns>
-        </member>
         <member name="M:BinanceAPI.Authentication.AuthenticationProvider.ByteToString(System.Byte[])">
             <summary>
             Convert byte array to hex
@@ -225,54 +211,9 @@
             <para>Wraps the Underlying ClientWebSocket</para>
             </summary>
         </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnClose">
-            <summary>
-            Socket closed event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnConnect">
-            <summary>
-            Socket connect event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnError">
-            <summary>
-            Socket error event
-            </summary>
-        </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.OnOpen">
-            <summary>
-            Socket opened event
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientBase.BaseSocketClient.errorHandlers">
-            <summary>
-            Handlers for when an error happens on the socket
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientBase.BaseSocketClient.openHandlers">
-            <summary>
-            Handlers for when the socket connection is opened
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientBase.BaseSocketClient.closeHandlers">
-            <summary>
-            Handlers for when the connection is closed
-            </summary>
-        </member>
-        <member name="F:BinanceAPI.ClientBase.BaseSocketClient.connectHandlers">
-            <summary>
-            Handlers for when the the connecting is opening
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.ClientSocket">
-            <summary>
-            The Real Underlying Socket
-            </summary>
-        </member>
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.ConnectionRestored">
             <summary>
-            Connecting restored event
+            Connectiion restored event
             </summary>
         </member>
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.ConnectionStatusChanged">
@@ -283,6 +224,11 @@
         <member name="E:BinanceAPI.ClientBase.BaseSocketClient.UnhandledMessage">
             <summary>
             Unhandled message event
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.ClientSocket">
+            <summary>
+            The Real Underlying Socket
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.SocketConnectionStatus">
@@ -300,9 +246,9 @@
             Time of disconnecting
             </summary>
         </member>
-        <member name="E:BinanceAPI.ClientBase.BaseSocketClient.StatusChanged">
+        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.LastActionTime">
             <summary>
-            Occurs when the status of the socket changes
+            The timestamp this socket has been active for the last time
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.Id">
@@ -310,19 +256,9 @@
             The id of this socket
             </summary>
         </member>
-        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.LastActionTime">
-            <summary>
-            The timestamp this socket has been active for the last time
-            </summary>
-        </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.Url">
             <summary>
             Url this socket connects to
-            </summary>
-        </member>
-        <member name="P:BinanceAPI.ClientBase.BaseSocketClient.IsClosed">
-            <summary>
-            If the connection is closed
             </summary>
         </member>
         <member name="P:BinanceAPI.ClientBase.BaseSocketClient.IsClosing">
@@ -376,11 +312,6 @@
             <param name="obj">The object to send</param>
             <param name="nullValueHandling">How null values should be serialized</param>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.SocketOnOpen">
-            <summary>
-            Handler for a socket opening
-            </summary>
-        </member>
         <member name="M:BinanceAPI.ClientBase.BaseSocketClient.CloseAndDisposeSubscriptionAsync(BinanceAPI.Sockets.SocketSubscription)">
             <summary>
             Closes the subscription on this connection
@@ -424,7 +355,13 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.InternalResetAsync(System.Boolean)">
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.InternalConnectSocketAsync">
+            <summary>
+            Connect the Socket
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:BinanceAPI.ClientBase.BaseSocketClient.InternalResetSocketAsync(System.Boolean)">
             <summary>
             Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
             </summary>
@@ -2590,19 +2527,6 @@
             </summary>
             <param name="error"></param>
         </member>
-        <member name="M:BinanceAPI.Objects.CallResult.op_Implicit(BinanceAPI.Objects.CallResult)~System.Boolean">
-            <summary>
-            Overwrite bool check so we can use if(callResult) instead of if(callResult.Success)
-            </summary>
-            <param name="obj"></param>
-        </member>
-        <member name="M:BinanceAPI.Objects.CallResult.CreateErrorResult(BinanceAPI.Objects.Error)">
-            <summary>
-            Create an error result
-            </summary>
-            <param name="error"></param>
-            <returns></returns>
-        </member>
         <member name="T:BinanceAPI.Objects.CallResult`1">
             <summary>
             The result of an operation
@@ -2632,27 +2556,11 @@
             </summary>
             <param name="obj"></param>
         </member>
-        <member name="M:BinanceAPI.Objects.CallResult`1.GetResultOrError(`0@,BinanceAPI.Objects.Error@)">
-            <summary>
-            Whether the call was successful or not. Useful for nullability checking.
-            </summary>
-            <param name="data">The data returned by the call.</param>
-            <param name="error"><see cref="T:BinanceAPI.Objects.Error"/> on failure.</param>
-            <returns><c>true</c> when <see cref="T:BinanceAPI.Objects.CallResult`1"/> succeeded, <c>false</c> otherwise.</returns>
-        </member>
         <member name="M:BinanceAPI.Objects.CallResult`1.CreateErrorResult(BinanceAPI.Objects.Error)">
             <summary>
             Create an error result
             </summary>
             <param name="error"></param>
-            <returns></returns>
-        </member>
-        <member name="M:BinanceAPI.Objects.CallResult`1.As``1(``0)">
-            <summary>
-            Copy the WebCallResult to a new data type
-            </summary>
-            <typeparam name="K">The new type</typeparam>
-            <param name="data">The data of the new type</param>
             <returns></returns>
         </member>
         <member name="T:BinanceAPI.Objects.WebCallResult">
@@ -2670,7 +2578,7 @@
             The response headers
             </summary>
         </member>
-        <member name="M:BinanceAPI.Objects.WebCallResult.#ctor(System.Nullable{System.Net.HttpStatusCode},System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
+        <member name="M:BinanceAPI.Objects.WebCallResult.#ctor(System.Net.HttpStatusCode,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
             <summary>
             ctor
             </summary>
@@ -2678,7 +2586,7 @@
             <param name="responseHeaders">Response headers</param>
             <param name="error">Error</param>
         </member>
-        <member name="M:BinanceAPI.Objects.WebCallResult.CreateErrorResult(System.Nullable{System.Net.HttpStatusCode},System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
+        <member name="M:BinanceAPI.Objects.WebCallResult.CreateErrorResult(System.Net.HttpStatusCode,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
             <summary>
             Create an error result
             </summary>
@@ -2710,7 +2618,7 @@
             The response headers
             </summary>
         </member>
-        <member name="M:BinanceAPI.Objects.WebCallResult`1.#ctor(System.Nullable{System.Net.HttpStatusCode},System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},`0,BinanceAPI.Objects.Error)">
+        <member name="M:BinanceAPI.Objects.WebCallResult`1.#ctor(System.Net.HttpStatusCode,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},`0,BinanceAPI.Objects.Error)">
             <summary>
             ctor
             </summary>
@@ -2719,7 +2627,7 @@
             <param name="data"></param>
             <param name="error"></param>
         </member>
-        <member name="M:BinanceAPI.Objects.WebCallResult`1.#ctor(System.Nullable{System.Net.HttpStatusCode},System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},System.String,`0,BinanceAPI.Objects.Error)">
+        <member name="M:BinanceAPI.Objects.WebCallResult`1.#ctor(System.Net.HttpStatusCode,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},System.String,`0,BinanceAPI.Objects.Error)">
             <summary>
             ctor
             </summary>
@@ -2737,7 +2645,7 @@
             <param name="data">The data of the new type</param>
             <returns></returns>
         </member>
-        <member name="M:BinanceAPI.Objects.WebCallResult`1.CreateErrorResult(System.Nullable{System.Net.HttpStatusCode},System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
+        <member name="M:BinanceAPI.Objects.WebCallResult`1.CreateErrorResult(System.Net.HttpStatusCode,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Collections.Generic.IEnumerable{System.String}}},BinanceAPI.Objects.Error)">
             <summary>
             Create an error result
             </summary>
@@ -7198,9 +7106,6 @@
         <member name="P:BinanceAPI.Requests.Request.Accept">
             <inheritdoc />
         </member>
-        <member name="P:BinanceAPI.Requests.Request.Method">
-            <inheritdoc />
-        </member>
         <member name="P:BinanceAPI.Requests.Request.Uri">
             <inheritdoc />
         </member>
@@ -7214,9 +7119,6 @@
             <inheritdoc />
         </member>
         <member name="M:BinanceAPI.Requests.Request.GetHeaders">
-            <inheritdoc />
-        </member>
-        <member name="M:BinanceAPI.Requests.Request.SetContent(System.Byte[])">
             <inheritdoc />
         </member>
         <member name="M:BinanceAPI.Requests.Request.GetResponseAsync(System.Threading.CancellationToken)">

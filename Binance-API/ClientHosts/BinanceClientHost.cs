@@ -313,12 +313,12 @@ namespace BinanceAPI.ClientHosts
 #if DEBUG
             ClientLog?.Debug($"[{requestId}] Creating request for " + uri);
 #endif
-            if (signed && authProvider == null)
+            if (signed && _authProvider == null)
             {
 #if DEBUG
                 ClientLog?.Warning($"[{requestId}] Request {uri} failed because no ApiCredentials were provided");
 #endif
-                return new WebCallResult<T>(null, null, null, new NoApiCredentialsError());
+                return new WebCallResult<T>(default, null, null, new NoApiCredentialsError());
             }
 
             var paramsPosition = parameterPosition ?? ParameterPositions[method];
@@ -363,7 +363,7 @@ namespace BinanceAPI.ClientHosts
                     responseStream.Close();
                     response.Close();
 #if DEBUG
-                        return new WebCallResult<T>(statusCode, headers, Json.OutputOriginalData ? desResult.OriginalData : null, desResult.Data, desResult.Error);
+                    return new WebCallResult<T>(statusCode, headers, Json.OutputOriginalData ? desResult.OriginalData : null, desResult.Data, desResult.Error);
 #else
                     return new WebCallResult<T>(statusCode, headers, null, desResult.Data, desResult.Error);
 #endif
@@ -393,7 +393,7 @@ namespace BinanceAPI.ClientHosts
 
                 ClientLog?.Warning($"[{request.RequestId}] Request exception: " + exceptionInfo);
 
-                return new WebCallResult<T>(null, null, default, new WebError(exceptionInfo));
+                return new WebCallResult<T>(default, null, default, new WebError(exceptionInfo));
             }
             catch (OperationCanceledException canceledException)
             {
@@ -403,7 +403,7 @@ namespace BinanceAPI.ClientHosts
 
                     ClientLog?.Warning($"[{request.RequestId}] Request cancel requested");
 
-                    return new WebCallResult<T>(null, null, default, new CancellationRequestedError());
+                    return new WebCallResult<T>(default, null, default, new CancellationRequestedError());
                 }
                 else
                 {
@@ -411,13 +411,13 @@ namespace BinanceAPI.ClientHosts
 
                     ClientLog?.Warning($"[{request.RequestId}] Request timed out");
 
-                    return new WebCallResult<T>(null, null, default, new WebError($"[{request.RequestId}] Request timed out"));
+                    return new WebCallResult<T>(default, null, default, new WebError($"[{request.RequestId}] Request timed out"));
                 }
             }
 #else
             catch (HttpRequestException)
             {
-                return new WebCallResult<T>(null, null, default, null);
+                return new WebCallResult<T>(default, null, default, null);
             }
 #endif
         }
@@ -444,18 +444,19 @@ namespace BinanceAPI.ClientHosts
             int requestId,
             Dictionary<string, string>? additionalHeaders)
         {
-            if (authProvider != null)
-                parameters = authProvider.AddAuthenticationToParameters(uri, method, parameters, signed, parameterPosition, arraySerialization);
+            if (_authProvider != null)
+                parameters = _authProvider.AddAuthenticationToParameters(uri, method, parameters, signed, parameterPosition, arraySerialization);
 
             if (parameterPosition == HttpMethodParameterPosition.InUri && parameters.Any() == true)
                 uri += "?" + parameters.CreateParamString(true, arraySerialization);
 
-            var request = RequestFactory.Create(method, uri, requestId);
+            Request request = RequestFactory.Create(method, uri, requestId);
+
             request.Accept = Constants.JsonContentHeader;
 
             var headers = new Dictionary<string, string>();
-            if (authProvider != null)
-                headers = authProvider.AddAuthenticationToHeaders(uri, method, parameters, signed, parameterPosition, arraySerialization);
+            if (_authProvider != null)
+                headers = _authProvider.AddAuthenticationToHeaders(uri, method, parameters, signed, parameterPosition, arraySerialization);
 
             foreach (var header in headers)
                 request.AddHeader(header.Key, header.Value);

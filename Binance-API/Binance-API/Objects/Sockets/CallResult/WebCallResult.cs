@@ -23,6 +23,7 @@
 */
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace BinanceAPI.Objects
@@ -35,12 +36,14 @@ namespace BinanceAPI.Objects
         /// <summary>
         /// The status code of the response. Note that a OK status does not always indicate success, check the Success parameter for this.
         /// </summary>
-        public HttpStatusCode? ResponseStatusCode { get; set; }
+        [AllowNull]
+        public HttpStatusCode ResponseStatusCode { get; set; }
 
         /// <summary>
         /// The response headers
         /// </summary>
-        public IEnumerable<KeyValuePair<string, IEnumerable<string>>>? ResponseHeaders { get; set; }
+        [AllowNull]
+        public IEnumerable<KeyValuePair<string, IEnumerable<string>>> ResponseHeaders { get; set; }
 
         /// <summary>
         /// ctor
@@ -48,9 +51,7 @@ namespace BinanceAPI.Objects
         /// <param name="code">Status code</param>
         /// <param name="responseHeaders">Response headers</param>
         /// <param name="error">Error</param>
-        public WebCallResult(
-            HttpStatusCode? code,
-            IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders, Error? error) : base(error)
+        public WebCallResult(HttpStatusCode code, IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders, [AllowNull] Error error) : base(error)
         {
             ResponseHeaders = responseHeaders;
             ResponseStatusCode = code;
@@ -63,7 +64,7 @@ namespace BinanceAPI.Objects
         /// <param name="responseHeaders">Response headers</param>
         /// <param name="error">Error</param>
         /// <returns></returns>
-        public static WebCallResult CreateErrorResult(HttpStatusCode? code, IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders, Error error)
+        public static WebCallResult CreateErrorResult(HttpStatusCode code, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders, Error error)
         {
             return new WebCallResult(code, responseHeaders, error);
         }

@@ -24,6 +24,7 @@
 
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BinanceAPI.Sockets
 {
@@ -40,7 +41,8 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// The originally received string data
         /// </summary>
-        public string? OriginalData { get; set; }
+        [AllowNull]
+        public string OriginalData { get; set; }
 
         /// <summary>
         /// The timestamp of when the data was received
@@ -53,7 +55,7 @@ namespace BinanceAPI.Sockets
         /// <param name="jsonData"></param>
         /// <param name="originalData"></param>
         /// <param name="timestamp"></param>
-        public MessageEvent(JToken jsonData, string? originalData, DateTime timestamp)
+        public MessageEvent(JToken jsonData, [AllowNull] string originalData, DateTime timestamp)
         {
             JsonData = jsonData;
             OriginalData = originalData;

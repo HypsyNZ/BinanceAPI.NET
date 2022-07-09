@@ -23,6 +23,7 @@
 */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BinanceAPI.Sockets
 {
@@ -44,7 +45,8 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// Request object
         /// </summary>
-        public object? Request { get; set; }
+        [AllowNull]
+        public object Request { get; set; }
 
         /// <summary>
         /// Is user subscription or generic
@@ -56,7 +58,7 @@ namespace BinanceAPI.Sockets
         /// </summary>
         public bool Confirmed { get; set; }
 
-        private SocketSubscription(int id, object? request, bool userSubscription, Action<MessageEvent> dataHandler)
+        private SocketSubscription(int id, [AllowNull] object request, bool userSubscription, Action<MessageEvent> dataHandler)
         {
             Id = id;
             UserSubscription = userSubscription;

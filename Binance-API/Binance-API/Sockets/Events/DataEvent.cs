@@ -23,6 +23,7 @@
 */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BinanceAPI.Sockets
 {
@@ -40,12 +41,14 @@ namespace BinanceAPI.Sockets
         /// <summary>
         /// The topic of the update, what symbol/asset etc..
         /// </summary>
-        public string? Topic { get; set; }
+        [AllowNull]
+        public string Topic { get; set; }
 
         /// <summary>
         /// The original data that was received, only available when OutputOriginalData is set to true in the client options
         /// </summary>
-        public string? OriginalData { get; set; }
+        [AllowNull]
+        public string OriginalData { get; set; }
 
         /// <summary>
         /// The received data deserialized into an object
@@ -63,14 +66,14 @@ namespace BinanceAPI.Sockets
             Timestamp = timestamp;
         }
 
-        internal DataEvent(T data, string? topic, DateTime timestamp)
+        internal DataEvent(T data, [AllowNull] string topic, DateTime timestamp)
         {
             Data = data;
             Topic = topic;
             Timestamp = timestamp;
         }
 
-        internal DataEvent(T data, string? topic, string? originalData, DateTime timestamp)
+        internal DataEvent(T data, [AllowNull] string topic, [AllowNull] string originalData, DateTime timestamp)
         {
             Data = data;
             Topic = topic;
@@ -96,7 +99,7 @@ namespace BinanceAPI.Sockets
         /// <param name="data">The new data</param>
         /// <param name="topic">The new topic</param>
         /// <returns></returns>
-        public DataEvent<K> As<K>(K data, string? topic)
+        public DataEvent<K> As<K>(K data, [AllowNull] string topic)
         {
             return new DataEvent<K>(data, topic, OriginalData, Timestamp);
         }

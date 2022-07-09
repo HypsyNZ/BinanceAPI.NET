@@ -61,13 +61,13 @@ namespace BinanceAPI.OrderBook
         private readonly object bookLock = new();
 
         private OrderBookStatus status;
-        private UpdateSubscription? subscription;
+        private UpdateSubscription subscription;
         private readonly bool sequencesAreConsecutive;
         private readonly bool strictLevels;
         private readonly bool validateChecksum;
 
         private bool _stopProcessing;
-        private Task? _processTask;
+        private Task _processTask;
         private readonly AutoResetEvent _queueEvent;
         private readonly ConcurrentQueue<object> _processQueue;
 
@@ -119,17 +119,17 @@ namespace BinanceAPI.OrderBook
         /// <summary>
         /// Event when the state changes
         /// </summary>
-        public event Action<OrderBookStatus, OrderBookStatus>? OnStatusChange;
+        public event Action<OrderBookStatus, OrderBookStatus> OnStatusChange;
 
         /// <summary>
         /// Event when the BestBid or BestAsk changes ie a Pricing Tick
         /// </summary>
-        public event Action<(ISymbolOrderBookEntry BestBid, ISymbolOrderBookEntry BestAsk)>? OnBestOffersChanged;
+        public event Action<(ISymbolOrderBookEntry BestBid, ISymbolOrderBookEntry BestAsk)> OnBestOffersChanged;
 
         /// <summary>
         /// Event when order book was updated, containing the changed bids and asks. Be careful! It can generate a lot of events at high-liquidity markets
         /// </summary>
-        public event Action<(IEnumerable<ISymbolOrderBookEntry> Bids, IEnumerable<ISymbolOrderBookEntry> Asks)>? OnOrderBookUpdate;
+        public event Action<(IEnumerable<ISymbolOrderBookEntry> Bids, IEnumerable<ISymbolOrderBookEntry> Asks)> OnOrderBookUpdate;
 
         /// <summary>
         /// Timestamp of the last update

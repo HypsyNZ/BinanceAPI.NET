@@ -37,12 +37,13 @@ namespace BinanceAPI.Objects
         /// <summary>
         /// The status code of the response. Note that a OK status does not always indicate success, check the Success parameter for this.
         /// </summary>
-        public HttpStatusCode? ResponseStatusCode { get; set; }
+        public HttpStatusCode ResponseStatusCode { get; set; }
 
         /// <summary>
         /// The response headers
         /// </summary>
-        public IEnumerable<KeyValuePair<string, IEnumerable<string>>>? ResponseHeaders { get; set; }
+        [AllowNull]
+        public IEnumerable<KeyValuePair<string, IEnumerable<string>>> ResponseHeaders { get; set; }
 
         /// <summary>
         /// ctor
@@ -51,11 +52,7 @@ namespace BinanceAPI.Objects
         /// <param name="responseHeaders"></param>
         /// <param name="data"></param>
         /// <param name="error"></param>
-        public WebCallResult(
-            HttpStatusCode? code,
-            IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders,
-            [AllowNull] T data,
-            Error? error) : base(data, error)
+        public WebCallResult(HttpStatusCode code, [AllowNull] IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders, [AllowNull] T data, [AllowNull] Error error) : base(data, error)
         {
             ResponseStatusCode = code;
             ResponseHeaders = responseHeaders;
@@ -69,12 +66,7 @@ namespace BinanceAPI.Objects
         /// <param name="responseHeaders"></param>
         /// <param name="data"></param>
         /// <param name="error"></param>
-        public WebCallResult(
-            HttpStatusCode? code,
-            IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders,
-            string? originalData,
-            [AllowNull] T data,
-            Error? error) : base(data, error)
+        public WebCallResult(HttpStatusCode code, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders, [AllowNull] string originalData, [AllowNull] T data, Error error) : base(data, error)
         {
             OriginalData = originalData;
             ResponseStatusCode = code;
@@ -87,7 +79,7 @@ namespace BinanceAPI.Objects
         /// <typeparam name="K">The new type</typeparam>
         /// <param name="data">The data of the new type</param>
         /// <returns></returns>
-        public new WebCallResult<K> As<K>([AllowNull] K data)
+        public WebCallResult<K> As<K>([AllowNull] K data)
         {
             return new WebCallResult<K>(ResponseStatusCode, ResponseHeaders, OriginalData, data, Error);
         }
@@ -99,7 +91,7 @@ namespace BinanceAPI.Objects
         /// <param name="responseHeaders"></param>
         /// <param name="error"></param>
         /// <returns></returns>
-        public static WebCallResult<T> CreateErrorResult(HttpStatusCode? code, IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders, Error error)
+        public static WebCallResult<T> CreateErrorResult(HttpStatusCode code, IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders, Error error)
         {
             return new WebCallResult<T>(code, responseHeaders, default, error);
         }

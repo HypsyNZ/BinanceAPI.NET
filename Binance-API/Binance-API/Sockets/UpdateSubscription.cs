@@ -104,7 +104,7 @@ namespace BinanceAPI.Sockets
             if (DateTime.UtcNow > (_lastConnectAttempt + TimeSpan.FromSeconds(5)))
             {
                 _lastConnectAttempt = DateTime.UtcNow;
-                await Connection.InternalResetAsync().ConfigureAwait(false);
+                await Connection.InternalResetSocketAsync().ConfigureAwait(false);
             }
             else
             {

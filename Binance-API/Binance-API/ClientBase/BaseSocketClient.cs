@@ -31,6 +31,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -50,62 +51,21 @@ namespace BinanceAPI.ClientBase
     public class BaseSocketClient
     {
         /// <summary>
-        /// Socket closed event
+        /// Connectiion restored event
         /// </summary>
-        public event Action OnClose
-        {
-            add => closeHandlers.Add(value);
-            remove => closeHandlers.Remove(value);
-        }
+        public event Action<TimeSpan> ConnectionRestored;
 
         /// <summary>
-        /// Socket connect event
+        /// Occurs when the status of the socket changes
         /// </summary>
-        public event Action OnConnect
-        {
-            add => connectHandlers.Add(value);
-            remove => connectHandlers.Remove(value);
-        }
+        public event Action<ConnectionStatus> ConnectionStatusChanged;
 
         /// <summary>
-        /// Socket error event
+        /// Unhandled message event
         /// </summary>
-        public event Action<Exception> OnError
-        {
-            add => errorHandlers.Add(value);
-            remove => errorHandlers.Remove(value);
-        }
+        public event Action<JToken> UnhandledMessage;
 
-        /// <summary>
-        /// Socket opened event
-        /// </summary>
-        public event Action OnOpen
-        {
-            add => openHandlers.Add(value);
-            remove => openHandlers.Remove(value);
-        }
-
-        /// <summary>
-        /// Handlers for when an error happens on the socket
-        /// </summary>
-        protected readonly List<Action<Exception>> errorHandlers = new();
-
-        /// <summary>
-        /// Handlers for when the socket connection is opened
-        /// </summary>
-        protected readonly List<Action> openHandlers = new();
-
-        /// <summary>
-        /// Handlers for when the connection is closed
-        /// </summary>
-        protected readonly List<Action> closeHandlers = new();
-
-        /// <summary>
-        /// Handlers for when the the connecting is opening
-        /// </summary>
-        protected readonly List<Action> connectHandlers = new();
-
-        private SocketSubscription? Subscription;
+        private SocketSubscription Subscription;
         private readonly object subscriptionLock = new();
         private readonly SocketClientHost socketClient;
         private readonly List<PendingRequest> pendingRequests;
@@ -122,8 +82,12 @@ namespace BinanceAPI.ClientBase
         private AsyncResetEvent _sendEvent;
         private ConcurrentQueue<byte[]> _sendBuffer;
 
-        private volatile MemoryStream? memoryStream = null;
-        private volatile WebSocketReceiveResult? receiveResult = null;
+        [AllowNull]
+        private volatile MemoryStream memoryStream = null;
+
+        [AllowNull]
+        private volatile WebSocketReceiveResult receiveResult = null;
+
         private volatile bool multiPartMessage = false;
         private ArraySegment<byte> buffer = new();
 
@@ -131,21 +95,6 @@ namespace BinanceAPI.ClientBase
         /// The Real Underlying Socket
         /// </summary>
         public ClientWebSocket ClientSocket { get; protected set; }
-
-        /// <summary>
-        /// Connecting restored event
-        /// </summary>
-        public event Action<TimeSpan>? ConnectionRestored;
-
-        /// <summary>
-        /// Occurs when the status of the socket changes
-        /// </summary>
-        public event Action<ConnectionStatus>? ConnectionStatusChanged;
-
-        /// <summary>
-        /// Unhandled message event
-        /// </summary>
-        public event Action<JToken>? UnhandledMessage;
 
         /// <summary>
         /// The Current Status of the Socket Connection
@@ -163,9 +112,9 @@ namespace BinanceAPI.ClientBase
         public DateTime? DisconnectTime { get; set; }
 
         /// <summary>
-        /// Occurs when the status of the socket changes
+        /// The timestamp this socket has been active for the last time
         /// </summary>
-        public event Action<ConnectionStatus>? StatusChanged;
+        public DateTime LastActionTime { get; internal set; }
 
         /// <summary>
         /// The id of this socket
@@ -173,19 +122,9 @@ namespace BinanceAPI.ClientBase
         public int Id { get; internal set; }
 
         /// <summary>
-        /// The timestamp this socket has been active for the last time
-        /// </summary>
-        public DateTime LastActionTime { get; internal set; }
-
-        /// <summary>
         /// Url this socket connects to
         /// </summary>
         public string Url { get; internal set; }
-
-        /// <summary>
-        /// If the connection is closed
-        /// </summary>
-        public bool IsClosed => ClientSocket.State == WebSocketState.Closed;
 
         /// <summary>
         /// If the connection is closing
@@ -215,7 +154,7 @@ namespace BinanceAPI.ClientBase
         /// <param name="url">The url the socket should connect to</param>
         /// <param name="client"></param>
         /// <param name="proxy"></param>
-        internal BaseSocketClient(string url, SocketClientHost client, ApiProxy? proxy = null)
+        internal BaseSocketClient(string url, SocketClientHost client, [AllowNull] ApiProxy proxy = null)
         {
             Id = NextStreamId();
             Url = url;
@@ -232,11 +171,6 @@ namespace BinanceAPI.ClientBase
             pendingRequests = new List<PendingRequest>();
 
             DisconnectTime = DateTime.UtcNow;
-
-            StatusChanged += SocketOnStatusChanged;
-            OnConnect += SocketOnConnect;
-            OnClose += SocketOnClose;
-            OnOpen += SocketOnOpen;
         }
 
         /// <summary>
@@ -296,57 +230,6 @@ namespace BinanceAPI.ClientBase
             else
             {
                 Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
-            }
-        }
-
-        /// <summary>
-        /// Handler for a socket opening
-        /// </summary>
-        private void SocketOnOpen()
-        {
-            SocketOnStatusChanged(ConnectionStatus.Connected);
-            SocketLog?.Debug($"Socket {Id} connected to {Url}");
-        }
-
-        private void SocketOnConnect()
-        {
-            _ = Task.Run(async () =>
-            {
-                await ConnectionAttemptLoop(true).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-        }
-
-        private void SocketOnClose()
-        {
-            lock (pendingRequests)
-            {
-                foreach (var pendingRequest in pendingRequests.ToList())
-                {
-                    pendingRequest.Fail();
-                    pendingRequests.Remove(pendingRequest);
-                }
-            }
-
-            if (ShouldAttemptConnection)
-            {
-                if (SocketConnectionStatus == ConnectionStatus.Connecting)
-                {
-                    return; // Already reconnecting
-                }
-
-                DisconnectTime = DateTime.UtcNow;
-                SocketOnStatusChanged(ConnectionStatus.Lost);
-                SocketLog?.Info($"Socket {Id} Connection lost, will try to reconnect after 2000ms");
-
-                _ = Task.Run(async () =>
-                {
-                    await ConnectionAttemptLoop().ConfigureAwait(false);
-                }).ConfigureAwait(false);
-            }
-            else
-            {
-                SocketOnStatusChanged(ConnectionStatus.Closed);
-                DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -666,7 +549,8 @@ namespace BinanceAPI.ClientBase
 #if DEBUG
                 Logging.SocketLog?.Debug($"Socket {Id} connected..");
 #endif
-                Handle(openHandlers);
+                SocketOnStatusChanged(ConnectionStatus.Connected);
+                SocketLog?.Debug($"Socket {Id} connected to {Url}");
                 return true;
             }
             catch
@@ -677,7 +561,7 @@ namespace BinanceAPI.ClientBase
 #if DEBUG
                 Logging.SocketLog?.Debug($"Socket {Id} connection failed: " + e.ToLogString());
 #endif
-                StatusChanged?.Invoke(ConnectionStatus.Error);
+                SocketOnStatusChanged(ConnectionStatus.Error);
                 return false;
             }
         }
@@ -736,7 +620,7 @@ namespace BinanceAPI.ClientBase
             }
             finally
             {
-                await InternalResetAsync().ConfigureAwait(false);
+                await InternalResetSocketAsync().ConfigureAwait(false);
             }
         }
 
@@ -768,7 +652,7 @@ namespace BinanceAPI.ClientBase
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
                         Logging.SocketLog?.Debug($"Socket {Id} received `Close` message..");
-                        await InternalResetAsync().ConfigureAwait(false);
+                        await InternalResetSocketAsync().ConfigureAwait(false);
                         return;
                     }
 
@@ -803,7 +687,7 @@ namespace BinanceAPI.ClientBase
             }
             catch
             {
-                await InternalResetAsync().ConfigureAwait(false);
+                await InternalResetSocketAsync().ConfigureAwait(false);
             }
         }
 
@@ -826,12 +710,32 @@ namespace BinanceAPI.ClientBase
         }
 
         /// <summary>
+        /// Connect the Socket
+        /// </summary>
+        /// <returns></returns>
+        internal async Task InternalConnectSocketAsync()
+        {
+            if (SocketConnectionStatus == ConnectionStatus.Connecting || SocketConnectionStatus == ConnectionStatus.Waiting || _resetting)
+            {
+                return;
+            }
+
+            _resetting = true;
+
+            Logging.SocketLog?.Debug($"Connecting Socket {Id}..");
+            _ = Task.Run(async () =>
+            {
+                await ConnectionAttemptLoop(true).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Internal reset method, Will prepare the socket to be reset so it can be automatically reconnected or closed permanantly
         /// </summary>
         /// <returns></returns>
-        public async Task InternalResetAsync(bool connectAttempt = false)
+        public async Task InternalResetSocketAsync(bool connectAttempt = false)
         {
-            if (_resetting)
+            if (SocketConnectionStatus == ConnectionStatus.Connecting || SocketConnectionStatus == ConnectionStatus.Waiting || _resetting)
             {
                 return;
             }
@@ -839,26 +743,49 @@ namespace BinanceAPI.ClientBase
             _resetting = true;
             _sendEvent.Set();
 
-            if (connectAttempt)
+            if (ClientSocket.State == WebSocketState.Open)
             {
-                Logging.SocketLog?.Debug($"Connecting Socket {Id}..");
-                Handle(connectHandlers);
+                await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, default).ConfigureAwait(false);
+                Logging.SocketLog?.Debug($"Socket {Id} has closed..");
             }
             else
             {
-                if (ClientSocket.State == WebSocketState.Open)
+                Logging.SocketLog?.Debug($"Socket {Id} was already closed..");
+            }
+
+            SocketOnStatusChanged(ConnectionStatus.Disconnected);
+
+            lock (pendingRequests)
+            {
+                foreach (var pendingRequest in pendingRequests.ToList())
                 {
-                    await ClientSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, default).ConfigureAwait(false);
-                    Logging.SocketLog?.Debug($"Socket {Id} has closed..");
+                    pendingRequest.Fail();
+                    pendingRequests.Remove(pendingRequest);
                 }
-                else
+            }
+
+            if (ShouldAttemptConnection)
+            {
+                if (SocketConnectionStatus == ConnectionStatus.Connecting || SocketConnectionStatus == ConnectionStatus.Waiting)
                 {
-                    Logging.SocketLog?.Debug($"Socket {Id} was already closed..");
+                    return; // Already reconnecting
                 }
 
-                StatusChanged?.Invoke(ConnectionStatus.Disconnected);
-                Handle(closeHandlers);
+                DisconnectTime = DateTime.UtcNow;
+                SocketOnStatusChanged(ConnectionStatus.Lost);
+                SocketLog?.Info($"Socket {Id} Connection lost, will try to reconnect after 2000ms");
+
+                _ = Task.Run(async () =>
+                {
+                    await ConnectionAttemptLoop().ConfigureAwait(false);
+                }).ConfigureAwait(false);
             }
+            else
+            {
+                SocketOnStatusChanged(ConnectionStatus.Closed);
+                await DisposeAsync().ConfigureAwait(false);
+            }
+
         }
 
         /// <summary>
@@ -869,7 +796,7 @@ namespace BinanceAPI.ClientBase
             SocketLog?.Info($"Socket {Id} closed");
             ShouldAttemptConnection = false;
 
-            await InternalResetAsync().ConfigureAwait(false);
+            await InternalResetSocketAsync().ConfigureAwait(false);
 
             if (socketClient.AllSockets.ContainsKey(Id))
             {
@@ -879,10 +806,6 @@ namespace BinanceAPI.ClientBase
             DisconnectTime = DateTime.UtcNow;
 
             ClientSocket.Dispose();
-            errorHandlers.Clear();
-            openHandlers.Clear();
-            closeHandlers.Clear();
-
 #if DEBUG
             Logging.SocketLog?.Trace($"Socket {Id} disposed..");
 #endif

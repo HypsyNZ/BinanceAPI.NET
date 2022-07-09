@@ -22,6 +22,8 @@
 *SOFTWARE.
 */
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace BinanceAPI.Requests
 {
     /// <summary>
@@ -37,7 +39,7 @@ namespace BinanceAPI.Requests
         /// <param name="apiVersion">API Version</param>
         /// <param name="endpointVersion">API Endpoint Version</param>
         /// <returns></returns>
-        internal static string Combine(string endpoint, string apiVersion, string? endpointVersion = null)
+        internal static string Combine(string endpoint, string apiVersion, [AllowNull] string endpointVersion = null)
         {
             var result = $"{apiVersion}/";
 

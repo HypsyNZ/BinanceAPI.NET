@@ -1,5 +1,6 @@
 ﻿using BinanceAPI.ClientBase;
 using BinanceAPI.Objects;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BinanceAPI.Options
 {
@@ -16,7 +17,8 @@ namespace BinanceAPI.Options
         /// <summary>
         /// Proxy to use
         /// </summary>
-        public ApiProxy? Proxy { get; set; }
+        [AllowNull]
+        public ApiProxy Proxy { get; set; }
 
         /// <inheritdoc />
         public override string ToString()

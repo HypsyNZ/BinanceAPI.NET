@@ -26,6 +26,7 @@ using BinanceAPI.Authentication;
 using BinanceAPI.Objects;
 using BinanceAPI.Options;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security;
 using static BinanceAPI.Logging;
 
@@ -36,12 +37,13 @@ namespace BinanceAPI.ClientBase
     /// </summary>
     public abstract class BaseClient : IDisposable
     {
-        private static ApiEndpoint _changeEndpoint = ApiEndpoint.ONE;
         private static int lastId;
         private static object idLock = new();
+        private static ApiEndpoint _changeEndpoint = ApiEndpoint.ONE;
+        protected private static AuthenticationProvider _authProvider;
 
-        protected private static AuthenticationProvider? authProvider;
-        protected private ApiProxy? ApiProxy;
+        [AllowNull]
+        protected private ApiProxy ApiProxy;
 
         /// <summary>
         /// Has the the Authentication Provider been set
@@ -85,7 +87,7 @@ namespace BinanceAPI.ClientBase
 #if DEBUG
             ClientLog?.Info("Converting strings to Secure Strings and Setting API Credentials");
 #endif
-            authProvider = new AuthenticationProvider(new ApiCredentials(apiKey, apiSecret));
+            _authProvider = new AuthenticationProvider(new ApiCredentials(apiKey, apiSecret));
             IsAuthenticationSet = true;
         }
 
@@ -99,7 +101,7 @@ namespace BinanceAPI.ClientBase
 #if DEBUG
             ClientLog?.Info("Setting API Credentials using Secure Strings");
 #endif
-            authProvider = new AuthenticationProvider(new ApiCredentials(apiKey, apiSecret));
+            _authProvider = new AuthenticationProvider(new ApiCredentials(apiKey, apiSecret));
             IsAuthenticationSet = true;
         }
 
@@ -121,7 +123,7 @@ namespace BinanceAPI.ClientBase
         /// </summary>
         public virtual void Dispose()
         {
-            authProvider?.Dispose();
+            _authProvider?.Dispose();
 #if DEBUG
             ClientLog?.Info("Disposing exchange client");
 #endif

@@ -35,12 +35,12 @@ namespace BinanceAPI.Authentication
         /// <summary>
         /// The api key to authenticate requests
         /// </summary>
-        public SecureString? Key { get; }
+        public SecureString Key { get; }
 
         /// <summary>
         /// The api secret to authenticate requests
         /// </summary>
-        public SecureString? Secret { get; }
+        public SecureString Secret { get; }
 
         /// <summary>
         /// Create Api credentials providing an api key and secret for authentication
@@ -78,8 +78,8 @@ namespace BinanceAPI.Authentication
         /// </summary>
         public void Dispose()
         {
-            Key?.Dispose();
-            Secret?.Dispose();
+            Key.Dispose();
+            Secret.Dispose();
         }
     }
 }

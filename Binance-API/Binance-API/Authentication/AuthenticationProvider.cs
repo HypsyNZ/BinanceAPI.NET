@@ -44,7 +44,7 @@ namespace BinanceAPI.Authentication
         /// <summary>
         /// The provided credentials
         /// </summary>
-        protected private static ApiCredentials? Credentials { get; set; }
+        protected private static ApiCredentials Credentials { get; private set; }
 
         /// <summary>
         /// ctor
@@ -119,26 +119,6 @@ namespace BinanceAPI.Authentication
                 throw new ArgumentException("No valid API credentials provided. Key/Secret needed.");
 
             return new Dictionary<string, string> { { "X-MBX-APIKEY", Credentials.Key.GetString() } };
-        }
-
-        /// <summary>
-        /// Sign a string
-        /// </summary>
-        /// <param name="toSign"></param>
-        /// <returns></returns>
-        public virtual string Sign(string toSign)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Sign a byte array
-        /// </summary>
-        /// <param name="toSign"></param>
-        /// <returns></returns>
-        public virtual byte[] Sign(byte[] toSign)
-        {
-            return toSign;
         }
 
         /// <summary>

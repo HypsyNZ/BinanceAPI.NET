@@ -313,8 +313,7 @@ namespace BinanceAPI
                 if (ignore != null)
                     continue;
 
-                var propertyName = ((JsonPropertyAttribute?)attr)?.PropertyName;
-                properties.Add(propertyName ?? prop.Name);
+                properties.Add(((JsonPropertyAttribute)attr).PropertyName ?? prop.Name);
             }
             foreach (var token in obj)
             {

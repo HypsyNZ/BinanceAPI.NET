@@ -31,10 +31,7 @@ namespace System.Diagnostics.CodeAnalysis
     ///     Specifies that <see langword="null"/> is allowed as an input even if the
     ///     corresponding type disallows it.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property,
-        Inherited = false
-    )]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property, Inherited = false)]
     [ExcludeFromCodeCoverage]
     internal sealed class AllowNullAttribute : Attribute
     {
@@ -49,10 +46,7 @@ namespace System.Diagnostics.CodeAnalysis
     ///     Specifies that <see langword="null"/> is disallowed as an input even if the
     ///     corresponding type allows it.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property,
-        Inherited = false
-    )]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property, Inherited = false)]
     [ExcludeFromCodeCoverage]
     internal sealed class DisallowNullAttribute : Attribute
     {
@@ -111,11 +105,7 @@ namespace System.Diagnostics.CodeAnalysis
     ///     Specifies that an output may be <see langword="null"/> even if the
     ///     corresponding type disallows it.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter |
-        AttributeTargets.Property | AttributeTargets.ReturnValue,
-        Inherited = false
-    )]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
     [ExcludeFromCodeCoverage]
     internal sealed class MaybeNullAttribute : Attribute
     {
@@ -157,11 +147,7 @@ namespace System.Diagnostics.CodeAnalysis
     ///     Specifies that an output is not <see langword="null"/> even if the
     ///     corresponding type allows it.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Field | AttributeTargets.Parameter |
-        AttributeTargets.Property | AttributeTargets.ReturnValue,
-        Inherited = false
-    )]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
     [ExcludeFromCodeCoverage]
     internal sealed class NotNullAttribute : Attribute
     {
@@ -176,11 +162,7 @@ namespace System.Diagnostics.CodeAnalysis
     ///     Specifies that the output will be non-<see langword="null"/> if the
     ///     named parameter is non-<see langword="null"/>.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue,
-        AllowMultiple = true,
-        Inherited = false
-    )]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, AllowMultiple = true, Inherited = false)]
     [ExcludeFromCodeCoverage]
     internal sealed class NotNullIfNotNullAttribute : Attribute
     {
