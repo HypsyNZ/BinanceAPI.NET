@@ -1,3 +1,13 @@
+### Version 6.0.6.1
+
+- [x] `[AllowNull]` Attribute instead of `Nullable`
+- [x] Remove `OnOpen` Event (Obselete use `ConnectionStatusChanged`)
+- [x] Remove `OnClose` Event (Obselete use `ConnectionStatusChanged`)
+- [x] Remove `OnConnect` Event (Obselete use `ConnectionStatusChanged`)
+- [x] Remove `OnError` Event
+- [x] Remove Handlers for Events
+- [x] Fix a bug that could cause a socket to fail to reconnect.
+
 ### Version 6.0.6.0
 - [x] Improve `Websocket` message processing speed
 - [x] Add Connection Status: `Waiting` to indicate when a socket is waiting to reconnect
