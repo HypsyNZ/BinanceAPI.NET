@@ -114,7 +114,7 @@ namespace BinanceAPI.SubClients
 
             var parameters = new Dictionary<string, object>
             {
-                { "type", JsonConvert.SerializeObject(accountType, new AccountTypeConverter(false)) },
+                { "type", EnumConverter.GetString(accountType) },
             };
             parameters.AddOptionalParameter("limit", limit?.ToString(CultureInfo.InvariantCulture));
             parameters.AddOptionalParameter("startTime", startTime.HasValue ? JsonConvert.SerializeObject(startTime.Value.Ticks, new TimestampConverter()) : null);

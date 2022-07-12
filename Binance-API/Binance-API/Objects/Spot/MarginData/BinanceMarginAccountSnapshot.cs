@@ -45,7 +45,7 @@ namespace BinanceAPI.Objects.Spot.MarginData
         /// <summary>
         /// Account type the data is for
         /// </summary>
-        [JsonConverter(typeof(AccountTypeConverter))]
+        [JsonConverter(typeof(EnumConverter))]
         public AccountType Type { get; set; }
 
         /// <summary>

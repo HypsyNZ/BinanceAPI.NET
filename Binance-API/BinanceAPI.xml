@@ -14,6 +14,22 @@
             Marks property as optional
             </summary>
         </member>
+        <member name="T:BinanceAPI.Attributes.MapAttribute">
+            <summary>
+            Map a enum entry to string values
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Attributes.MapAttribute.Values">
+            <summary>
+            Values mapping to the enum entry
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.Attributes.MapAttribute.#ctor(System.String[])">
+            <summary>
+            ctor
+            </summary>
+            <param name="maps"></param>
+        </member>
         <member name="T:BinanceAPI.Authentication.ApiCredentials">
             <summary>
             Api credentials info
@@ -442,6 +458,28 @@
         <member name="M:BinanceAPI.Converters.BaseConverter`1.CanConvert(System.Type)">
             <inheritdoc />
         </member>
+        <member name="T:BinanceAPI.Converters.EnumConverter">
+            <summary>
+            Converter for enum values. Enums entries should be noted with a MapAttribute to map the enum value to a string value
+            </summary>
+        </member>
+        <member name="M:BinanceAPI.Converters.EnumConverter.CanConvert(System.Type)">
+            <inheritdoc />
+        </member>
+        <member name="M:BinanceAPI.Converters.EnumConverter.ReadJson(Newtonsoft.Json.JsonReader,System.Type,System.Object,Newtonsoft.Json.JsonSerializer)">
+            <inheritdoc />
+        </member>
+        <member name="M:BinanceAPI.Converters.EnumConverter.GetString``1(``0)">
+            <summary>
+            Get the string value for an enum value using the MapAttribute mapping. When multiple values are mapped for a enum entry the first value will be returned
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="enumValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:BinanceAPI.Converters.EnumConverter.WriteJson(Newtonsoft.Json.JsonWriter,System.Object,Newtonsoft.Json.JsonSerializer)">
+            <inheritdoc />
+        </member>
         <member name="T:BinanceAPI.Converters.TimestampConverter">
             <summary>
             converter for milliseconds to datetime
@@ -481,17 +519,17 @@
             Leveraged account type
             </summary>
         </member>
-        <member name="F:BinanceAPI.Enums.AccountType.TRD_GRP_002">
+        <member name="F:BinanceAPI.Enums.AccountType.TradeGroup002">
             <summary>
             See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
             </summary>
         </member>
-        <member name="F:BinanceAPI.Enums.AccountType.TRD_GRP_003">
+        <member name="F:BinanceAPI.Enums.AccountType.TradeGroup003">
             <summary>
             See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
             </summary>
         </member>
-        <member name="F:BinanceAPI.Enums.AccountType.TRD_GRP_004">
+        <member name="F:BinanceAPI.Enums.AccountType.TradeGroup004">
             <summary>
             See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
             </summary>

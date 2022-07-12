@@ -87,7 +87,7 @@ namespace BinanceAPI.Objects.Spot.UserStream
         /// <summary>
         /// Permissions types
         /// </summary>
-        [JsonProperty("P", ItemConverterType = typeof(AccountTypeConverter))]
+        [JsonProperty("P", ItemConverterType = typeof(EnumConverter))]
         public IEnumerable<AccountType> Permissions { get; set; } = Array.Empty<AccountType>();
 
         /// <summary>

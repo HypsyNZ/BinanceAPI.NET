@@ -42,6 +42,13 @@ namespace API_Test
                 {
                     Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
                     Console.WriteLine("Rate: " + result.Data.RateLimits.First().Interval.ToString() + " | Limit: " + result.Data.RateLimits.First().Limit.ToString());
+
+                    var r = result.Data.Symbols.Where(t => t.Permissions != null).FirstOrDefault();
+                    Console.WriteLine(r.Name);
+                    foreach (var p in r.Permissions)
+                    {
+                        Console.WriteLine(p);
+                    }
                 }
             }).ConfigureAwait(false);
         }
