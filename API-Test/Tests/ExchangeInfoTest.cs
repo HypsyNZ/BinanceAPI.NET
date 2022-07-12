@@ -41,6 +41,7 @@ namespace API_Test
                 if (result.Success)
                 {
                     Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
+                    Console.WriteLine("Rate: " + result.Data.RateLimits.First().Interval.ToString() + " | Limit: " + result.Data.RateLimits.First().Limit.ToString());
                 }
             }).ConfigureAwait(false);
         }

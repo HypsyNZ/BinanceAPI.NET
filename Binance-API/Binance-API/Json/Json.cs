@@ -55,7 +55,7 @@ namespace BinanceAPI
             DefaultSerializer = JsonSerializer.Create(new JsonSerializerSettings
             {
                 DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-                Culture = CultureInfo.InvariantCulture
+                Culture = CultureInfo.InvariantCulture              
             });
         }
 
@@ -106,22 +106,6 @@ namespace BinanceAPI
         {
             try
             {
-#if DEBUG
-                if ((checkObject ?? ShouldCheckObjects) && ClientLog?.LogLevel <= LogLevel.Debug)
-                {
-                    // This checks the input JToken object against the class it is being serialized into and outputs any missing fields
-                    // in either the input or the class
-                    if (obj is JObject o)
-                    {
-                        CheckObject(typeof(T), o, requestId);
-                    }
-                    else if (obj is JArray j)
-                    {
-                        if (j.HasValues && j[0] is JObject jObject)
-                            CheckObject(typeof(T).GetElementType(), jObject, requestId);
-                    }
-                }
-#endif
                 return new CallResult<T>(obj.ToObject<T>(DefaultSerializer), null);
             }
 #if DEBUG
@@ -258,123 +242,6 @@ namespace BinanceAPI
         /// (Global) If true, the CallResult and DataEvent objects should also contain the originally received json data in the OriginalDaa property
         /// </summary>
         public static bool OutputOriginalData { get; set; }
-
-        /// <summary>
-        /// (Global) Should check objects for missing properties based on the model and the received JSON
-        /// </summary>
-        public static bool ShouldCheckObjects { get; set; }
-
-        private static PropertyInfo? GetProperty(string name, IEnumerable<PropertyInfo> props)
-        {
-            foreach (var prop in props)
-            {
-                var attr = prop.GetCustomAttributes(typeof(JsonPropertyAttribute), false).FirstOrDefault();
-                if (attr == null)
-                {
-                    if (string.Equals(prop.Name, name, StringComparison.CurrentCultureIgnoreCase))
-                        return prop;
-                }
-                else
-                {
-                    if (((JsonPropertyAttribute)attr).PropertyName == name)
-                        return prop;
-                }
-            }
-            return null;
-        }
-
-        private static void CheckObject(Type type, JObject obj, int? requestId = null)
-        {
-            if (type == null)
-                return;
-
-            if (type.GetCustomAttribute<JsonConverterAttribute>(true) != null)
-                // If type has a custom JsonConverter we assume this will handle property mapping
-                return;
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-                return;
-
-            if (!obj.HasValues && type != typeof(object))
-            {
-                ClientLog?.Warning($"{(requestId != null ? $"[{requestId}] " : "")}Expected `{type.Name}`, but received object was empty");
-
-                return;
-            }
-
-            var isDif = false;
-
-            var properties = new List<string>();
-            var props = type.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-            foreach (var prop in props)
-            {
-                var attr = prop.GetCustomAttributes(typeof(JsonPropertyAttribute), false).FirstOrDefault();
-                var ignore = prop.GetCustomAttributes(typeof(JsonIgnoreAttribute), false).FirstOrDefault();
-                if (ignore != null)
-                    continue;
-
-                properties.Add(((JsonPropertyAttribute)attr).PropertyName ?? prop.Name);
-            }
-            foreach (var token in obj)
-            {
-                var d = properties.FirstOrDefault(p => p == token.Key);
-                if (d == null)
-                {
-                    d = properties.SingleOrDefault(p => string.Equals(p, token.Key, StringComparison.CurrentCultureIgnoreCase));
-                    if (d == null)
-                    {
-                        if (!(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>)))
-                        {
-                            ClientLog?.Warning($"{(requestId != null ? $"[{requestId}] " : "")}Local object doesn't have property `{token.Key}` expected in type `{type.Name}`");
-                            isDif = true;
-                        }
-
-                        continue;
-                    }
-                }
-
-                properties.Remove(d);
-
-                var propType = GetProperty(d, props)?.PropertyType;
-                if (propType == null || token.Value == null)
-                    continue;
-                if (!IsSimple(propType) && propType != typeof(DateTime))
-                {
-                    if (propType.IsArray && token.Value.HasValues && ((JArray)token.Value).Any() && ((JArray)token.Value)[0] is JObject)
-                        CheckObject(propType.GetElementType()!, (JObject)token.Value[0]!, requestId);
-                    else if (token.Value is JObject o)
-                        CheckObject(propType, o, requestId);
-                }
-            }
-
-            foreach (var prop in properties)
-            {
-                var propInfo = props.First(p => p.Name == prop ||
-                    ((JsonPropertyAttribute)p.GetCustomAttributes(typeof(JsonPropertyAttribute), false).FirstOrDefault())?.PropertyName == prop);
-                var optional = propInfo.GetCustomAttributes(typeof(JsonOptionalPropertyAttribute), false).FirstOrDefault();
-                if (optional != null)
-                    continue;
-
-                isDif = true;
-                ClientLog?.Warning($"{(requestId != null ? $"[{requestId}] " : "")}Local object has property `{prop}` but was not found in received object of type `{type.Name}`");
-            }
-
-            if (isDif)
-                ClientLog?.Info($"{(requestId != null ? $"[{requestId}] " : "")}Returned data: " + obj);
-        }
-
-        private static bool IsSimple(Type type)
-        {
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                // nullable type, check if the nested type is simple.
-                return IsSimple(type.GetGenericArguments()[0]);
-            }
-            return type.IsPrimitive
-                   || type.IsEnum
-                   || type == typeof(string)
-                   || type == typeof(decimal);
-        }
 
         internal static async Task<string> ReadStreamAsync(Stream stream)
         {

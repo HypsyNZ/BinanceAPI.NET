@@ -71,7 +71,6 @@ namespace BinanceAPI.ClientBase
 
             ClientLog?.Info($"Client configuration: {options}, BinanceAPI.NET: v{GetType().Assembly.GetName().Version}");
 #if DEBUG
-            Json.ShouldCheckObjects = options.ShouldCheckObjects;
             Json.OutputOriginalData = options.OutputOriginalData;
 #endif
         }

@@ -23,41 +23,39 @@
 */
 
 using BinanceAPI.Converters;
+using BinanceAPI.Enums;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BinanceAPI.Objects.Spot.MarketData
 {
     /// <summary>
-    /// Exchange info
+    /// Symbol info
     /// </summary>
-    public class BinanceExchangeInfo
+    [JsonObject("rateLimits")]
+    public class BinanceRateLimit
     {
         /// <summary>
-        /// The timezone the server uses
+        /// The symbol
         /// </summary>
-        public string TimeZone { get; set; } = string.Empty;
+        [JsonProperty("rateLimitType")]
+        public string Type { get; set; } = string.Empty;
 
         /// <summary>
-        /// The current server time
+        /// Rate Limit Interval
         /// </summary>
-        [JsonConverter(typeof(TimestampConverter))]
-        public DateTime ServerTime { get; set; }
+        public string Interval { get; set; } = string.Empty;
 
         /// <summary>
-        /// Rate Limits
+        /// Rate Limit Interval Number
         /// </summary>
-        public IEnumerable<BinanceRateLimit> RateLimits { get; set; } = Array.Empty<BinanceRateLimit>();
+        public int IntervalNum { get; set; } = 0;
 
         /// <summary>
-        /// All symbols supported
+        /// Rate Limit
         /// </summary>
-        public IEnumerable<BinanceSymbol> Symbols { get; set; } = Array.Empty<BinanceSymbol>();
-
-        /// <summary>
-        /// Filters
-        /// </summary>
-        public IEnumerable<object> ExchangeFilters { get; set; } = Array.Empty<object>();
+        public int Limit { get; set; } = 0;
     }
 }

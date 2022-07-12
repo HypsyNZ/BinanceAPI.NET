@@ -491,6 +491,11 @@
             See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
             </summary>
         </member>
+        <member name="F:BinanceAPI.Enums.AccountType.TRD_GRP_004">
+            <summary>
+            See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
+            </summary>
+        </member>
         <member name="T:BinanceAPI.Enums.AdjustRateDirection">
             <summary>
             Rate direction
@@ -4355,6 +4360,11 @@
             The current server time
             </summary>
         </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceExchangeInfo.RateLimits">
+            <summary>
+            Rate Limits
+            </summary>
+        </member>
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceExchangeInfo.Symbols">
             <summary>
             All symbols supported
@@ -4448,6 +4458,31 @@
         <member name="P:BinanceAPI.Objects.Spot.MarketData.BinancePrice.Timestamp">
             <summary>
             Timestamp
+            </summary>
+        </member>
+        <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceRateLimit">
+            <summary>
+            Symbol info
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceRateLimit.Type">
+            <summary>
+            The symbol
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceRateLimit.Interval">
+            <summary>
+            Rate Limit Interval
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceRateLimit.IntervalNum">
+            <summary>
+            Rate Limit Interval Number
+            </summary>
+        </member>
+        <member name="P:BinanceAPI.Objects.Spot.MarketData.BinanceRateLimit.Limit">
+            <summary>
+            Rate Limit
             </summary>
         </member>
         <member name="T:BinanceAPI.Objects.Spot.MarketData.BinanceRecentTrade">

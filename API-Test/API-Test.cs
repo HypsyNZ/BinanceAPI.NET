@@ -78,10 +78,9 @@ namespace API_Test
 
             _ = true; // breakpoint here and read the values;
 
-            //#if DEBUG
-            //            Json.ShouldCheckObjects = true;
-            //            Json.OutputOriginalData = true;
-            //#endif
+#if DEBUG
+            Json.OutputOriginalData = true;
+#endif
 
             // API Keys need to be set to go any further
             // They don't have to be valid they just have to be set

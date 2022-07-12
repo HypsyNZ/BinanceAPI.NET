@@ -44,7 +44,8 @@ namespace BinanceAPI.Converters
             new KeyValuePair<AccountType, string>(AccountType.Futures, "FUTURES"),
             new KeyValuePair<AccountType, string>(AccountType.Leveraged, "LEVERAGED"),
             new KeyValuePair<AccountType, string>(AccountType.TRD_GRP_002, "TRD_GRP_002"),
-            new KeyValuePair<AccountType, string>(AccountType.TRD_GRP_003, "TRD_GRP_003")
+            new KeyValuePair<AccountType, string>(AccountType.TRD_GRP_003, "TRD_GRP_003"),
+            new KeyValuePair<AccountType, string>(AccountType.TRD_GRP_003, "TRD_GRP_004")
         };
     }
 }

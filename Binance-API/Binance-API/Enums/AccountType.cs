@@ -57,6 +57,11 @@ namespace BinanceAPI.Enums
         /// <summary>
         /// See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
         /// </summary>
-        TRD_GRP_003 = 5
+        TRD_GRP_003 = 5,
+
+        /// <summary>
+        /// See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
+        /// </summary>
+        TRD_GRP_004 = 6
     }
 }
