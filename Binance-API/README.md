@@ -1,3 +1,8 @@
+### Version 6.0.6.4
+- [x] Fixes a bug in `ExchangeInfo`
+- [x] Change how `AccountType` is handled
+- [x] `AccountType` won't cause issues anymore
+
 ### Version 6.0.6.3
 - [x] Fixes a bug in `ExchangeInfo`
 
