@@ -1,3 +1,7 @@
+### Version 6.0.6.2
+- [x] Add `RateLimits` to `ExchangeInfo`
+- [x] Add missing group to `ExchangeInfo`
+
 ### Version 6.0.6.1
 
 - [x] `[AllowNull]` Attribute instead of `Nullable`
