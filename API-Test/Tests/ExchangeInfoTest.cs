@@ -23,6 +23,8 @@
 */
 
 using BinanceAPI.ClientHosts;
+using BinanceAPI.Enums;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -49,6 +51,22 @@ namespace API_Test
                     {
                         Console.WriteLine(p);
                     }
+
+
+                    Console.WriteLine("Spot: " + AccountType.Spot.ToString());
+                    Console.WriteLine("Spot: " + nameof(AccountType.Spot));
+
+
+                    var se = JsonConvert.SerializeObject(result.Data);
+
+                    //_ = true; // Breakpoint;
+
+                    var de = JsonConvert.DeserializeObject(se);
+
+                    Console.WriteLine(de);
+
+
+
                 }
             }).ConfigureAwait(false);
         }

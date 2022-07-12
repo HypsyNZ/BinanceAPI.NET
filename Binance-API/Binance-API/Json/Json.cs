@@ -22,17 +22,13 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Attributes;
 using BinanceAPI.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SimpleLog4.NET;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using static BinanceAPI.Logging;
@@ -55,7 +51,7 @@ namespace BinanceAPI
             DefaultSerializer = JsonSerializer.Create(new JsonSerializerSettings
             {
                 DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-                Culture = CultureInfo.InvariantCulture              
+                Culture = CultureInfo.InvariantCulture
             });
         }
 

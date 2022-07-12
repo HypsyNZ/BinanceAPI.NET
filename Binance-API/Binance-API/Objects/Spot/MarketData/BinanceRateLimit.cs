@@ -22,12 +22,7 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Converters;
-using BinanceAPI.Enums;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace BinanceAPI.Objects.Spot.MarketData
 {

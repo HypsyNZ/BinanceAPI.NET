@@ -124,7 +124,7 @@ namespace BinanceAPI.Objects.Spot.MarketData
         /// <summary>
         /// Permissions types
         /// </summary>
-        [JsonProperty(ItemConverterType = typeof(EnumConverter))]
+        [JsonProperty(ItemConverterType = typeof(AccountTypeConverter))]
         public IEnumerable<AccountType> Permissions { get; set; } = Array.Empty<AccountType>();
 
         /// <summary>

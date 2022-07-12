@@ -22,8 +22,6 @@
 *SOFTWARE.
 */
 
-using BinanceAPI.Attributes;
-
 namespace BinanceAPI.Enums
 {
     /// <summary>
@@ -32,39 +30,43 @@ namespace BinanceAPI.Enums
     public enum AccountType
     {
         /// <summary>
+        /// Unknown account type
+        /// </summary>
+        Unknown,
+
+        /// <summary>
         /// Spot account type
         /// </summary>
-        [Map("SPOT")]
         Spot,
+
         /// <summary>
         /// Margin account type
         /// </summary>>
-        [Map("MARGIN")]
         Margin,
+
         /// <summary>
         /// Futures account type
         /// </summary>
-        [Map("FUTURES")]
         Futures,
+
         /// <summary>
         /// Leveraged account type
         /// </summary>
-        [Map("LEVERAGED")]
         Leveraged,
+
         /// <summary>
         /// See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
         /// </summary>
-        [Map("TRD_GRP_002")]
-        TradeGroup002,
+        TRD_GRP_002,
+
         /// <summary>
         /// See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
         /// </summary>
-        [Map("TRD_GRP_003")]
-        TradeGroup003,
+        TRD_GRP_003,
+
         /// <summary>
         /// See https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#enum-definitions
         /// </summary>
-        [Map("TRD_GRP_004")]
-        TradeGroup004
+        TRD_GRP_004
     }
 }

@@ -45,7 +45,7 @@ namespace BinanceAPI.Objects.Spot.SpotData
         /// <summary>
         /// Account type the data is for
         /// </summary>
-        [JsonConverter(typeof(EnumConverter))]
+        [JsonConverter(typeof(AccountTypeConverter))]
         public AccountType Type { get; set; }
 
         /// <summary>

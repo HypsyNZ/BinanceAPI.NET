@@ -80,13 +80,13 @@ namespace BinanceAPI.Objects.Spot.SpotData
         /// <summary>
         /// The type of account
         /// </summary>
-        [JsonConverter(typeof(EnumConverter))]
+        [JsonConverter(typeof(AccountTypeConverter))]
         public AccountType AccountType { get; set; }
 
         /// <summary>
         /// Permissions types
         /// </summary>
-        [JsonProperty(ItemConverterType = typeof(EnumConverter))]
+        [JsonProperty(ItemConverterType = typeof(AccountTypeConverter))]
         public IEnumerable<AccountType> Permissions { get; set; } = Array.Empty<AccountType>();
 
         /// <summary>
