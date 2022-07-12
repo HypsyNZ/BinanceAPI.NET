@@ -1,3 +1,6 @@
+### Version 6.0.6.3
+- [x] Fixes a bug in `ExchangeInfo`
+
 ### Version 6.0.6.2
 - [x] Add `RateLimits` to `ExchangeInfo`
 - [x] Add missing group to `ExchangeInfo`
