@@ -227,6 +227,12 @@ namespace BinanceAPI.Converters
                     writer.WriteValue(algoFilter.MaxNumberAlgorithmicOrders);
                     break;
 
+                case SymbolFilterType.MaxPosition:
+                    var maxPositionFilter = (BinanceSymbolMaxPositionFilter)filter;
+                    writer.WritePropertyName("maxPosition");
+                    writer.WriteValue(maxPositionFilter.MaxPosition);
+                    break;
+
                 case SymbolFilterType.MaxNumberOrders:
                     var orderFilter = (BinanceSymbolMaxOrdersFilter)filter;
                     writer.WritePropertyName("maxNumOrders");

@@ -26,6 +26,7 @@ using BinanceAPI.ClientHosts;
 using BinanceAPI.Enums;
 using Newtonsoft.Json;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -42,9 +43,13 @@ namespace API_Test
 
                 if (result.Success)
                 {
+                    // All Exchange Symbols
                     Console.WriteLine("Passed loaded exchange info for: [" + result.Data.Symbols.Count() + "] symbols");
+
+                    // Rate Limits
                     Console.WriteLine("Rate: " + result.Data.RateLimits.First().Interval.ToString() + " | Limit: " + result.Data.RateLimits.First().Limit.ToString());
 
+                    // Permissions
                     var r = result.Data.Symbols.Where(t => t.Permissions != null).FirstOrDefault();
                     Console.WriteLine(r.Name);
                     foreach (var p in r.Permissions)
@@ -52,21 +57,25 @@ namespace API_Test
                         Console.WriteLine(p);
                     }
 
+                    // Max Position
+                    var max = result.Data.Symbols.Where(t => t.MaxPositionFilter != null).FirstOrDefault();
+                    if (max != null)
+                    {
+                        Console.WriteLine("Symbol: " + max.Name + " | Max Possible Position: " + max.MaxPositionFilter.MaxPosition);
+                    }
 
                     Console.WriteLine("Spot: " + AccountType.Spot.ToString());
                     Console.WriteLine("Spot: " + nameof(AccountType.Spot));
 
-
+                    // Convert to Json
                     var se = JsonConvert.SerializeObject(result.Data);
 
                     //_ = true; // Breakpoint;
 
+                    // Convert from Json
                     var de = JsonConvert.DeserializeObject(se);
 
-                    Console.WriteLine(de);
-
-
-
+                    Trace.WriteLine(de);
                 }
             }).ConfigureAwait(false);
         }

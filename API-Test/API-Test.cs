@@ -32,7 +32,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.6.1 Test - [AllowNull]
+// 6.0.7.0 Test
+// Fixed a bug in MaxPosition filter
 
 namespace API_Test
 {
@@ -83,7 +84,7 @@ namespace API_Test
 #endif
 
             // API Keys need to be set to go any further
-            // They don't have to be valid they just have to be set
+            // They don't have to be valid for public requests but they have to be set
             BaseClient.SetAuthentication("ReplaceWithYourKeysBeforeTest", "ReplaceWithYourKeysBeforeTest");
 
             // Select the API Endpoint Controller to use
@@ -142,7 +143,7 @@ namespace API_Test
                 }
                 else
                 {
-                    // Run Tests
+                    // Choose which tests to run
                     Console.WriteLine("Account Status: " + status.Data.Data.ToString());
 
                     ExchangeInfoTest.Run(client);
