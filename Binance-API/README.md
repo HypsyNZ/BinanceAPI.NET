@@ -1,3 +1,7 @@
+### Version 6.0.6.5
+- [x] Small Improvement to `AccountType`
+- [x] `AccountType` will never be `null`, It will be `AccountType.Unknown`
+
 ### Version 6.0.6.4
 - [x] Fixes a bug in `ExchangeInfo`
 - [x] Change how `AccountType` is handled
