@@ -1,3 +1,6 @@
+### Version 6.0.7.0
+- [x] Fixed a bug in `MaxPosition` filter
+
 ### Version 6.0.6.5
 - [x] Small Improvement to `AccountType`
 - [x] `AccountType` will never be `null`, It will be `AccountType.Unknown`
