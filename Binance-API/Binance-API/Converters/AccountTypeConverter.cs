@@ -62,7 +62,7 @@ namespace BinanceAPI.Converters
         /// <inheritdoc />
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            writer.WriteValue(value?.ToString().ToUpper() ?? null);
+            writer.WriteValue(value?.ToString().ToUpper() ?? "UNKNOWN");
         }
 
         /// <inheritdoc />
@@ -70,7 +70,7 @@ namespace BinanceAPI.Converters
         {
             if (reader.Value == null)
             {
-                return null;
+                return AccountType.Unknown;
             }
 
             var rValue = reader.Value.ToString();
