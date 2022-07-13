@@ -1,3 +1,7 @@
+### Version 6.0.7.1
+- [x] Fixed a typo in `AccountTypeConverter`
+- [x] `Group 4` will work now
+
 ### Version 6.0.7.0
 - [x] Fixed a bug in `MaxPosition` filter
 
