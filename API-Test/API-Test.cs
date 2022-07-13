@@ -32,8 +32,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-// 6.0.7.0 Test
-// Fixed a bug in MaxPosition filter
+// 6.0.7.1 Test
+// Fixed a typo in AccountTypeConverter
 
 namespace API_Test
 {
